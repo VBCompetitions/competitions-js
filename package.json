@@ -11,6 +11,9 @@
     "import": "./src/index.js",
     "require": "./src/index.cjs"
   },
+  "bin": {
+    "vbc-validate": "bin/vbc-validate.js"
+  },
   "scripts": {
     "doc": "jsdoc ",
     "pretest": "npm run schema && npm run lint && npm run rollup",
