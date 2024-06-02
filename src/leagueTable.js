@@ -14,6 +14,8 @@ class LeagueTable {
   static ORDERING_SETS_FOR = 'SF'
   static ORDERING_SETS_AGAINST = 'SA'
   static ORDERING_SETS_DIFFERENCE = 'SD'
+  static ORDERING_BONUS_POINTS = 'BP'
+  static ORDERING_PENALTY_POINTS = 'PP'
 
   /**
    * An array of entries in the league table
@@ -112,6 +114,10 @@ class LeagueTable {
         return 'sets against'
       case LeagueTable.ORDERING_SETS_DIFFERENCE:
         return 'sets difference'
+      case LeagueTable.ORDERING_BONUS_POINTS:
+        return 'bonus points'
+      case LeagueTable.ORDERING_PENALTY_POINTS:
+        return 'penalty points'
     }
   }
 

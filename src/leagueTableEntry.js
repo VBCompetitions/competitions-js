@@ -87,6 +87,20 @@ class LeagueTableEntry {
   #pd = 0
 
   /**
+   * The number of bonus points
+   * @type {number}
+   * @private
+   */
+  #bp = 0
+
+  /**
+   * The number of penalty points
+   * @type {number}
+   * @private
+   */
+  #pp = 0
+
+  /**
    * The total points
    * @type {number}
    * @private
@@ -118,6 +132,33 @@ class LeagueTableEntry {
     this.#league = league
     this.#teamID = teamID
     this.#team = name
+  }
+
+  /**
+   * Return the leagueTableEntry in a form suitable for serializing.  Thisis only used by unit tests
+   *
+   * @return {object} The serialized league table entry data
+   */
+  serialize () {
+    const leagueTableEntry = {
+      teamID: this.#teamID,
+      played: this.#played,
+      wins: this.#wins,
+      losses: this.#losses,
+      draws: this.#draws,
+      sf: this.#sf,
+      sa: this.#sa,
+      sd: this.#sd,
+      pf: this.#pf,
+      pa: this.#pa,
+      pd: this.#pd,
+      bp: this.#bp,
+      pp: this.#pp,
+      pts: this.#pts,
+      head: this.#head
+    }
+
+    return leagueTableEntry
   }
 
   /**
@@ -325,6 +366,42 @@ class LeagueTableEntry {
    */
   setPD (pd) {
     this.#pd = pd
+  }
+
+  /**
+   * Get the bonus points.
+   *
+   * @return {number} The bonus points
+   */
+  getBP () {
+    return this.#bp
+  }
+
+  /**
+   * Set the bonus points.
+   *
+   * @param {number} bp The bonus points
+   */
+  setBP (bp) {
+    this.#bp = bp
+  }
+
+  /**
+   * Get the penalty points.
+   *
+   * @return {number} The penalty points
+   */
+  getPP () {
+    return this.#pp
+  }
+
+  /**
+   * Set the penalty points.
+   *
+   * @param {number} pp The penalty points
+   */
+  setPP (pp) {
+    this.#pp = pp
   }
 
   /**

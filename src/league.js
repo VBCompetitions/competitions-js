@@ -139,17 +139,18 @@ class League extends Group {
         if (match.getAwayTeam().getForfeit()) {
           teamResults[awayTeamID].setPTS(teamResults[awayTeamID].getPTS() - this._leagueConfig.getPoints().getForfeit())
         }
-        teamResults[homeTeamID].setPTS(teamResults[homeTeamID].getPTS() + match.getHomeTeam().getBonusPoints())
-        teamResults[homeTeamID].setPTS(teamResults[homeTeamID].getPTS() - match.getHomeTeam().getPenaltyPoints())
-        teamResults[awayTeamID].setPTS(teamResults[awayTeamID].getPTS() + match.getAwayTeam().getBonusPoints())
-        teamResults[awayTeamID].setPTS(teamResults[awayTeamID].getPTS() - match.getAwayTeam().getPenaltyPoints())
+        teamResults[homeTeamID].setBP(teamResults[homeTeamID].getBP() + match.getHomeTeam().getBonusPoints())
+        teamResults[homeTeamID].setPP(teamResults[homeTeamID].getPP() + match.getHomeTeam().getPenaltyPoints())
+
+        teamResults[awayTeamID].setBP(teamResults[awayTeamID].getBP() + match.getAwayTeam().getBonusPoints())
+        teamResults[awayTeamID].setPP(teamResults[awayTeamID].getPP() + match.getAwayTeam().getPenaltyPoints())
       }
     })
 
     Object.values(teamResults).forEach(teamLine => {
       teamLine.setPD(teamLine.getPF() - teamLine.getPA())
       teamLine.setSD(teamLine.getSF() - teamLine.getSA())
-      teamLine.setPTS(teamLine.getPTS() + (teamLine.getPlayed() * this._leagueConfig.getPoints().getPlayed()))
+      teamLine.setPTS(teamLine.getPTS() + (teamLine.getPlayed() * this._leagueConfig.getPoints().getPlayed()) + teamLine.getBP() - teamLine.getPP())
       this.#table.entries.push(teamLine)
     })
 
@@ -197,6 +198,12 @@ class League extends Group {
           break
         case 'SD':
           compareResult = League.#compareSetsDifference(a, b)
+          break
+        case 'BP':
+          compareResult = League.#compareBonusPoints(a, b)
+          break
+        case 'PP':
+          compareResult = League.#comparePenaltyPoints(a, b)
           break
       }
       if (compareResult !== 0) {
@@ -328,6 +335,28 @@ class League extends Group {
    */
   static #compareSetsDifference (a, b) {
     return b.getSD() - a.getSD()
+  }
+
+  /**
+   * Compares two LeagueTableEntry objects based on their bonus points.
+   *
+   * @param {LeagueTableEntry} a The first league table entry to compare
+   * @param {LeagueTableEntry} b The second league table entry to compare
+   * @returns {number} Returns an integer less than, equal to, or greater than zero if the team name of the first entry is considered to be respectively less than, equal to, or greater than the team name of the second entry.
+   */
+  static #compareBonusPoints (a, b) {
+    return b.getBP() - a.getBP()
+  }
+
+  /**
+   * Compares two LeagueTableEntry objects based on their penalty points.
+   *
+   * @param {LeagueTableEntry} a The first league table entry to compare
+   * @param {LeagueTableEntry} b The second league table entry to compare
+   * @returns {number} Returns an integer less than, equal to, or greater than zero if the team name of the first entry is considered to be respectively less than, equal to, or greater than the team name of the second entry.
+   */
+  static #comparePenaltyPoints (a, b) {
+    return a.getPP() - b.getPP()
   }
 
   /**
