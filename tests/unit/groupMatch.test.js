@@ -448,6 +448,32 @@ describe('groupMatch', () => {
     })
   })
 
+  it('testGroupMatchSavesFriendlyInfo', async () => {
+    let competition = new Competition('test competition')
+    const stage = new Stage(competition, 'S')
+    competition.addStage(stage)
+    const group = new Crossover(stage, 'C', MatchType.SETS)
+    stage.addGroup(group)
+    const config = new SetConfig(group)
+    group.setSetConfig(config)
+
+    const team1 = new CompetitionTeam(competition, 'TM1', 'Team 1')
+    competition.addTeam(team1)
+    const team2 = new CompetitionTeam(competition, 'TM2', 'Team 2')
+    competition.addTeam(team2)
+
+    const match = new GroupMatch(group, 'M1')
+    const homeTeam = new MatchTeam(match, 'TM1')
+    const awayTeam = new MatchTeam(match, 'TM2')
+    match.setHomeTeam(homeTeam)
+    match.setAwayTeam(awayTeam)
+    match.setFriendly(true)
+    group.addMatch(match)
+
+    competition = await Competition.loadFromCompetitionJSON(JSON.stringify(competition.serialize()))
+    assert(competition.getStageByID('S').getGroupByID('C').getMatchByID('M1').isFriendly())
+  })
+
   it('testGroupMatchContinuousScoresLengthMismatch', () => {
     assert.throws(() => {
       GroupMatch.assertContinuousScoresValid([10, 10], [20])

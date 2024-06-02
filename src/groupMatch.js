@@ -95,6 +95,8 @@ class GroupMatch {
     this.#isDraw = false
     this.#homeTeamSets = 0
     this.#awayTeamSets = 0
+    this.#homeTeamScores = []
+    this.#awayTeamScores = []
   }
 
   /**
@@ -209,6 +211,7 @@ class GroupMatch {
     if (this.#manager !== null) {
       match.manager = this.#manager.serialize()
     }
+    match.friendly = this.#friendly
     if (this.#notes !== null) {
       match.notes = this.#notes
     }
