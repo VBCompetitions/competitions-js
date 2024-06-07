@@ -95,7 +95,7 @@ class League extends Group {
 
             if (match.getHomeTeam().getScores()[i] > match.getAwayTeam().getScores()[i]) {
               homeTeamSets++
-            } else {
+            } else if (match.getHomeTeam().getScores()[i] < match.getAwayTeam().getScores()[i]) {
               awayTeamSets++
             }
           }
