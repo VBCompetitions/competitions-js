@@ -1,9 +1,0 @@
-.c8rc.json
-.nyc_output
-coverage
-jsdoc
-jsdoc.json
-package-lock.json
-rollup.config.js
-tests
-webpack.config.cjs

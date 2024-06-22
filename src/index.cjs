@@ -8730,6 +8730,13 @@ class Competition {
     }
 
     // Also remove team from any club's list
+    this.#clubs.forEach(club => {
+      club.deleteTeam(teamID);
+    });
+
+    // Then delete the team
+    delete this.#teamLookup[teamID];
+    this.#teams = this.#teams.filter(team => team.getID() !== teamID);
 
     return this
   }
@@ -8906,7 +8913,9 @@ class Competition {
     if (teamsInClub.length > 0) {
       throw new Error(`Club still contains teams with IDs: ${teamsInClub.map(t => `{${t.getID()}}`).join(', ')}`)
     }
-    // throw if any team still declares this club
+
+    delete this.#clubLookup[clubID];
+    this.#clubs = this.#clubs.filter(club => club.getID() !== clubID);
 
     return this
   }

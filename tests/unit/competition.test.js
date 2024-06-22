@@ -537,6 +537,11 @@ describe('competition', () => {
     const team3 = new CompetitionTeam(competition, 'T3', 'Team 3')
     const team4 = new CompetitionTeam(competition, 'T4', 'Team 4')
     competition.addTeam(team1).addTeam(team2).addTeam(team3).addTeam(team4)
+    const club1 = new Club(competition, 'C1', 'Club 1')
+    const club2 = new Club(competition, 'C2', 'Club 2')
+    competition.addClub(club1).addClub(club2)
+    club1.addTeam(team1).addTeam(team2)
+    club2.addTeam(team3).addTeam(team4)
     const stage = new Stage(competition, 'S')
     competition.addStage(stage)
     const league = new League(stage, 'G', MatchType.CONTINUOUS, false)
@@ -571,8 +576,72 @@ describe('competition', () => {
       message: 'Team still has matches with IDs: {S:G:M1}, {S:G:M2}'
     })
 
+    assert.equal(competition.getTeams().length, 4)
     competition.deleteTeam(team4.getID())
+    assert(!competition.hasTeamWithID('T4'))
+    assert.equal(competition.getTeamByID('T4').getID(), CompetitionTeam.UNKNOWN_TEAM_ID)
+    assert.equal(competition.getTeams().length, 3)
+
     competition.deleteTeam('undefined-team-id')
+  })
+
+  it('testCompetitionDeleteClub', () => {
+    const competition = new Competition('test competition')
+    const team1 = new CompetitionTeam(competition, 'T1', 'Team 1')
+    const team2 = new CompetitionTeam(competition, 'T2', 'Team 2')
+    const team3 = new CompetitionTeam(competition, 'T3', 'Team 3')
+    const team4 = new CompetitionTeam(competition, 'T4', 'Team 4')
+    competition.addTeam(team1).addTeam(team2).addTeam(team3).addTeam(team4)
+    const club1 = new Club(competition, 'C1', 'Club 1')
+    const club2 = new Club(competition, 'C2', 'Club 2')
+    competition.addClub(club1).addClub(club2)
+    club1.addTeam(team1).addTeam(team2)
+    club2.addTeam(team3)
+    const stage = new Stage(competition, 'S')
+    competition.addStage(stage)
+    const league = new League(stage, 'G', MatchType.CONTINUOUS, false)
+    stage.addGroup(league)
+    const match1 = new GroupMatch(league, 'M1')
+    match1.setHomeTeam(new MatchTeam(match1, team1.getID())).setAwayTeam(new MatchTeam(match1, team2.getID())).setOfficials(new MatchOfficials(match1, team3.getID()))
+    const match2 = new GroupMatch(league, 'M2')
+    match2.setHomeTeam(new MatchTeam(match2, team2.getID())).setAwayTeam(new MatchTeam(match2, team1.getID())).setOfficials(new MatchOfficials(match2, team3.getID()))
+    league.addMatch(match1).addMatch(match2)
+    const leagueConfig = new LeagueConfig(league)
+    league.setLeagueConfig(leagueConfig)
+    leagueConfig.setOrdering(['PTS', 'PD'])
+    const leagueConfigPoints = new LeagueConfigPoints(leagueConfig)
+    leagueConfig.setPoints(leagueConfigPoints)
+
+    assert.equal(team1.getClub().getID(), 'C1')
+    assert.equal(team2.getClub().getID(), 'C1')
+    assert.equal(team4.getClub(), null)
+
+    // Club with teams cannot be deleted
+    assert.throws(() => {
+      competition.deleteClub(club1.getID())
+    }, {
+      message: 'Club still contains teams with IDs: {T1}, {T2}'
+    })
+
+    assert.throws(() => {
+      competition.deleteClub(club2.getID())
+    }, {
+      message: 'Club still contains teams with IDs: {T3}'
+    })
+
+    club1.deleteTeam('T1')
+    club1.deleteTeam('T2')
+    assert.equal(competition.getClubs().length, 2)
+    competition.deleteClub(club1.getID())
+    assert(!competition.hasClubWithID('C1'))
+    assert.equal(competition.getClubs().length, 1)
+    assert.throws(() => {
+      competition.getClubByID('C1')
+    }, {
+      message: 'Club with ID "C1" not found'
+    })
+
+    competition.deleteClub('undefined-club-id')
   })
 
   it('testCompetitionSetters', () => {
@@ -674,38 +743,6 @@ describe('competition', () => {
     assert.equal(competition1.getClubs().length, 1)
     assert.equal(competition2.getClubs().length, 0)
   })
-
-  it('testCompetitionDeleteClub', () => {
-    // Create a competition with a club containing two teams, and a second club with no teams
-    const competition = new Competition('test competition')
-    const team1 = new CompetitionTeam(competition, 'T1', 'Team 1')
-    const team2 = new CompetitionTeam(competition, 'T2', 'Team 2')
-    const team3 = new CompetitionTeam(competition, 'T3', 'Team 3')
-    const club1 = new Club(competition, 'C1', 'Club 1')
-    const club2 = new Club(competition, 'C2', 'Club 2')
-    competition.addClub(club1).addClub(club2)
-    competition.addTeam(team1).addTeam(team2).addTeam(team3)
-    team1.setClubID(club1.getID())
-    team2.setClubID(club1.getID())
-
-    assert.equal(team1.getClub().getID(), 'C1')
-    assert.equal(team2.getClub().getID(), 'C1')
-    assert.equal(team3.getClub(), null)
-
-    assert.throws(() => {
-      competition.deleteClub(club1.getID())
-    }, {
-      message: 'Club still contains teams with IDs: {T1}, {T2}'
-    })
-
-    competition.deleteClub(club2.getID())
-    club1.deleteTeam(team1.getID())
-    club1.deleteTeam(team2.getID())
-    competition.deleteClub(club1.getID())
-
-    competition.deleteClub('non-existent-team-id')
-  })
-
 
   it('testCompetitionMetadataFunctions', () => {
     const competition = new Competition('test')

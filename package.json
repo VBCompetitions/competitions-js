@@ -1,6 +1,6 @@
 {
   "name": "@vbcompetitions/competitions",
-  "version": "0.10.12",
+  "version": "0.10.13",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -14,6 +14,16 @@
   "bin": {
     "vbc-validate": "bin/vbc-validate.js"
   },
+  "files": [
+    "LICENSE",
+    "README",
+    "bin/vbc-validate.js",
+    "package.json",
+    "schema/*.js",
+    "schema/*.json",
+    "src/*.cjs",
+    "src/*.js"
+  ],
   "scripts": {
     "doc": "jsdoc ",
     "pretest": "npm run schema && npm run lint && npm run rollup",
