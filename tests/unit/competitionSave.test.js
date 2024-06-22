@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict'
-import { afterEach, describe, it } from 'node:test'
-import { readdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { describe, it } from 'node:test'
+import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 
-import { Club, Competition, CompetitionTeam, GroupMatch, League, LeagueConfig, LeagueConfigPoints, MatchOfficials, MatchTeam, MatchType, Stage } from '../../src/index.js'
+import { Competition } from '../../src/index.js'
 
 describe('competition', () => {
     it('testCompetitionSaveCompetition', async () => {
