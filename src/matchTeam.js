@@ -1,3 +1,5 @@
+import Player from './player.js'
+
 /**
  * Represents a team that plays in a match.
  */
@@ -11,7 +13,7 @@ class MatchTeam {
 
   /**
    * This team's most valuable player award.
-   * @type {string|null}
+   * @type {Player|null}
    * @private
    */
   #mvp
@@ -49,7 +51,7 @@ class MatchTeam {
 
   /**
    * The list of players from this team that played in this match.
-   * @type {string[]}
+   * @type {Player[]}
    * @private
    */
   #players
@@ -81,12 +83,17 @@ class MatchTeam {
    * Load team data from a given object.
    * @param {MatchInterface} match The match this team is playing in.
    * @param {object} teamData The data defining this Team.
-   * @return {MatchTeam} The match team instance.
+   * @returns {MatchTeam} The match team instance.
    */
   static loadFromData (match, teamData) {
     const team = new MatchTeam(match, teamData.id)
     if (Object.hasOwn(teamData, 'mvp')) {
-      team.setMVP(teamData.mvp)
+      const mvpMatch = teamData.mvp.match(/^{(.*)}$/)
+      if (mvpMatch !== null) {
+        team.setMVP(match.getGroup().getStage().getCompetition().getPlayer(mvpMatch[1]))
+      } else {
+        team.setMVP(new Player(match.getGroup().getStage().getCompetition(), Player.UNREGISTERED_PLAYER_ID, teamData.mvp))
+      }
     }
     if (Object.hasOwn(teamData, 'forfeit')) {
       team.setForfeit(teamData.forfeit)
@@ -101,7 +108,16 @@ class MatchTeam {
       team.setNotes(teamData.notes)
     }
     if (Object.hasOwn(teamData, 'players')) {
-      team.setPlayers(teamData.players)
+      const players = []
+      teamData.players.forEach(playerData => {
+        const playerRefMatch = playerData.match(/^{(.*)}$/)
+        if (playerRefMatch !== null) {
+          players.push(match.getGroup().getStage().getCompetition().getPlayer(playerRefMatch[1]))
+        } else {
+          players.push(new Player(match.getGroup().getStage().getCompetition(), Player.UNREGISTERED_PLAYER_ID, playerData))
+        }
+      })
+      team.setPlayers(players)
     }
     return team
   }
@@ -109,21 +125,38 @@ class MatchTeam {
   /**
    * Return the team data in a form suitable for serializing
    *
-   * @return {object} The serialized team data.
+   * @returns {object} The serialized team data.
    */
   serialize () {
     const matchTeam = {
       id: this.#id,
-      scores: this.getScores(),
-      forfeit: this.#forfeit,
-      bonusPoints: this.#bonusPoints,
-      penaltyPoints: this.#penaltyPoints,
-      players: this.#players
+      scores: this.getScores()
     }
 
     if (this.#mvp !== null) {
-      matchTeam.mvp = this.#mvp
+      if (this.#mvp.getID() === Player.UNREGISTERED_PLAYER_ID) {
+        matchTeam.mvp = this.#mvp.getName()
+      } else {
+        matchTeam.mvp = `{${this.#mvp.getID()}}`
+      }
     }
+
+    matchTeam.forfeit = this.#forfeit
+    matchTeam.bonusPoints = this.#bonusPoints
+    matchTeam.penaltyPoints = this.#penaltyPoints
+
+    if (this.#players.length > 0) {
+      const players = []
+      this.#players.forEach(player => {
+        if (player.getID() === Player.UNREGISTERED_PLAYER_ID) {
+          players.push(player.getName())
+        } else {
+          players.push(`{${player.getID()}}`)
+        }
+      })
+      matchTeam.players = players
+    }
+
     if (this.#notes !== null) {
       matchTeam.notes = this.#notes
     }
@@ -133,7 +166,7 @@ class MatchTeam {
 
   /**
    * Get the match the team is playing in.
-   * @return {MatchInterface} The match this team plays in.
+   * @returns {MatchInterface} The match this team plays in.
    */
   getMatch () {
     return this.#match
@@ -141,16 +174,16 @@ class MatchTeam {
 
   /**
    * Get the ID of the team.
-   * @return {string} The team ID.
+   * @returns {string} The team ID.
    */
   getID () {
     return this.#id
   }
 
   /**
-   * Set whether the team forfeited the match.
-   * @param {boolean} forfeit Whether the team forfeited the match.
-   * @return {MatchTeam} The MatchTeam instance.
+   * Set whether the team forfeited the match
+   * @param {boolean} forfeit Whether the team forfeited the match
+   * @returns {MatchTeam} The MatchTeam instance
    */
   setForfeit (forfeit) {
     this.#forfeit = forfeit
@@ -158,16 +191,16 @@ class MatchTeam {
   }
 
   /**
-   * Get whether the team forfeited the match.
-   * @return {boolean} Whether the team forfeited the match.
+   * Get whether the team forfeited the match
+   * @returns {boolean} Whether the team forfeited the match
    */
   getForfeit () {
     return this.#forfeit
   }
 
   /**
-   * Get the array of scores for this team in this match.
-   * @return {number[]} The team's scores.
+   * Get the array of scores for this team in this match
+   * @returns {number[]} The team's scores
    */
   getScores () {
     if (this.#match.getHomeTeam().getID() === this.#id) {
@@ -177,9 +210,9 @@ class MatchTeam {
   }
 
   /**
-   * Set the bonus points for the team.
-   * @param {number} bonusPoints The bonus points for the team.
-   * @return {MatchTeam} The MatchTeam instance.
+   * Set the bonus points for the team
+   * @param {number} bonusPoints The bonus points for the team
+   * @returns {MatchTeam} The MatchTeam instance
    */
   setBonusPoints (bonusPoints) {
     this.#bonusPoints = bonusPoints
@@ -187,17 +220,17 @@ class MatchTeam {
   }
 
   /**
-   * Get the bonus points for the team.
-   * @return {number} The bonus points for the team.
+   * Get the bonus points for the team
+   * @returns {number} The bonus points for the team
    */
   getBonusPoints () {
     return this.#bonusPoints
   }
 
   /**
-   * Set the penalty points for the team.
-   * @param {number} penaltyPoints The penalty points for the team.
-   * @return {MatchTeam} The MatchTeam instance.
+   * Set the penalty points for the team
+   * @param {number} penaltyPoints The penalty points for the team
+   * @returns {MatchTeam} The MatchTeam instance
    */
   setPenaltyPoints (penaltyPoints) {
     this.#penaltyPoints = penaltyPoints
@@ -205,17 +238,17 @@ class MatchTeam {
   }
 
   /**
-   * Get the penalty points for the team.
-   * @return {number} The penalty points for the team.
+   * Get the penalty points for the team
+   * @returns {number} The penalty points for the team
    */
   getPenaltyPoints () {
     return this.#penaltyPoints
   }
 
   /**
-   * Set the most valuable player for the team.
-   * @param {?string} mvp The most valuable player for the team.
-   * @return {MatchTeam} The MatchTeam instance.
+   * Set the most valuable player for the team
+   * @param {Player|null} mvp The most valuable player for the team
+   * @returns {MatchTeam} The MatchTeam instance
    */
   setMVP (mvp) {
     this.#mvp = mvp
@@ -223,17 +256,17 @@ class MatchTeam {
   }
 
   /**
-   * Get the most valuable player for the team.
-   * @return {?string} The most valuable player for the team.
+   * Get the most valuable player for the team
+   * @returns {Player|null} The most valuable player for the team
    */
   getMVP () {
     return this.#mvp
   }
 
   /**
-   * Set notes for the team.
-   * @param {?string} notes The notes for the team.
-   * @return {MatchTeam} The MatchTeam instance.
+   * Set notes for the team
+   * @param {string|null} notes The notes for the team
+   * @returns {MatchTeam} The MatchTeam instance
    */
   setNotes (notes) {
     this.#notes = notes
@@ -241,17 +274,17 @@ class MatchTeam {
   }
 
   /**
-   * Get notes for the team.
-   * @return {?string} The notes for the team.
+   * Get notes for the team
+   * @returns {string|null} The notes for the team
    */
   getNotes () {
     return this.#notes
   }
 
   /**
-   * Set the players for the team.
-   * @param {string[]} players The players for the team.
-   * @return {MatchTeam} The MatchTeam instance.
+   * Set the players for the team
+   * @param {Array<Player>} players The players for the team
+   * @returns {MatchTeam} The MatchTeam instance
    */
   setPlayers (players) {
     this.#players = players
@@ -259,8 +292,8 @@ class MatchTeam {
   }
 
   /**
-   * Get the players for the team.
-   * @return {string[]} The players for the team.
+   * Get the players for the team
+   * @returns {Player[]} The players for the team
    */
   getPlayers () {
     return this.#players

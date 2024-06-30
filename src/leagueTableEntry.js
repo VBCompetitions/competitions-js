@@ -137,7 +137,7 @@ class LeagueTableEntry {
   /**
    * Return the leagueTableEntry in a form suitable for serializing.  Thisis only used by unit tests
    *
-   * @return {object} The serialized league table entry data
+   * @returns {object} The serialized league table entry data
    */
   serialize () {
     const leagueTableEntry = {
@@ -164,7 +164,7 @@ class LeagueTableEntry {
   /**
    * Get the group ID associated with this entry.
    *
-   * @return {string} The group ID associated with this entry
+   * @returns {string} The group ID associated with this entry
    */
   getGroupID () {
     return this.#league.getID()
@@ -173,7 +173,7 @@ class LeagueTableEntry {
   /**
    * Get the team ID.
    *
-   * @return {string} The team ID
+   * @returns {string} The team ID
    */
   getTeamID () {
     return this.#teamID
@@ -182,7 +182,7 @@ class LeagueTableEntry {
   /**
    * Get the name of the team.
    *
-   * @return {string} The name of the team
+   * @returns {string} The name of the team
    */
   getTeam () {
     return this.#team
@@ -191,7 +191,7 @@ class LeagueTableEntry {
   /**
    * Get the number of matches played.
    *
-   * @return {number} The number of matches played
+   * @returns {number} The number of matches played
    */
   getPlayed () {
     return this.#played
@@ -209,7 +209,7 @@ class LeagueTableEntry {
   /**
    * Get the number of matches won.
    *
-   * @return {number} The number of matches won
+   * @returns {number} The number of matches won
    */
   getWins () {
     return this.#wins
@@ -227,7 +227,7 @@ class LeagueTableEntry {
   /**
    * Get the number of matches lost.
    *
-   * @return {number} The number of matches lost
+   * @returns {number} The number of matches lost
    */
   getLosses () {
     return this.#losses
@@ -245,7 +245,7 @@ class LeagueTableEntry {
   /**
    * Get the number of matches drawn.
    *
-   * @return {number} The number of matches drawn
+   * @returns {number} The number of matches drawn
    */
   getDraws () {
     return this.#draws
@@ -263,7 +263,7 @@ class LeagueTableEntry {
   /**
    * Get the number of sets won.
    *
-   * @return {number} The number of sets won
+   * @returns {number} The number of sets won
    */
   getSF () {
     return this.#sf
@@ -281,7 +281,7 @@ class LeagueTableEntry {
   /**
    * Get the number of sets against.
    *
-   * @return {number} The number of sets against
+   * @returns {number} The number of sets against
    */
   getSA () {
     return this.#sa
@@ -299,7 +299,7 @@ class LeagueTableEntry {
   /**
    * Get the sets difference.
    *
-   * @return {number} The sets difference
+   * @returns {number} The sets difference
    */
   getSD () {
     return this.#sd
@@ -317,7 +317,7 @@ class LeagueTableEntry {
   /**
    * Get the number of points scored.
    *
-   * @return {number} The number of points scored
+   * @returns {number} The number of points scored
    */
   getPF () {
     return this.#pf
@@ -335,7 +335,7 @@ class LeagueTableEntry {
   /**
    * Get the number of points conceded.
    *
-   * @return {number} The number of points conceded
+   * @returns {number} The number of points conceded
    */
   getPA () {
     return this.#pa
@@ -353,7 +353,7 @@ class LeagueTableEntry {
   /**
    * Get the points difference.
    *
-   * @return {number} The points difference
+   * @returns {number} The points difference
    */
   getPD () {
     return this.#pd
@@ -371,7 +371,7 @@ class LeagueTableEntry {
   /**
    * Get the bonus points.
    *
-   * @return {number} The bonus points
+   * @returns {number} The bonus points
    */
   getBP () {
     return this.#bp
@@ -389,7 +389,7 @@ class LeagueTableEntry {
   /**
    * Get the penalty points.
    *
-   * @return {number} The penalty points
+   * @returns {number} The penalty points
    */
   getPP () {
     return this.#pp
@@ -407,7 +407,7 @@ class LeagueTableEntry {
   /**
    * Get the total points.
    *
-   * @return {number} The total points
+   * @returns {number} The total points
    */
   getPTS () {
     return this.#pts
@@ -425,7 +425,7 @@ class LeagueTableEntry {
   /**
    * Get the head-to-head data.
    *
-   * @return {object} The head-to-head data
+   * @returns {object} The head-to-head data
    */
   getH2H () {
     return this.#head

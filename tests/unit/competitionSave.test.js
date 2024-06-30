@@ -12,9 +12,9 @@ describe('competition', () => {
         const serializedData = JSON.stringify(competition.serialize())
         const savedCompetition = await Competition.loadFromCompetitionJSON(serializedData)
         assert(Array.isArray(savedCompetition.getTeams()))
-        const stage = savedCompetition.getStageByID('L')
+        const stage = savedCompetition.getStage('L')
         assert.equal(stage.getName(), 'league')
-        assert.equal(savedCompetition.getTeamByID('{L:RL:RLM14:winner}').getID(), 'TM6')
+        assert.equal(savedCompetition.getTeam('{L:RL:RLM14:winner}').getID(), 'TM6')
     })
 
     it('testCompetitionSaveWithNewName', async () => {
@@ -24,11 +24,11 @@ describe('competition', () => {
         const serializedData = JSON.stringify(competition.serialize())
         const savedCompetition = await Competition.loadFromCompetitionJSON(serializedData)
         assert(Array.isArray(savedCompetition.getTeams()))
-        const stage = savedCompetition.getStageByID('L')
+        const stage = savedCompetition.getStage('L')
         assert.equal(stage.getName(), 'league')
-        assert.equal(savedCompetition.getTeamByID('{L:RL:RLM14:winner}').getID(), 'TM6')
+        assert.equal(savedCompetition.getTeam('{L:RL:RLM14:winner}').getID(), 'TM6')
         assert.equal(savedCompetition.getName(), 'Saved Competition')
-        assert.equal(competition.getTeamByID('TM1').getNotes(), savedCompetition.getTeamByID('TM1').getNotes())
+        assert.equal(competition.getTeam('TM1').getNotes(), savedCompetition.getTeam('TM1').getNotes())
     })
 
     it('testCompetitionSaveWithDates', async () =>  {
@@ -38,9 +38,9 @@ describe('competition', () => {
         const serializedData = JSON.stringify(competition.serialize())
         const savedCompetition = await Competition.loadFromCompetitionJSON(serializedData)
         assert(Array.isArray(savedCompetition.getTeams()))
-        const stage = savedCompetition.getStageByID('L')
+        const stage = savedCompetition.getStage('L')
         assert.equal(stage.getName(), 'league')
-        assert.equal(savedCompetition.getTeamByID('{L:RL:RLM4:winner}').getID(), 'TM2')
+        assert.equal(savedCompetition.getTeam('{L:RL:RLM4:winner}').getID(), 'TM2')
         assert.equal(savedCompetition.getName(), 'Saved Competition')
     })
 
@@ -70,15 +70,13 @@ describe('competition', () => {
         competition.setName('Saved Competition')
         const serializedData = JSON.stringify(competition.serialize())
         const savedCompetition = await Competition.loadFromCompetitionJSON(serializedData)
-        let team = savedCompetition.getTeamByID('TM3')
-        assert.equal(team.getPlayerByID('P1').getName(), 'Alice Alison')
-        assert.equal(team.getPlayerByID('P1').getNotes(), 'junior')
-        assert.equal(team.getPlayerByID('P3').getName(), 'Charlie Charleston')
-        assert.equal(team.getPlayerByID('P3').getNumber(), 7)
+        assert.equal(savedCompetition.getPlayer('P1').getName(), 'Alice Alison')
+        assert.equal(savedCompetition.getPlayer('P1').getNotes(), 'junior')
+        assert.equal(savedCompetition.getPlayer('P3').getName(), 'Charlie Charleston')
+        assert.equal(savedCompetition.getPlayer('P3').getNumber(), 7)
 
-        team = competition.getTeamByID('TM2')
-        assert.equal(team.getPlayerByID('P1').getNumber(), null)
-        assert.equal(team.getPlayerByID('P1').getNotes(), null)
+        assert.equal(savedCompetition.getPlayer('P7').getNumber(), null)
+        assert.equal(savedCompetition.getPlayer('P7').getNotes(), null)
     })
 
     it('testCompetitionSaveCompetitionKnockoutSets', async () => {
@@ -87,8 +85,8 @@ describe('competition', () => {
         competition.setName('Saved Competition')
         const serializedData = JSON.stringify(competition.serialize())
         const savedCompetition = await Competition.loadFromCompetitionJSON(serializedData)
-        assert.equal(competition.getTeamByID('{KO:CUP:FIN:winner}').getID(), 'TM7')
-        assert.equal(savedCompetition.getTeamByID('{KO:CUP:FIN:winner}').getID(), 'TM7')
+        assert.equal(competition.getTeam('{KO:CUP:FIN:winner}').getID(), 'TM7')
+        assert.equal(savedCompetition.getTeam('{KO:CUP:FIN:winner}').getID(), 'TM7')
     })
 
     it('testCompetitionSaveCompetitionKnockoutSetsStandings', async () => {
@@ -97,8 +95,8 @@ describe('competition', () => {
         competition.setName('Saved Competition')
         const serializedData = JSON.stringify(competition.serialize())
         const savedCompetition = await Competition.loadFromCompetitionJSON(serializedData)
-        assert.equal(competition.getTeamByID('{KO:CUP:FIN:winner}').getID(), 'TM7')
-        assert.equal(savedCompetition.getTeamByID('{KO:CUP:FIN:winner}').getID(), 'TM7')
+        assert.equal(competition.getTeam('{KO:CUP:FIN:winner}').getID(), 'TM7')
+        assert.equal(savedCompetition.getTeam('{KO:CUP:FIN:winner}').getID(), 'TM7')
     })
 
     it('testCompetitionSaveCompetitionWithIfUnknown', async () => {
@@ -107,8 +105,8 @@ describe('competition', () => {
         competition.setName('Saved Competition')
         const serializedData = JSON.stringify(competition.serialize(), null, 2)
         const savedCompetition = await Competition.loadFromCompetitionJSON(serializedData)
-        assert.equal(competition.getStageByID('F').getIfUnknown().getDescription()[0], 'There will be a knockout stage')
-        assert.equal(savedCompetition.getStageByID('F').getIfUnknown().getDescription()[0], 'There will be a knockout stage')
+        assert.equal(competition.getStage('F').getIfUnknown().getDescription()[0], 'There will be a knockout stage')
+        assert.equal(savedCompetition.getStage('F').getIfUnknown().getDescription()[0], 'There will be a knockout stage')
     })
 
     it('testCompetitionSaveCompetitionWithClubs', async () => {
@@ -117,11 +115,11 @@ describe('competition', () => {
         competition.setName('Saved Competition')
         const serializedData = JSON.stringify(competition.serialize())
         const savedCompetition = await Competition.loadFromCompetitionJSON(serializedData)
-        assert.equal(competition.getClubByID('SOU').getName(), 'Southampton')
-        assert.equal(savedCompetition.getClubByID('SOU').getName(), 'Southampton')
+        assert.equal(competition.getClub('SOU').getName(), 'Southampton')
+        assert.equal(savedCompetition.getClub('SOU').getName(), 'Southampton')
 
-        assert(Array.isArray(savedCompetition.getClubByID('SOU').getTeams()))
-        assert.equal(savedCompetition.getClubByID('SOU').getTeams().length, 3)
+        assert(Array.isArray(savedCompetition.getClub('SOU').getTeams()))
+        assert.equal(savedCompetition.getClub('SOU').getTeams().length, 3)
     })
 
     it('testCompetitionSaveMatchWithManagerTeam', async () => {
@@ -130,7 +128,7 @@ describe('competition', () => {
         competition.setName('Saved Competition')
         const serializedData = JSON.stringify(competition.serialize())
         const savedCompetition = await Competition.loadFromCompetitionJSON(serializedData)
-        assert.equal(savedCompetition.getStageByID('L').getGroupByID('LG').getMatchByID('LG1').getManager().getTeamID(), 'TM1')
+        assert.equal(savedCompetition.getStage('L').getGroup('LG').getMatch('LG1').getManager().getTeamID(), 'TM1')
     })
 
     it('testCompetitionSaveMatchWithManagerPlayer', async () => {
@@ -139,7 +137,7 @@ describe('competition', () => {
         competition.setName('Saved Competition')
         const serializedData = JSON.stringify(competition.serialize())
         const savedCompetition = await Competition.loadFromCompetitionJSON(serializedData)
-        assert.equal(savedCompetition.getStageByID('L').getGroupByID('LG').getMatchByID('LG1').getManager().getManagerName(), 'Some Manager')
+        assert.equal(savedCompetition.getStage('L').getGroup('LG').getMatch('LG1').getManager().getManagerName(), 'Some Manager')
     })
 
     it('testCompetitionSaveMatchWitOfficialsPeople', async () => {
@@ -148,7 +146,7 @@ describe('competition', () => {
         competition.setName('Saved Competition')
         const serializedData = JSON.stringify(competition.serialize())
         const savedCompetition = await Competition.loadFromCompetitionJSON(serializedData)
-        assert.equal(savedCompetition.getStageByID('L').getGroupByID('LG').getMatchByID('LG1').getOfficials().getFirstRef(), 'A First')
+        assert.equal(savedCompetition.getStage('L').getGroup('LG').getMatch('LG1').getOfficials().getFirstRef(), 'A First')
     })
 
     it('testCompetitionSaveCompetitionWithMetadata', async () => {

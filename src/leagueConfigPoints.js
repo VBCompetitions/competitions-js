@@ -78,28 +78,28 @@ class LeagueConfigPoints {
    * Load league points configuration data from a provided object.
    *
    * @param {object} leagueConfigData The league points configuration data to load
-   * @return {LeagueConfigPoints} Returns the LeagueConfigPoints instance after loading the data
+   * @returns {LeagueConfigPoints} Returns the LeagueConfigPoints instance after loading the data
    */
   loadFromData (leagueConfigData) {
-    if (leagueConfigData.played !== undefined) {
+    if (Object.hasOwn(leagueConfigData, 'played')) {
       this.setPlayed(leagueConfigData.played)
     }
-    if (leagueConfigData.perSet !== undefined) {
+    if (Object.hasOwn(leagueConfigData, 'perSet')) {
       this.setPerSet(leagueConfigData.perSet)
     }
-    if (leagueConfigData.win !== undefined) {
+    if (Object.hasOwn(leagueConfigData, 'win')) {
       this.setWin(leagueConfigData.win)
     }
-    if (leagueConfigData.winByOne !== undefined) {
+    if (Object.hasOwn(leagueConfigData, 'winByOne')) {
       this.setWinByOne(leagueConfigData.winByOne)
     }
-    if (leagueConfigData.lose !== undefined) {
+    if (Object.hasOwn(leagueConfigData, 'lose')) {
       this.setLose(leagueConfigData.lose)
     }
-    if (leagueConfigData.loseByOne !== undefined) {
+    if (Object.hasOwn(leagueConfigData, 'loseByOne')) {
       this.setLoseByOne(leagueConfigData.loseByOne)
     }
-    if (leagueConfigData.forfeit !== undefined) {
+    if (Object.hasOwn(leagueConfigData, 'forfeit')) {
       this.setForfeit(leagueConfigData.forfeit)
     }
 
@@ -109,7 +109,7 @@ class LeagueConfigPoints {
   /**
    * The league points configuration in a form suitable for serializing
    *
-   * @return {object} The serialized league points configuration data
+   * @returns {object} The serialized league points configuration data
    */
   serialize () {
     return {
@@ -126,7 +126,7 @@ class LeagueConfigPoints {
   /**
    * Get the league configuration associated with these points.
    *
-   * @return {LeagueConfig} The league configuration associated with these points
+   * @returns {LeagueConfig} The league configuration associated with these points
    */
   getLeagueConfig () {
     return this.#leagueConfig
@@ -136,7 +136,7 @@ class LeagueConfigPoints {
    * Set the number of league points for playing the match.
    *
    * @param {number} played The number of league points for playing the match
-   * @return {LeagueConfigPoints} Returns the LeagueConfigPoints instance for method chaining
+   * @returns {LeagueConfigPoints} Returns the LeagueConfigPoints instance for method chaining
    */
   setPlayed (played) {
     this.#played = played
@@ -146,7 +146,7 @@ class LeagueConfigPoints {
   /**
    * Get the number of league points for playing the match.
    *
-   * @return {number} The number of league points for playing the match
+   * @returns {number} The number of league points for playing the match
    */
   getPlayed () {
     return this.#played
@@ -156,7 +156,7 @@ class LeagueConfigPoints {
    * Set the number of league points for each set won.
    *
    * @param {number} perSet The number of league points for each set won
-   * @return {LeagueConfigPoints} Returns the LeagueConfigPoints instance for method chaining
+   * @returns {LeagueConfigPoints} Returns the LeagueConfigPoints instance for method chaining
    */
   setPerSet (perSet) {
     this.#perSet = perSet
@@ -166,7 +166,7 @@ class LeagueConfigPoints {
   /**
    * Get the number of league points for each set won.
    *
-   * @return {number} The number of league points for each set won
+   * @returns {number} The number of league points for each set won
    */
   getPerSet () {
     return this.#perSet
@@ -176,7 +176,7 @@ class LeagueConfigPoints {
    * Set the number of league points for winning.
    *
    * @param {number} win The number of league points for winning
-   * @return {LeagueConfigPoints} Returns the LeagueConfigPoints instance for method chaining
+   * @returns {LeagueConfigPoints} Returns the LeagueConfigPoints instance for method chaining
    */
   setWin (win) {
     this.#win = win
@@ -186,7 +186,7 @@ class LeagueConfigPoints {
   /**
    * Get the number of league points for winning.
    *
-   * @return {number} The number of league points for winning
+   * @returns {number} The number of league points for winning
    */
   getWin () {
     return this.#win
@@ -196,7 +196,7 @@ class LeagueConfigPoints {
    * Set the number of league points for winning by one set.
    *
    * @param {number} winByOne The number of league points for winning by one set
-   * @return {LeagueConfigPoints} Returns the LeagueConfigPoints instance for method chaining
+   * @returns {LeagueConfigPoints} Returns the LeagueConfigPoints instance for method chaining
    */
   setWinByOne (winByOne) {
     this.#winByOne = winByOne
@@ -206,7 +206,7 @@ class LeagueConfigPoints {
   /**
    * Get the number of league points for winning by one set.
    *
-   * @return {number} The number of league points for winning by one set
+   * @returns {number} The number of league points for winning by one set
    */
   getWinByOne () {
     return this.#winByOne
@@ -216,7 +216,7 @@ class LeagueConfigPoints {
    * Set the number of league points for losing.
    *
    * @param {number} lose The number of league points for losing
-   * @return {LeagueConfigPoints} Returns the LeagueConfigPoints instance for method chaining
+   * @returns {LeagueConfigPoints} Returns the LeagueConfigPoints instance for method chaining
    */
   setLose (lose) {
     this.#lose = lose
@@ -226,7 +226,7 @@ class LeagueConfigPoints {
   /**
    * Get the number of league points for losing.
    *
-   * @return {number} The number of league points for losing
+   * @returns {number} The number of league points for losing
    */
   getLose () {
     return this.#lose
@@ -236,7 +236,7 @@ class LeagueConfigPoints {
    * Set the number of league points for losing by one set.
    *
    * @param {number} loseByOne The number of league points for losing by one set
-   * @return {LeagueConfigPoints} Returns the LeagueConfigPoints instance for method chaining
+   * @returns {LeagueConfigPoints} Returns the LeagueConfigPoints instance for method chaining
    */
   setLoseByOne (loseByOne) {
     this.#loseByOne = loseByOne
@@ -246,7 +246,7 @@ class LeagueConfigPoints {
   /**
    * Get the number of league points for losing by one set.
    *
-   * @return {number} The number of league points for losing by one set
+   * @returns {number} The number of league points for losing by one set
    */
   getLoseByOne () {
     return this.#loseByOne
@@ -256,7 +256,7 @@ class LeagueConfigPoints {
    * Set the number of league penalty points for forfeiting a match.
    *
    * @param {number} forfeit The number of league penalty points for forfeiting a match
-   * @return {LeagueConfigPoints} Returns the LeagueConfigPoints instance for method chaining
+   * @returns {LeagueConfigPoints} Returns the LeagueConfigPoints instance for method chaining
    */
   setForfeit (forfeit) {
     this.#forfeit = forfeit
@@ -266,7 +266,7 @@ class LeagueConfigPoints {
   /**
    * Get the number of league penalty points for forfeiting a match.
    *
-   * @return {number} The number of league penalty points for forfeiting a match
+   * @returns {number} The number of league penalty points for forfeiting a match
    */
   getForfeit () {
     return this.#forfeit

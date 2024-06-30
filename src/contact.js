@@ -61,7 +61,7 @@ class Contact {
       throw new Error('Invalid contact ID: must contain only ASCII printable characters excluding " : { } ? =')
     }
 
-    if (team.hasContactWithID(id)) {
+    if (team.hasContact(id)) {
       throw new Error(`Contact with ID "${id}" already exists in the team`)
     }
 
@@ -125,7 +125,7 @@ class Contact {
   /**
    * Return the contact definition in a form suitable for serializing
    *
-   * @return {Object}
+   * @returns {Object}
    */
   serialize () {
     const contact = {

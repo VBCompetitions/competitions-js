@@ -1,4 +1,5 @@
 import Group from './group.js'
+import Player from './player.js'
 import MatchManager from './matchManager.js'
 import MatchOfficials from './matchOfficials.js'
 import MatchTeam from './matchTeam.js'
@@ -74,7 +75,7 @@ class GroupMatch {
    * @throws {Error} If the two teams have scores arrays of different lengths
    */
   constructor (group, id) {
-    if (group.hasMatchWithID(id)) {
+    if (group.hasMatch(id)) {
       throw new Error(`Group {${group.getStage().getID()}:${group.getID()}}: matches with duplicate IDs {${id}} not allowed`)
     }
     this.#group = group
@@ -107,22 +108,22 @@ class GroupMatch {
    * @throws {Error} If the two teams have scores arrays of different lengths
    */
   loadFromData (matchData) {
-    if (matchData.court) {
+    if (Object.hasOwn(matchData, 'court')) {
       this.setCourt(matchData.court)
     }
-    if (matchData.venue) {
+    if (Object.hasOwn(matchData, 'venue')) {
       this.setVenue(matchData.venue)
     }
-    if (matchData.date) {
+    if (Object.hasOwn(matchData, 'date')) {
       this.setDate(matchData.date)
     }
-    if (matchData.warmup) {
+    if (Object.hasOwn(matchData, 'warmup')) {
       this.setWarmup(matchData.warmup)
     }
-    if (matchData.start) {
+    if (Object.hasOwn(matchData, 'start')) {
       this.setStart(matchData.start)
     }
-    if (matchData.duration) {
+    if (Object.hasOwn(matchData, 'duration')) {
       this.setDuration(matchData.duration)
     }
     if (matchData.complete !== undefined) {
@@ -139,23 +140,28 @@ class GroupMatch {
     this.#homeTeamScores = matchData.homeTeam.scores
     this.#awayTeamScores = matchData.awayTeam.scores
 
-    if (matchData.officials) {
+    if (Object.hasOwn(matchData, 'officials')) {
       const officials = MatchOfficials.loadFromData(this, matchData.officials)
       if (officials.isTeam() && (officials.getTeamID() === this.getHomeTeam().getID() || officials.getTeamID() === this.getAwayTeam().getID())) {
         throw new Error(`Refereeing team (in match {${this.#group.getStage().getID()}:${this.#group.getID()}:${this.getID()}}) cannot be the same as one of the playing teams`)
       }
       this.setOfficials(officials)
     }
-    if (matchData.mvp) {
-      this.setMVP(matchData.mvp)
+    if (Object.hasOwn(matchData, 'mvp')) {
+      const mvpMatch = matchData.mvp.match(/^{(.*)}$/)
+      if (mvpMatch !== null) {
+        this.setMVP(this.getGroup().getStage().getCompetition().getPlayer(mvpMatch[1]))
+      } else {
+        this.setMVP(new Player(this.getGroup().getStage().getCompetition(), Player.UNREGISTERED_PLAYER_ID, matchData.mvp))
+      }
     }
-    if (matchData.manager) {
+    if (Object.hasOwn(matchData, 'manager')) {
       this.setManager(MatchManager.loadFromData(this, matchData.manager))
     }
-    if (matchData.notes) {
+    if (Object.hasOwn(matchData, 'notes')) {
       this.setNotes(matchData.notes)
     }
-    if (matchData.friendly !== undefined) {
+    if (Object.hasOwn(matchData, 'friendly')) {
       this.setFriendly(matchData.friendly)
     }
 
@@ -206,7 +212,11 @@ class GroupMatch {
       match.officials = this.#officials.serialize()
     }
     if (this.#mvp !== null) {
-      match.mvp = this.#mvp
+      if (this.#mvp.getID() === Player.UNREGISTERED_PLAYER_ID) {
+        match.mvp = this.#mvp.getName()
+      } else {
+        match.mvp = `{${this.#mvp.getID()}}`
+      }
     }
     if (this.#manager !== null) {
       match.manager = this.#manager.serialize()
@@ -301,6 +311,15 @@ class GroupMatch {
    * @returns {GroupMatch} The GroupMatch object
    */
   setDate (date) {
+    if (!/^[0-9]{4}-(0[0-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/.test(date)) {
+      throw new Error(`Invalid date "${date}": must contain a value of the form "YYYY-MM-DD"`)
+    }
+
+    const d = new Date(date)
+    if (`${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${(d.getDate()).toString().padStart(2, '0')}` !== date) {
+      throw new Error(`Invalid date "${date}": date does not exist`)
+    }
+
     this.#date = date
     return this
   }
@@ -330,6 +349,9 @@ class GroupMatch {
    * @returns {GroupMatch} The GroupMatch object
    */
   setWarmup (warmup) {
+    if (!/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/.test(warmup)) {
+      throw new Error(`Invalid warmup time "${warmup}": must contain a value of the form "HH:mm" using a 24 hour clock`)
+    }
     this.#warmup = warmup
     return this
   }
@@ -359,6 +381,9 @@ class GroupMatch {
    * @returns {GroupMatch} The GroupMatch object
    */
   setStart (start) {
+    if (!/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/.test(start)) {
+      throw new Error(`Invalid start time "${start}": must contain a value of the form "HH:mm" using a 24 hour clock`)
+    }
     this.#start = start
     return this
   }
@@ -388,6 +413,9 @@ class GroupMatch {
    * @returns {GroupMatch} The GroupMatch object
    */
   setDuration (duration) {
+    if (!/^[0-9]+:[0-5][0-9]$/.test(duration)) {
+      throw new Error(`Invalid duration "${duration}": must contain a value of the form "HH:mm"`)
+    }
     this.#duration = duration
     return this
   }
@@ -567,7 +595,7 @@ class GroupMatch {
   /**
    * Set the MVP for this match
    *
-   * @param {string|null} mvp The MVP for this match
+   * @param {Player|null} mvp The MVP for this match
    * @returns {GroupMatch} The GroupMatch object
    */
   setMVP (mvp) {

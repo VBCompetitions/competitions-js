@@ -21,7 +21,7 @@ class Knockout extends Group {
   /**
    * Get the knockout config for this group
    *
-   * @return {KnockoutConfig|null} the knockout config for this group
+   * @returns {KnockoutConfig|null} the knockout config for this group
    */
   getKnockoutConfig () {
     return this._knockoutConfig

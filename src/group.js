@@ -303,34 +303,34 @@ class Group {
    * Load group data from object
    *
    * @param {object} groupData The data defining this Group
-   * @return {Group} The loaded group instance
+   * @returns {Group} The loaded group instance
    */
   loadFromData (groupData) {
-    if (groupData.name !== undefined) {
+    if (Object.hasOwn(groupData, 'name')) {
       this.setName(groupData.name)
     }
 
-    if (groupData.notes !== undefined) {
+    if (Object.hasOwn(groupData, 'notes')) {
       this.setNotes(groupData.notes)
     }
 
-    if (groupData.description !== undefined) {
+    if (Object.hasOwn(groupData, 'description')) {
       this.setDescription(groupData.description)
     }
 
-    if (groupData.sets !== undefined) {
+    if (Object.hasOwn(groupData, 'sets')) {
       const setConfig = new SetConfig(this)
       this.setSetConfig(setConfig)
       setConfig.loadFromData(groupData.sets)
     }
 
-    if (groupData.knockout !== undefined) {
+    if (Object.hasOwn(groupData, 'knockout')) {
       const knockoutConfig = new KnockoutConfig(this)
       this.setKnockoutConfig(knockoutConfig)
       knockoutConfig.loadFromData(groupData.knockout)
     }
 
-    if (groupData.league !== undefined) {
+    if (Object.hasOwn(groupData, 'league')) {
       const leagueConfig = new LeagueConfig(this)
       this.setLeagueConfig(leagueConfig)
       leagueConfig.loadFromData(groupData.league)
@@ -350,7 +350,7 @@ class Group {
   /**
    * Return the group data in a form suitable for serializing
    *
-   * @return {object} The serialized group data
+   * @returns {object} The serialized group data
    */
   serialize () {
     const group = {
@@ -398,7 +398,7 @@ class Group {
   /**
    * Get the stage this group is in
    *
-   * @return {Stage} The stage this group is in
+   * @returns {Stage} The stage this group is in
    */
   getStage () {
     return this._stage
@@ -645,7 +645,7 @@ class Group {
   /**
    * Returns a list of matches from this Group, where the list depends on the input parameters and on the type of the MatchContainer
    *
-   * @param {string|null} teamID When provided, return the matches where this team is playing, otherwise all matches are returned
+   * @param {string|null} id When provided, return the matches where the team with this ID is playing, otherwise all matches are returned
    *                          (and subsequent parameters are ignored).  This must be a resolved team ID and not a reference.
    *                          A team ID of CompetitionTeam::UNKNOWN_TEAM_ID is interpreted as null
    * @param {number} flags Controls what gets returned
@@ -656,11 +656,11 @@ class Group {
    *                       </ul>
    * @returns {Array<MatchInterface|BreakInterface>}
    */
-  getMatches (teamID = null, flags = 0) {
-    if (teamID === null ||
+  getMatches (id = null, flags = 0) {
+    if (id === null ||
             flags & Competition.VBC_MATCH_ALL_IN_GROUP ||
-            teamID === CompetitionTeam.UNKNOWN_TEAM_ID ||
-            teamID.charAt(0) === '{') {
+            id === CompetitionTeam.UNKNOWN_TEAM_ID ||
+            id.charAt(0) === '{') {
       return this._matches
     }
 
@@ -670,12 +670,12 @@ class Group {
       if (match instanceof GroupBreak) {
         continue
       } else if (flags & Competition.VBC_MATCH_PLAYING &&
-                (this._competition.getTeamByID(match.getHomeTeam().getID()).getID() === teamID || this._competition.getTeamByID(match.getAwayTeam().getID()).getID() === teamID)) {
+                (this._competition.getTeam(match.getHomeTeam().getID()).getID() === id || this._competition.getTeam(match.getAwayTeam().getID()).getID() === id)) {
         matches.push(match)
       } else if (flags & Competition.VBC_MATCH_OFFICIATING &&
                 match.getOfficials() !== null &&
                 match.getOfficials().isTeam() &&
-                this._competition.getTeamByID(match.getOfficials().getTeamID()).getID() === teamID) {
+                this._competition.getTeam(match.getOfficials().getTeamID()).getID() === id) {
         matches.push(match)
       }
     }
@@ -708,11 +708,11 @@ class Group {
     } else if (flags & Competition.VBC_TEAMS_MAYBE) {
       return this.#getMaybeTeamIDs()
     } else if (flags & Competition.VBC_TEAMS_KNOWN) {
-      teamIDs = Object.keys(this.#teamIDs).filter(k => this._competition.getTeamByID(k).getID() !== CompetitionTeam.UNKNOWN_TEAM_ID)
-      teamIDs.sort((a, b) => this._competition.getTeamByID(a).getName().localeCompare(this._competition.getTeamByID(b).getName()))
+      teamIDs = Object.keys(this.#teamIDs).filter(k => this._competition.getTeam(k).getID() !== CompetitionTeam.UNKNOWN_TEAM_ID)
+      teamIDs.sort((a, b) => this._competition.getTeam(a).getName().localeCompare(this._competition.getTeam(b).getName()))
     } else if (flags & Competition.VBC_TEAMS_FIXED_ID) {
       teamIDs = Object.keys(this.#teamIDs).filter(k => k.charAt(0) !== '{')
-      teamIDs.sort((a, b) => this._competition.getTeamByID(a).getName().localeCompare(this._competition.getTeamByID(b).getName()))
+      teamIDs.sort((a, b) => this._competition.getTeam(a).getName().localeCompare(this._competition.getTeam(b).getName()))
     }
 
     return teamIDs
@@ -738,7 +738,7 @@ class Group {
 
       const stgGrpLookupValues = Object.values(this.#stgGrpLookup)
       for (let i = 0; i < stgGrpLookupValues.length; i++) {
-        const group = this._competition.getStageByID(stgGrpLookupValues[i].stage).getGroupByID(stgGrpLookupValues[i].group)
+        const group = this._competition.getStage(stgGrpLookupValues[i].stage).getGroup(stgGrpLookupValues[i].group)
         if (!group.isComplete()) {
           this.#maybeTeams = Array.from(new Set([...this.#maybeTeams, ...group.getTeamIDs(Competition.VBC_TEAMS_KNOWN), ...group.getTeamIDs(Competition.VBC_TEAMS_MAYBE)]))
         }
@@ -789,25 +789,25 @@ class Group {
   /**
    * Returns the match with the specified ID
    *
-   * @param {string} matchID The ID of the match
+   * @param {string} id The ID of the match
    *
    * @returns {GroupMatch} The requested match
    */
-  getMatchByID (matchID) {
-    if (Object.hasOwn(this.#matchLookup, matchID)) {
-      return this.#matchLookup[matchID]
+  getMatch (id) {
+    if (Object.hasOwn(this.#matchLookup, id)) {
+      return this.#matchLookup[id]
     }
-    throw new Error(`Match with ID ${matchID} not found`)
+    throw new Error(`Match with ID ${id} not found`)
   }
 
   /**
    * Checks if a match with the given ID exists in the group.
    *
-   * @param {string} matchID The ID of the match to check
-   * @return {boolean} True if a match with the given ID exists, false otherwise
+   * @param {string} id The ID of the match to check
+   * @returns {boolean} True if a match with the given ID exists, false otherwise
    */
-  hasMatchWithID (matchID) {
-    return Object.hasOwn(this.#matchLookup, matchID)
+  hasMatch (id) {
+    return Object.hasOwn(this.#matchLookup, id)
   }
 
   /**
@@ -822,21 +822,21 @@ class Group {
    *
    * @param {string} type The type part of the team reference ('MATCH-ID' or 'league')
    * @param {string} entity The entity (e.g., 'winner' or 'loser')
-   * @return {CompetitionTeam} The CompetitionTeam instance
+   * @returns {CompetitionTeam} The CompetitionTeam instance
    * @throws {Error} If the entity is invalid
    */
-  getTeamByID (type, entity) {
+  getTeam (type, entity) {
     if (type === 'league') {
       throw new Error('Invalid type "league" in team reference.  Cannot get league position from a non-league group')
     }
 
-    const match = this.getMatchByID(type)
+    const match = this.getMatch(type)
 
     switch (entity) {
       case 'winner':
-        return this._competition.getTeamByID(match.getWinnerTeamID())
+        return this._competition.getTeam(match.getWinnerTeamID())
       case 'loser':
-        return this._competition.getTeamByID(match.getLoserTeamID())
+        return this._competition.getTeam(match.getLoserTeamID())
       default:
         throw new Error(`Invalid entity "${entity}" in team reference`)
     }
@@ -845,7 +845,7 @@ class Group {
   /**
    * Checks if the matches in this group have been processed.
    *
-   * @return {boolean} True if the matches in this group have been processed, false otherwise
+   * @returns {boolean} True if the matches in this group have been processed, false otherwise
    */
   isProcessed () {
     return this._matchesProcessed
@@ -854,7 +854,7 @@ class Group {
   /**
    * Checks if the group is complete, i.e., all matches in the group are complete.
    *
-   * @return {boolean} True if the group is complete, false otherwise
+   * @returns {boolean} True if the group is complete, false otherwise
    */
   isComplete () {
     if (!this._isCompleteKnown) {
@@ -882,7 +882,7 @@ class Group {
   /**
    * Checks if the matches in this group have courts.
    *
-   * @return {boolean} True if the matches in this group have courts, false otherwise
+   * @returns {boolean} True if the matches in this group have courts, false otherwise
    */
   matchesHaveCourts () {
     return this.#matchesHaveCourts
@@ -891,7 +891,7 @@ class Group {
   /**
    * Checks if the matches in this group have dates.
    *
-   * @return {boolean} True if the matches in this group have dates, false otherwise
+   * @returns {boolean} True if the matches in this group have dates, false otherwise
    */
   matchesHaveDates () {
     return this.#matchesHaveDates
@@ -900,7 +900,7 @@ class Group {
   /**
    * Checks if the matches in this group have durations.
    *
-   * @return {boolean} True if the matches in this group have durations, false otherwise
+   * @returns {boolean} True if the matches in this group have durations, false otherwise
    */
   matchesHaveDurations () {
     return this.#matchesHaveDurations
@@ -909,7 +909,7 @@ class Group {
   /**
    * Checks if the matches in this group have MVPs.
    *
-   * @return {boolean} True if the matches in this group have MVPs, false otherwise
+   * @returns {boolean} True if the matches in this group have MVPs, false otherwise
    */
   matchesHaveMVPs () {
     return this.#matchesHaveMVPs
@@ -918,7 +918,7 @@ class Group {
   /**
    * Checks if the matches in this group have court managers.
    *
-   * @return {boolean} True if the matches in this group have court managers, false otherwise
+   * @returns {boolean} True if the matches in this group have court managers, false otherwise
    */
   matchesHaveManagers () {
     return this.#matchesHaveManagers
@@ -927,7 +927,7 @@ class Group {
   /**
    * Checks if the matches in this group have notes.
    *
-   * @return {boolean} True if the matches in this group have notes, false otherwise
+   * @returns {boolean} True if the matches in this group have notes, false otherwise
    */
   matchesHaveNotes () {
     return this.#matchesHaveNotes
@@ -936,7 +936,7 @@ class Group {
   /**
    * Checks if the matches in this group have officials.
    *
-   * @return {boolean} True if the matches in this group have officials, false otherwise
+   * @returns {boolean} True if the matches in this group have officials, false otherwise
    */
   matchesHaveOfficials () {
     return this.#matchesHaveOfficials
@@ -945,7 +945,7 @@ class Group {
   /**
    * Checks if the matches in this group have start times.
    *
-   * @return {boolean} True if the matches in this group have start times, false otherwise
+   * @returns {boolean} True if the matches in this group have start times, false otherwise
    */
   matchesHaveStarts () {
     return this.#matchesHaveStarts
@@ -954,7 +954,7 @@ class Group {
   /**
    * Checks if the matches in this group have venues.
    *
-   * @return {boolean} True if the matches in this group have venues, false otherwise
+   * @returns {boolean} True if the matches in this group have venues, false otherwise
    */
   matchesHaveVenues () {
     return this.#matchesHaveVenues
@@ -963,7 +963,7 @@ class Group {
   /**
    * Checks if the matches in this group have warmup times.
    *
-   * @return {boolean} True if the matches in this group have warmup times, false otherwise
+   * @returns {boolean} True if the matches in this group have warmup times, false otherwise
    */
   matchesHaveWarmups () {
     return this.#matchesHaveWarmups
@@ -972,13 +972,13 @@ class Group {
   /**
    * Returns whether all of the teams in this group are known yet or not.
    *
-   * @return {boolean} Whether all of the teams in this group are known yet or not
+   * @returns {boolean} Whether all of the teams in this group are known yet or not
    */
   allTeamsKnown () {
     let allGroupsComplete = true
     for (const teamReference of this.#teamReferences) {
       const parts = teamReference.trim().replace(/[{}]/g, '').split(':', 4)
-      if (!this._competition.getStageByID(parts[0]).getGroupByID(parts[1]).isComplete()) {
+      if (!this._competition.getStage(parts[0]).getGroup(parts[1]).isComplete()) {
         allGroupsComplete = false
       }
     }
@@ -988,64 +988,64 @@ class Group {
   /**
    * Returns whether the specified team is known to have matches in this group.
    *
-   * @param {string} teamID The ID of the team
-   * @return {boolean} Whether the specified team is known to have matches in this group
+   * @param {string} id The ID of the team
+   * @returns {boolean} Whether the specified team is known to have matches in this group
    */
-  teamHasMatches (teamID) {
-    if (!Object.hasOwn(this.#teamHasMatchesLookup, teamID)) {
-      this.#teamHasMatchesLookup[teamID] = false
+  teamHasMatches (id) {
+    if (!Object.hasOwn(this.#teamHasMatchesLookup, id)) {
+      this.#teamHasMatchesLookup[id] = false
       for (const match of this._matches) {
         if (match instanceof GroupBreak) {
           continue
         }
-        if (this._competition.getTeamByID(match.getHomeTeam().getID()).getID() === teamID) {
-          this.#teamHasMatchesLookup[teamID] = true
+        if (this._competition.getTeam(match.getHomeTeam().getID()).getID() === id) {
+          this.#teamHasMatchesLookup[id] = true
           break
         }
-        if (this._competition.getTeamByID(match.getAwayTeam().getID()).getID() === teamID) {
-          this.#teamHasMatchesLookup[teamID] = true
+        if (this._competition.getTeam(match.getAwayTeam().getID()).getID() === id) {
+          this.#teamHasMatchesLookup[id] = true
           break
         }
       }
     }
-    return this.#teamHasMatchesLookup[teamID]
+    return this.#teamHasMatchesLookup[id]
   }
 
   /**
    * Returns whether the specified team is known to have officiating duties in this group.
    *
-   * @param {string} teamID The ID of the team
-   * @return {boolean} Whether the specified team is known to have officiating duties in this group
+   * @param {string} id The ID of the team
+   * @returns {boolean} Whether the specified team is known to have officiating duties in this group
    */
-  teamHasOfficiating (teamID) {
-    if (!Object.hasOwn(this.#teamHasOfficiatingLookup, teamID)) {
-      this.#teamHasOfficiatingLookup[teamID] = false
+  teamHasOfficiating (id) {
+    if (!Object.hasOwn(this.#teamHasOfficiatingLookup, id)) {
+      this.#teamHasOfficiatingLookup[id] = false
       for (const match of this._matches) {
         if (match instanceof GroupBreak) {
           continue
         }
         if (match.getOfficials() !== null && match.getOfficials().isTeam() &&
-                    this._competition.getTeamByID(match.getOfficials().getTeamID()).getID() === teamID) {
-          this.#teamHasOfficiatingLookup[teamID] = true
+                    this._competition.getTeam(match.getOfficials().getTeamID()).getID() === id) {
+          this.#teamHasOfficiatingLookup[id] = true
           break
         }
       }
     }
-    return this.#teamHasOfficiatingLookup[teamID]
+    return this.#teamHasOfficiatingLookup[id]
   }
 
   /**
    * Returns whether the specified team may have matches or officiating duties in this group.
    *
-   * @param {string} teamID The ID of the team
-   * @return {boolean} Whether it is possible for a team with the given ID to have matches in this group
+   * @param {string} id The ID of the team
+   * @returns {boolean} Whether it is possible for a team with the given ID to have matches in this group
    */
-  teamMayHaveMatches (teamID) {
+  teamMayHaveMatches (id) {
     if (this.isComplete()) {
       return false
     }
 
-    if (this._competition.getTeamByID(teamID).getID() === CompetitionTeam.UNKNOWN_TEAM_ID) {
+    if (this._competition.getTeam(id).getID() === CompetitionTeam.UNKNOWN_TEAM_ID) {
       return false
     }
 
@@ -1053,8 +1053,8 @@ class Group {
 
     const stgGrpLookupValues = Object.values(this.#stgGrpLookup)
     for (let i = 0; i < stgGrpLookupValues.length; i++) {
-      const group = this._competition.getStageByID(stgGrpLookupValues[i].stage).getGroupByID(stgGrpLookupValues[i].group)
-      if ((!group.isComplete() && group.teamHasMatches(teamID)) || group.teamMayHaveMatches(teamID)) {
+      const group = this._competition.getStage(stgGrpLookupValues[i].stage).getGroup(stgGrpLookupValues[i].group)
+      if ((!group.isComplete() && group.teamHasMatches(id)) || group.teamMayHaveMatches(id)) {
         return true
       }
     }
@@ -1067,7 +1067,7 @@ class Group {
    *
    * @param {string} [teamID=null] The ID of the team
    * @param {number} [flags=VBC_MATCH_PLAYING] Controls what gets returned
-   * @return {Array<string>} List of match dates
+   * @returns {Array<string>} List of match dates
    */
   getMatchDates (teamID = null, flags = Competition.VBC_MATCH_PLAYING) {
     const matchDates = {}
@@ -1084,13 +1084,13 @@ class Group {
         }
 
         if (flags & Competition.VBC_MATCH_PLAYING &&
-                    (this._competition.getTeamByID(match.getHomeTeam().getID()).getID() === teamID ||
-                     this._competition.getTeamByID(match.getAwayTeam().getID()).getID() === teamID)) {
+                    (this._competition.getTeam(match.getHomeTeam().getID()).getID() === teamID ||
+                     this._competition.getTeam(match.getAwayTeam().getID()).getID() === teamID)) {
           matchDates[match.getDate()] = 1
         } else if (flags & Competition.VBC_MATCH_OFFICIATING &&
                     match.getOfficials() !== null &&
                     match.getOfficials().isTeam() &&
-                    this._competition.getTeamByID(match.getOfficials().getTeamID()).getID() === teamID) {
+                    this._competition.getTeam(match.getOfficials().getTeamID()).getID() === teamID) {
           matchDates[match.getDate()] = 1
         }
       }
@@ -1105,7 +1105,7 @@ class Group {
    * @param {string} date The requested date in the format YYYY-MM-DD
    * @param {string} [teamID=null] The ID of the team
    * @param {number} [flags=VBC_MATCH_ALL] Controls what gets returned
-   * @return {Array<MatchInterface>} List of matches on the specified date
+   * @returns {Array<MatchInterface>} List of matches on the specified date
    */
   getMatchesOnDate (date, teamID = null, flags = Competition.VBC_MATCH_ALL) {
     const matches = []
@@ -1121,13 +1121,13 @@ class Group {
           if (!(match instanceof GroupMatch)) {
             matches.push(match)
           } else if (flags & Competition.VBC_MATCH_PLAYING &&
-                              (this._competition.getTeamByID(match.getHomeTeam().getID()).getID() === teamID ||
-                               this._competition.getTeamByID(match.getAwayTeam().getID()).getID() === teamID)) {
+                              (this._competition.getTeam(match.getHomeTeam().getID()).getID() === teamID ||
+                               this._competition.getTeam(match.getAwayTeam().getID()).getID() === teamID)) {
             matches.push(match)
           } else if (flags & Competition.VBC_MATCH_OFFICIATING &&
                                match.getOfficials() !== null &&
                                match.getOfficials().isTeam() &&
-                               this._competition.getTeamByID(match.getOfficials().getTeamID()).getID() === teamID) {
+                               this._competition.getTeam(match.getOfficials().getTeamID()).getID() === teamID) {
             matches.push(match)
           }
         }

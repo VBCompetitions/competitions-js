@@ -10,38 +10,29 @@ describe('player', () => {
     const competitionJSON = await readFile(new URL(path.join('players', 'players.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
 
-    const team = competition.getTeamByID('TM1')
+    const team = competition.getTeam('TM1')
     assert(team instanceof CompetitionTeam)
     assert(!team.hasPlayers())
-  })
-
-  it('testPlayerDuplicateID', async () => {
-    const competitionJSON = await readFile(new URL(path.join('players', 'players-duplicate-ids.json'), import.meta.url), { encoding: 'utf8' })
-    await assert.rejects(async () => {
-      await Competition.loadFromCompetitionJSON(competitionJSON)
-    }, {
-      message: 'Player with ID "P1" already exists in the team'
-    })
   })
 
   it('testPlayerGetByID', async () => {
     const competitionJSON = await readFile(new URL(path.join('players', 'players.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    let team = competition.getTeamByID('TM3')
+    let team = competition.getTeam('TM3')
 
-    assert.equal(team.getPlayerByID('P1').getName(), 'Alice Alison')
-    assert.equal(team.getPlayerByID('P1').getNotes(), 'junior')
-    assert.equal(team.getPlayerByID('P2').getName(), 'Bobby Bobs')
-    assert.equal(team.getPlayerByID('P3').getName(), 'Charlie Charleston')
-    assert.equal(team.getPlayerByID('P3').getNumber(), 7)
-    assert.equal(team.getPlayerByID('P4').getName(), 'Dave Davidson')
-    assert.equal(team.getPlayerByID('P5').getName(), 'Emma Emerson')
-    assert.equal(team.getPlayerByID('P6').getName(), 'Frankie Frank')
-    assert.equal(team.getPlayerByID('P6').getTeam().getID(), team.getID())
-
-    team = competition.getTeamByID('TM2')
-    assert.equal(team.getPlayerByID('P1').getNumber(), null)
-    assert.equal(team.getPlayerByID('P1').getNotes(), null)
+    assert.equal(competition.getPlayer('P1').getCompetition(), competition)
+    assert.equal(competition.getPlayer('P1').getName(), 'Alice Alison')
+    assert.equal(competition.getPlayer('P1').getNotes(), 'junior')
+    assert.equal(competition.getPlayer('P2').getName(), 'Bobby Bobs')
+    assert.equal(competition.getPlayer('P3').getName(), 'Charlie Charleston')
+    assert.equal(competition.getPlayer('P3').getNumber(), 7)
+    assert.equal(competition.getPlayer('P4').getName(), 'Dave Davidson')
+    assert.equal(competition.getPlayer('P5').getName(), 'Emma Emerson')
+    assert.equal(competition.getPlayer('P6').getName(), 'Frankie Frank')
+    assert.equal(competition.getPlayer('P6').getCurrentTeam().getID(), team.getID())
+    assert.equal(competition.getPlayer('P7').getNumber(), null)
+    assert.equal(competition.getPlayer('P7').getNotes(), null)
+    assert.equal(competition.getPlayer('P8').getCurrentTeam().getID(), CompetitionTeam.UNKNOWN_TEAM_ID)
   })
 
   it('testPlayerGetByIDOutOfBounds', async () => {
@@ -49,34 +40,43 @@ describe('player', () => {
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
 
     assert.throws(() => {
-      competition.getTeamByID('TM1').getPlayerByID('NO-SUCH-TEAM')
+      competition.getPlayer('NO-SUCH-PLAYER')
     }, {
-      message: 'Player with ID "NO-SUCH-TEAM" not found'
+      message: 'Player with ID "NO-SUCH-PLAYER" not found'
     })
   })
 
-  it('testPlayerSetters', async () => {
+  it('testPlayerSettersGetters', async () => {
     const competitionJSON = await readFile(new URL(path.join('players', 'players.json'), import.meta.url), { encoding: 'utf8' })
     let competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    let team = competition.getTeamByID('TM3')
 
-    const player1 = team.getPlayerByID('P1')
+    const player1 = competition.getPlayer('P1')
 
     assert.equal(player1.getName(), 'Alice Alison')
     assert.equal(player1.getNumber(), 1)
     assert.equal(player1.getNotes(), 'junior')
+    assert(!player1.hasTeamEntry('TM1'))
+    assert(player1.hasTeamEntry('TM2'))
+    assert(player1.hasTeamEntry('TM3'))
+
+    assert.equal(competition.getPlayer('P8').getLatestTeamEntry(), null)
 
     player1.setName('Alison Alison')
-    player1.setNumber(10)
-    player1.setNotes('no longer junior')
-
     assert.equal(player1.getName(), 'Alison Alison')
+
+    player1.setNumber(10)
     assert.equal(player1.getNumber(), 10)
+
+    player1.setNotes('no longer junior')
     assert.equal(player1.getNotes(), 'no longer junior')
 
+    player1.spliceTeamEntries(0, 1)
+    assert(!player1.hasTeamEntry('TM1'))
+    assert(!player1.hasTeamEntry('TM2'))
+    assert(player1.hasTeamEntry('TM3'))
+
     competition = new Competition('test')
-    team = new CompetitionTeam(competition, 'T1', 'Team 1')
-    const player = new Player(team, 'P1', 'Alice Alison')
+    const player = new Player(competition, 'P1', 'Alice Alison')
 
     assert.throws(() => {
       player.setName('')
@@ -103,63 +103,62 @@ describe('player', () => {
 
   it('testPlayerConstructor', async () => {
     const competition = new Competition('test')
-    const team = new CompetitionTeam(competition, 'T1', 'Team 1')
 
     assert.throws(() => {
-      new Player(team, '', 'Alice Alison')
+      new Player(competition, '', 'Alice Alison')
     }, {
       message: 'Invalid player ID: must be between 1 and 100 characters long'
     })
 
     assert.throws(() => {
-      new Player(team, '01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567891', 'Alice Alison')
+      new Player(competition, '01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567891', 'Alice Alison')
     }, {
       message: 'Invalid player ID: must be between 1 and 100 characters long'
     })
 
     assert.throws(() => {
-      new Player(team, '"id1"', 'Alice Alison')
+      new Player(competition, '"id1"', 'Alice Alison')
     }, {
       message: 'Invalid player ID: must contain only ASCII printable characters excluding " : { } ? ='
     })
 
     assert.throws(() => {
-      new Player(team, 'id:1', 'Alice Alison')
+      new Player(competition, 'id:1', 'Alice Alison')
     }, {
       message: 'Invalid player ID: must contain only ASCII printable characters excluding " : { } ? ='
     })
 
     assert.throws(() => {
-      new Player(team, 'id{1', 'Alice Alison')
+      new Player(competition, 'id{1', 'Alice Alison')
     }, {
       message: 'Invalid player ID: must contain only ASCII printable characters excluding " : { } ? ='
     })
 
     assert.throws(() => {
-      new Player(team, 'id1}', 'Alice Alison')
+      new Player(competition, 'id1}', 'Alice Alison')
     }, {
       message: 'Invalid player ID: must contain only ASCII printable characters excluding " : { } ? ='
     })
 
     assert.throws(() => {
-      new Player(team, 'id1?', 'Alice Alison')
+      new Player(competition, 'id1?', 'Alice Alison')
     }, {
       message: 'Invalid player ID: must contain only ASCII printable characters excluding " : { } ? ='
     })
 
     assert.throws(() => {
-      new Player(team, 'id=1', 'Alice Alison')
+      new Player(competition, 'id=1', 'Alice Alison')
     }, {
       message: 'Invalid player ID: must contain only ASCII printable characters excluding " : { } ? ='
     })
 
-    const player1 = new Player(team, 'P1', 'Alice Alison')
-    team.addPlayer(player1)
+    const player1 = new Player(competition, 'P1', 'Alice Alison')
+    competition.addPlayer(player1)
 
     assert.throws(() => {
-      new Player(team, 'P1', 'Bobby Bobs')
+      new Player(competition, 'P1', 'Bobby Bobs')
     }, {
-      message: 'Player with ID "P1" already exists in the team'
+      message: 'Player with ID "P1" already exists in the competition'
     })
   })
 })

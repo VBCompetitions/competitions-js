@@ -83,24 +83,24 @@ class Stage {
 
   /**
    * @param {Competition} competition A link back to the Competition this Stage is in
-   * @param {string} stageID The unique ID of this Stage
+   * @param {string} id The unique ID of this Stage
    * @throws {Error} If the stage ID is invalid or already exists in the competition
    */
-  constructor (competition, stageID) {
-    if (stageID.length > 100 || stageID.length < 1) {
+  constructor (competition, id) {
+    if (id.length > 100 || id.length < 1) {
       throw new Error('Invalid stage ID: must be between 1 and 100 characters long')
     }
 
-    if (!/^((?![":{}?=])[\x20-\x7F])+$/.test(stageID)) {
+    if (!/^((?![":{}?=])[\x20-\x7F])+$/.test(id)) {
       throw new Error('Invalid stage ID: must contain only ASCII printable characters excluding " : { } ? =')
     }
 
-    if (competition.hasStageWithID(stageID)) {
-      throw new Error(`Stage with ID "${stageID}" already exists in the competition`)
+    if (competition.hasStage(id)) {
+      throw new Error(`Stage with ID "${id}" already exists in the competition`)
     }
 
     this.#competition = competition
-    this.#id = stageID
+    this.#id = id
     this.#name = null
     this.#notes = null
     this.#description = null
@@ -147,7 +147,7 @@ class Stage {
       group.loadFromData(groupData)
     })
 
-    if (stageData.ifUnknown !== undefined) {
+    if (Object.hasOwn(stageData, 'ifUnknown')) {
       this.setIfUnknown(new IfUnknown(this, stageData.ifUnknown.description)).loadFromData(stageData.ifUnknown)
     }
 
@@ -159,7 +159,7 @@ class Stage {
   /**
    * Return the stage data in a form suitable for serializing
    *
-   * @return {object}
+   * @returns {object}
    */
   serialize () {
     const stage = {
@@ -219,7 +219,7 @@ class Stage {
     if (group.getStage() !== this) {
       throw new Error('Group was initialised with a different Stage')
     }
-    if (this.hasGroupWithID(group.getID())) {
+    if (this.hasGroup(group.getID())) {
       throw new Error(`Groups in a Stage with duplicate IDs not allowed: {${this.#id}:${group.getID()}}`)
     }
     this.#groups.push(group)
@@ -332,7 +332,7 @@ class Stage {
   /**
    * Returns a list of matches from this Stage, where the list depends on the input parameters and on the type of the MatchContainer.
    *
-   * @param {string} teamID When provided, return the matches where this team is playing, otherwise all matches are returned
+   * @param {string} id When provided, return the matches where this team is playing, otherwise all matches are returned
    *                        (and flags is ignored).  This must be a resolved team ID and not a reference.
    *                        A team ID of CompetitionTeam.UNKNOWN_TEAM_ID is interpreted as null
    * @param {number} flags Controls what gets returned
@@ -341,19 +341,19 @@ class Stage {
    *                     <li><code>Competition.VBC_MATCH_PLAYING</code> - Include matches that a team plays in</li>
    *                     <li><code>Competition.VBC_MATCH_OFFICIATING</code> - Include matches that a team officiates in</li>
    *                   </ul>
-   * @return {array<MatchInterface>}
+   * @returns {array<MatchInterface>}
    */
-  getMatches (teamID = null, flags = 0) {
+  getMatches (id = null, flags = 0) {
     /*
       TODO when should we include breaks?
       TODO how do we handle duplicate breaks?
     */
 
-    if (teamID === null || teamID === CompetitionTeam.UNKNOWN_TEAM_ID || teamID.startsWith('{')) {
+    if (id === null || id === CompetitionTeam.UNKNOWN_TEAM_ID || id.startsWith('{')) {
       return this.#getAllMatchesInStage()
     }
 
-    return this.#getMatchesForTeam(teamID, flags)
+    return this.#getMatchesForTeam(id, flags)
   }
 
   /**
@@ -408,31 +408,31 @@ class Stage {
   /**
    * Return the group in this stage with the given ID.
    *
-   * @param {string} groupID The ID of the group to get
+   * @param {string} id The ID of the group to get
    * @throws {Error} If the group with the given ID is not found
    * @returns {Group} The Group object if found, null otherwise
    */
-  getGroupByID (groupID) {
-    if (!Object.hasOwn(this.#groupLookup, groupID)) {
-      throw new Error(`Group with ID ${groupID} not found in stage with ID ${this.#id}`)
+  getGroup (id) {
+    if (!Object.hasOwn(this.#groupLookup, id)) {
+      throw new Error(`Group with ID ${id} not found in stage with ID ${this.#id}`)
     }
-    return this.#groupLookup[groupID]
+    return this.#groupLookup[id]
   }
 
   /**
    * Check if a group with a given ID exists in this stage.
    *
-   * @param {string} groupID The ID to check
+   * @param {string} id The ID to check
    * @returns {boolean} True if the group exists, false otherwise
    */
-  hasGroupWithID (groupID) {
-    return Object.hasOwn(this.#groupLookup, groupID)
+  hasGroup (id) {
+    return Object.hasOwn(this.#groupLookup, id)
   }
 
   /**
    * Check if all matches in the stage are complete.
    *
-   * @return {bool} True if all matches in the stage are complete, false otherwise
+   * @returns {bool} True if all matches in the stage are complete, false otherwise
    */
   isComplete () {
     for (let i = 0; i < this.#groups.length; i++) {
@@ -447,18 +447,18 @@ class Stage {
   /**
    * Get matches for a specific team in this stage.
    *
-   * @param {string} teamID The ID of the team
+   * @param {string} id The ID of the team
    * @param {number} flags Flags to filter the matches
-   * @return {array} An array of matches for the specified team
+   * @returns {array} An array of matches for the specified team
    */
-  #getMatchesForTeam (teamID, flags) {
+  #getMatchesForTeam (id, flags) {
     let matches = []
 
     this.#groups.forEach(group => {
-      if (group.teamHasMatches(teamID)) {
-        matches = matches.concat(group.getMatches(teamID, flags))
-      } else if (flags & Competition.VBC_MATCH_OFFICIATING && group.teamHasOfficiating(teamID)) {
-        matches = matches.concat(group.getMatches(teamID, Competition.VBC_MATCH_OFFICIATING))
+      if (group.teamHasMatches(id)) {
+        matches = matches.concat(group.getMatches(id, flags))
+      } else if (flags & Competition.VBC_MATCH_OFFICIATING && group.teamHasOfficiating(id)) {
+        matches = matches.concat(group.getMatches(id, Competition.VBC_MATCH_OFFICIATING))
       }
     })
 
@@ -478,7 +478,7 @@ class Stage {
   /**
    * Check if matches in any group within this stage have courts assigned.
    *
-   * @return {bool} True if matches have courts assigned, false otherwise
+   * @returns {bool} True if matches have courts assigned, false otherwise
    */
   matchesHaveCourts () {
     for (let i = 0; i < this.#groups.length; i++) {
@@ -492,7 +492,7 @@ class Stage {
   /**
    * Check if matches in any group within this stage have dates assigned.
    *
-   * @return {bool} True if matches have dates assigned, false otherwise
+   * @returns {bool} True if matches have dates assigned, false otherwise
    */
   matchesHaveDates () {
     for (let i = 0; i < this.#groups.length; i++) {
@@ -506,7 +506,7 @@ class Stage {
   /**
    * Check if matches in any group within this stage have durations assigned.
    *
-   * @return {bool} True if matches have durations assigned, false otherwise
+   * @returns {bool} True if matches have durations assigned, false otherwise
    */
   matchesHaveDurations () {
     for (let i = 0; i < this.#groups.length; i++) {
@@ -520,7 +520,7 @@ class Stage {
   /**
    * Check if matches in any group within this stage have MVPs assigned.
    *
-   * @return {bool} True if matches have MVPs assigned, false otherwise
+   * @returns {bool} True if matches have MVPs assigned, false otherwise
    */
   matchesHaveMVPs () {
     for (let i = 0; i < this.#groups.length; i++) {
@@ -534,7 +534,7 @@ class Stage {
   /**
    * Check if matches in any group within this stage have managers assigned.
    *
-   * @return {bool} True if matches have managers assigned, false otherwise
+   * @returns {bool} True if matches have managers assigned, false otherwise
    */
   matchesHaveManagers () {
     for (let i = 0; i < this.#groups.length; i++) {
@@ -548,7 +548,7 @@ class Stage {
   /**
    * Check if matches in any group within this stage have notes assigned.
    *
-   * @return {bool} True if matches have notes assigned, false otherwise
+   * @returns {bool} True if matches have notes assigned, false otherwise
    */
   matchesHaveNotes () {
     for (let i = 0; i < this.#groups.length; i++) {
@@ -562,7 +562,7 @@ class Stage {
   /**
    * Check if matches in any group within this stage have officials assigned.
    *
-   * @return {bool} True if matches have officials assigned, false otherwise
+   * @returns {bool} True if matches have officials assigned, false otherwise
    */
   matchesHaveOfficials () {
     for (let i = 0; i < this.#groups.length; i++) {
@@ -576,7 +576,7 @@ class Stage {
   /**
    * Check if matches in any group within this stage have start times assigned.
    *
-   * @return {bool} True if matches have start times assigned, false otherwise
+   * @returns {bool} True if matches have start times assigned, false otherwise
    */
   matchesHaveStarts () {
     for (let i = 0; i < this.#groups.length; i++) {
@@ -590,7 +590,7 @@ class Stage {
   /**
    * Check if matches in any group within this stage have venues assigned.
    *
-   * @return {bool} True if matches have venues assigned, false otherwise
+   * @returns {bool} True if matches have venues assigned, false otherwise
    */
   matchesHaveVenues () {
     for (let i = 0; i < this.#groups.length; i++) {
@@ -604,7 +604,7 @@ class Stage {
   /**
    * Check if matches in any group within this stage have warmup information assigned.
    *
-   * @return {bool} True if matches have warmup information assigned, false otherwise
+   * @returns {bool} True if matches have warmup information assigned, false otherwise
    */
   matchesHaveWarmups () {
     for (let i = 0; i < this.#groups.length; i++) {
@@ -618,12 +618,12 @@ class Stage {
   /**
    * Check if a team has matches scheduled in any group within this stage.
    *
-   * @param {string} teamID The ID of the team
-   * @return {bool} True if the team has matches scheduled, false otherwise
+   * @param {string} id The ID of the team
+   * @returns {bool} True if the team has matches scheduled, false otherwise
    */
-  teamHasMatches (teamID) {
+  teamHasMatches (id) {
     for (let i = 0; i < this.#groups.length; i++) {
-      if (this.#groups[i].teamHasMatches(teamID)) {
+      if (this.#groups[i].teamHasMatches(id)) {
         return true
       }
     }
@@ -633,12 +633,12 @@ class Stage {
   /**
    * Check if a team has officiating duties assigned in any group within this stage.
    *
-   * @param {string} teamID The ID of the team
-   * @return {bool} True if the team has officiating duties assigned, false otherwise
+   * @param {string} id The ID of the team
+   * @returns {bool} True if the team has officiating duties assigned, false otherwise
    */
-  teamHasOfficiating (teamID) {
+  teamHasOfficiating (id) {
     for (let i = 0; i < this.#groups.length; i++) {
-      if (this.#groups[i].teamHasOfficiating(teamID)) {
+      if (this.#groups[i].teamHasOfficiating(id)) {
         return true
       }
     }
@@ -651,10 +651,10 @@ class Stage {
    * references that might point to this team (e.g. a reference to a team in a league position in an incomplete league) then call this function.  This
    * is essentially so we know whether we still need to consider displaying a stage to the competitors as they <i>might</i> still be able to reach that stage.
    *
-   * @param {string} teamID The ID of the team to check
-   * @return {bool} True if the team may have matches scheduled, false otherwise
+   * @param {string} id The ID of the team to check
+   * @returns {bool} True if the team may have matches scheduled, false otherwise
    */
-  teamMayHaveMatches (teamID) {
+  teamMayHaveMatches (id) {
     /* TODO Do we need to rewrite this?
 
     assert - we only call this after calling "teamHasMatches()".  In other words, this has ?undefined return? if you definitely have matches?
@@ -675,7 +675,7 @@ class Stage {
       this.#teamStgGrpLookup = {}
       this.#groups.forEach(group => {
         group.getMatches().forEach(match => {
-          if (match instanceof GroupMatch && this.#competition.getTeamByID(teamID).getID() !== CompetitionTeam.UNKNOWN_TEAM_ID) {
+          if (match instanceof GroupMatch && this.#competition.getTeam(id).getID() !== CompetitionTeam.UNKNOWN_TEAM_ID) {
             const homeTeamParts = match.getHomeTeam().getID().substr(1).split(':', 3)
             if (homeTeamParts.length > 2) {
               const key = `${homeTeamParts[0]}:${homeTeamParts[1]}`
@@ -718,8 +718,8 @@ class Stage {
     // Look up each reference to see if it leads back to this team
     const teamStgGrpLookupValues = Object.values(this.#teamStgGrpLookup)
     for (let i = 0; i < teamStgGrpLookupValues.length; i++) {
-      const group = this.#competition.getStageByID(teamStgGrpLookupValues[i].stage).getGroupByID(teamStgGrpLookupValues[i].group)
-      if ((!group.isComplete() && group.teamHasMatches(teamID)) || group.teamMayHaveMatches(teamID)) {
+      const group = this.#competition.getStage(teamStgGrpLookupValues[i].stage).getGroup(teamStgGrpLookupValues[i].group)
+      if ((!group.isComplete() && group.teamHasMatches(id)) || group.teamMayHaveMatches(id)) {
         return true
       }
     }
@@ -729,19 +729,19 @@ class Stage {
   /**
    * Returns a list of match dates in this Stage.  If a team ID is given then return dates for just that team.
    *
-   * @param {string} teamID This must be a resolved team ID and not a reference
+   * @param {string} id This must be a resolved team ID and not a reference
    * @param {number} flags Controls what gets returned
    *                   <ul>
    *                     <li><code>Competition.VBC_MATCH_ALL</code> - Include all matches</li>
    *                     <li><code>Competition.VBC_MATCH_PLAYING</code> - Include matches that a team plays in</li>
    *                     <li><code>Competition.VBC_MATCH_OFFICIATING</code> - Include matches that a team officiates in</li>
    *                   </ul>
-   * @return array<string>
+   * @returns array<string>
    */
-  getMatchDates (teamID = null, flags = Competition.VBC_MATCH_PLAYING) {
+  getMatchDates (id = null, flags = Competition.VBC_MATCH_PLAYING) {
     let matchDates = []
     this.#groups.forEach(group => {
-      const groupMatchDates = group.getMatchDates(teamID, flags)
+      const groupMatchDates = group.getMatchDates(id, flags)
       matchDates = matchDates.concat(groupMatchDates)
     })
     matchDates.sort()
@@ -753,19 +753,19 @@ class Stage {
    * The returned list includes breaks when that break has a date value
    *
    * @param {string} date The requested date in the format YYYY-MM-DD
-   * @param {string} teamID This must be a resolved team ID and not a reference
+   * @param {string} id This must be a resolved team ID and not a reference
    * @param {number} flags Controls what gets returned
    *                   <ul>
    *                     <li><code>Competition.VBC_MATCH_ALL</code> - Include all matches</li>
    *                     <li><code>Competition.VBC_MATCH_PLAYING</code> - Include matches that a team plays in</li>
    *                     <li><code>Competition.VBC_MATCH_OFFICIATING</code> - Include matches that a team officiates in</li>
    *                   </ul>
-   * @return array<MatchInterface>
+   * @returns array<MatchInterface>
    */
-  getMatchesOnDate (date, teamID = null, flags = Competition.VBC_MATCH_ALL) {
+  getMatchesOnDate (date, id = null, flags = Competition.VBC_MATCH_ALL) {
     let matches = []
     this.#groups.forEach(group => {
-      const groupMatches = group.getMatchesOnDate(date, teamID, flags)
+      const groupMatches = group.getMatchesOnDate(date, id, flags)
       matches = matches.concat(groupMatches)
     })
     matches.sort((a, b) => {

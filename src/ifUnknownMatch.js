@@ -2,6 +2,7 @@ import CompetitionTeam from './competitionTeam.js'
 import MatchManager from './matchManager.js'
 import MatchOfficials from './matchOfficials.js'
 import MatchTeam from './matchTeam.js'
+import Player from './player.js'
 
 /**
  * A match between two teams
@@ -120,7 +121,7 @@ class IfUnknownMatch {
    * @throws {Error} If the two teams have scores arrays of different lengths
    */
   constructor (ifUnknown, id) {
-    if (ifUnknown.hasMatchWithID(id)) {
+    if (ifUnknown.hasMatch(id)) {
       throw new Error(`stage ID {${ifUnknown.getStage().getID()}}, ifUnknown: matches with duplicate IDs {${id}} not allowed`)
     }
 
@@ -176,7 +177,12 @@ class IfUnknownMatch {
       this.setOfficials(MatchOfficials.loadFromData(this, matchData.officials))
     }
     if (Object.hasOwn(matchData, 'mvp')) {
-      this.setMVP(matchData.mvp)
+      const mvpMatch = matchData.mvp.match(/^{(.*)}$/)
+      if (mvpMatch !== null) {
+        this.setMVP(this.getGroup().getStage().getCompetition().getPlayer(mvpMatch[1]))
+      } else {
+        this.setMVP(new Player(this.getGroup().getStage().getCompetition(), Player.UNREGISTERED_PLAYER_ID, matchData.mvp))
+      }
     }
     if (Object.hasOwn(matchData, 'manager')) {
       this.setManager(MatchManager.loadFromData(this, matchData.manager))
@@ -227,7 +233,11 @@ class IfUnknownMatch {
       match.officials = this.#officials.serialize()
     }
     if (this.#mvp !== null) {
-      match.mvp = this.#mvp
+      if (this.#mvp.getID() === Player.UNREGISTERED_PLAYER_ID) {
+        match.mvp = this.#mvp.getName()
+      } else {
+        match.mvp = `{${this.#mvp.getID()}}`
+      }
     }
     if (this.#manager !== null) {
       match.manager = this.#manager.serialize()
@@ -455,9 +465,6 @@ class IfUnknownMatch {
    * @throws {Error} If the MVP string is invalid
    */
   setMVP (mvp) {
-    if (mvp.length > 203 || mvp.length < 1) {
-      throw new Error('Invalid MVP: must be between 1 and 203 characters long')
-    }
     this.#mvp = mvp
     return this
   }
@@ -535,7 +542,7 @@ class IfUnknownMatch {
   /**
    * Get the ID of the winning team
    *
-   * @return {string} The ID of the winning team
+   * @returns {string} The ID of the winning team
    */
   getWinnerTeamID () {
     return CompetitionTeam.UNKNOWN_TEAM_ID
@@ -544,7 +551,7 @@ class IfUnknownMatch {
   /**
    * Get the ID of the losing team
    *
-   * @return {string} The ID of the losing team
+   * @returns {string} The ID of the losing team
    */
   getLoserTeamID () {
     return CompetitionTeam.UNKNOWN_TEAM_ID
@@ -553,7 +560,7 @@ class IfUnknownMatch {
   /**
    * Get the scores of the home team
    *
-   * @return {array} The scores of the home team
+   * @returns {array} The scores of the home team
    */
   getHomeTeamScores () {
     return []
@@ -562,7 +569,7 @@ class IfUnknownMatch {
   /**
    * Get the scores of the away team
    *
-   * @return {array} The scores of the away team
+   * @returns {array} The scores of the away team
    */
   getAwayTeamScores () {
     return []
@@ -571,7 +578,7 @@ class IfUnknownMatch {
   /**
    * Get the number of sets won by the home team
    *
-   * @return {number} The number of sets won by the home team
+   * @returns {number} The number of sets won by the home team
    */
   getHomeTeamSets () {
     return 0
@@ -580,7 +587,7 @@ class IfUnknownMatch {
   /**
    * Get the number of sets won by the away team
    *
-   * @return {number} The number of sets won by the away team
+   * @returns {number} The number of sets won by the away team
    */
   getAwayTeamSets () {
     return 0
@@ -625,7 +632,7 @@ class IfUnknownMatch {
   /**
    * An IfUnknown match has no scores so this function has no effect
    *
-   * @return IfUnknownMatch The updated IfUnknownMatch instance
+   * @returns IfUnknownMatch The updated IfUnknownMatch instance
    */
   setScores () {
     return this

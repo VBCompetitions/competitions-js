@@ -116,7 +116,7 @@ class MatchOfficials {
    *
    * @param {MatchInterface} match The match these Officials are in
    * @param {object} officialsData The data defining this match's Officials
-   * @return {MatchOfficials} The match officials instance
+   * @returns {MatchOfficials} The match officials instance
    */
   static loadFromData (match, officialsData) {
     let officials
@@ -124,28 +124,28 @@ class MatchOfficials {
       officials = new MatchOfficials(match, officialsData.team, null, match instanceof IfUnknownMatch)
     } else {
       officials = new MatchOfficials(match, null, officialsData.first, match instanceof IfUnknownMatch)
-      if (officialsData.second !== undefined) {
+      if (Object.hasOwn(officialsData, 'second')) {
         officials.setSecondRef(officialsData.second)
       }
-      if (officialsData.challenge !== undefined) {
+      if (Object.hasOwn(officialsData, 'challenge')) {
         officials.setChallengeRef(officialsData.challenge)
       }
-      if (officialsData.assistantChallenge !== undefined) {
+      if (Object.hasOwn(officialsData, 'assistantChallenge')) {
         officials.setAssistantChallengeRef(officialsData.assistantChallenge)
       }
-      if (officialsData.reserve !== undefined) {
+      if (Object.hasOwn(officialsData, 'reserve')) {
         officials.setReserveRef(officialsData.reserve)
       }
-      if (officialsData.scorer !== undefined) {
+      if (Object.hasOwn(officialsData, 'scorer')) {
         officials.setScorer(officialsData.scorer)
       }
-      if (officialsData.assistantScorer !== undefined) {
+      if (Object.hasOwn(officialsData, 'assistantScorer')) {
         officials.setAssistantScorer(officialsData.assistantScorer)
       }
-      if (officialsData.linespersons !== undefined) {
+      if (Object.hasOwn(officialsData, 'linespersons')) {
         officials.setLinespersons(officialsData.linespersons)
       }
-      if (officialsData.ballCrew !== undefined) {
+      if (Object.hasOwn(officialsData, 'ballCrew')) {
         officials.setBallCrew(officialsData.ballCrew)
       }
     }
@@ -156,7 +156,7 @@ class MatchOfficials {
   /**
    * Return the match officials definition in a form suitable for serializing
    *
-   * @return {Object|string} The serialized match officials data
+   * @returns {Object|string} The serialized match officials data
    */
   serialize () {
     const officials = {}
@@ -197,7 +197,7 @@ class MatchOfficials {
   /**
    * Get the match this manager is managing.
    *
-   * @return {MatchInterface} The match being managed
+   * @returns {MatchInterface} The match being managed
    */
   getMatch () {
     return this.#match
@@ -206,7 +206,7 @@ class MatchOfficials {
   /**
    * Get whether the match official is a team or not.
    *
-   * @return {boolean} Whether the official is a team or not
+   * @returns {boolean} Whether the official is a team or not
    */
   isTeam () {
     return this.#officialsTeam !== null
@@ -215,7 +215,7 @@ class MatchOfficials {
   /**
    * Get the ID of the team officiating the match.
    *
-   * @return {string|null} The team ID
+   * @returns {string|null} The team ID
    */
   getTeamID () {
     return this.#officialsTeam
@@ -224,13 +224,13 @@ class MatchOfficials {
   /**
    * Set the officiating team.
    *
-   * @param {string|null} officialsTeam The ID of the officiating team
+   * @param {string|null} id The ID of the officiating team
    */
-  setTeamID (officialsTeam, isUnknown = false) {
+  setTeamID (id, isUnknown = false) {
     if (!isUnknown) {
-      this.#match.getGroup().getCompetition().validateTeamID(officialsTeam, this.#match.getID(), 'officials')
+      this.#match.getGroup().getCompetition().validateTeamID(id, this.#match.getID(), 'officials')
     }
-    this.#officialsTeam = officialsTeam
+    this.#officialsTeam = id
     this.#first = null
     this.#second = null
     this.#challenge = null
@@ -245,7 +245,7 @@ class MatchOfficials {
   /**
    * Get the first referee
    *
-   * @return {string|null} the name of the first referee
+   * @returns {string|null} the name of the first referee
    */
   getFirstRef () {
     return this.#first
@@ -264,7 +264,7 @@ class MatchOfficials {
   /**
    * Get whether the match has a second referee.
    *
-   * @return {boolean} Whether the match has a second referee
+   * @returns {boolean} Whether the match has a second referee
    */
   hasSecondRef () {
     return this.#second !== null
@@ -273,7 +273,7 @@ class MatchOfficials {
   /**
    * Get the second referee.
    *
-   * @return {string|null} The name of the second referee
+   * @returns {string|null} The name of the second referee
    */
   getSecondRef () {
     return this.#second
@@ -292,7 +292,7 @@ class MatchOfficials {
   /**
    * Get whether the match has a challenge referee.
    *
-   * @return {boolean} Whether the match has a challenge referee
+   * @returns {boolean} Whether the match has a challenge referee
    */
   hasChallengeRef () {
     return this.#challenge !== null
@@ -301,7 +301,7 @@ class MatchOfficials {
   /**
    * Get the challenge referee's name.
    *
-   * @return {string|null} The name of the challenge referee
+   * @returns {string|null} The name of the challenge referee
    */
   getChallengeRef () {
     return this.#challenge
@@ -320,7 +320,7 @@ class MatchOfficials {
   /**
    * Check if the match has an assistant challenge referee.
    *
-   * @return {boolean} Whether the match has an assistant challenge referee
+   * @returns {boolean} Whether the match has an assistant challenge referee
    */
   hasAssistantChallengeRef () {
     return this.#assistantChallenge !== null
@@ -329,7 +329,7 @@ class MatchOfficials {
   /**
    * Get the name of the assistant challenge referee.
    *
-   * @return {string|null} The name of the assistant challenge referee
+   * @returns {string|null} The name of the assistant challenge referee
    */
   getAssistantChallengeRef () {
     return this.#assistantChallenge
@@ -348,7 +348,7 @@ class MatchOfficials {
   /**
    * Check if the match has a reserve referee.
    *
-   * @return {boolean} Whether the match has a reserve referee
+   * @returns {boolean} Whether the match has a reserve referee
    */
   hasReserveRef () {
     return this.#reserve !== null
@@ -357,7 +357,7 @@ class MatchOfficials {
   /**
    * Get the name of the reserve referee.
    *
-   * @return {string|null} The name of the reserve referee
+   * @returns {string|null} The name of the reserve referee
    */
   getReserveRef () {
     return this.#reserve
@@ -376,7 +376,7 @@ class MatchOfficials {
   /**
    * Check if the match has a scorer.
    *
-   * @return {boolean} Whether the match has a scorer
+   * @returns {boolean} Whether the match has a scorer
    */
   hasScorer () {
     return this.#scorer !== null
@@ -385,7 +385,7 @@ class MatchOfficials {
   /**
    * Get the name of the scorer.
    *
-   * @return {string|null} The name of the scorer
+   * @returns {string|null} The name of the scorer
    */
   getScorer () {
     return this.#scorer
@@ -404,7 +404,7 @@ class MatchOfficials {
   /**
    * Check if the match has an assistant scorer.
    *
-   * @return {boolean} Whether the match has an assistant scorer
+   * @returns {boolean} Whether the match has an assistant scorer
    */
   hasAssistantScorer () {
     return this.#assistantScorer !== null
@@ -413,7 +413,7 @@ class MatchOfficials {
   /**
    * Get the name of the assistant scorer.
    *
-   * @return {string|null} The name of the assistant scorer
+   * @returns {string|null} The name of the assistant scorer
    */
   getAssistantScorer () {
     return this.#assistantScorer
@@ -432,7 +432,7 @@ class MatchOfficials {
   /**
    * Check if the match has any linespersons.
    *
-   * @return {boolean} Whether the match has any linespersons
+   * @returns {boolean} Whether the match has any linespersons
    */
   hasLinespersons () {
     return this.#linespersons.length > 0
@@ -441,7 +441,7 @@ class MatchOfficials {
   /**
    * Get the list of linespersons.
    *
-   * @return {string[]} The list of linespersons
+   * @returns {string[]} The list of linespersons
    */
   getLinespersons () {
     return this.#linespersons
@@ -460,7 +460,7 @@ class MatchOfficials {
   /**
    * Check if the match has a ball crew.
    *
-   * @return {boolean} Whether the match has a ball crew
+   * @returns {boolean} Whether the match has a ball crew
    */
   hasBallCrew () {
     return this.#ballCrew.length > 0
@@ -469,7 +469,7 @@ class MatchOfficials {
   /**
    * Get the list of ball crew members.
    *
-   * @return {string[]} The list of ball crew members
+   * @returns {string[]} The list of ball crew members
    */
   getBallCrew () {
     return this.#ballCrew
