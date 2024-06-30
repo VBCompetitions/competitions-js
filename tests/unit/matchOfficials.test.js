@@ -9,13 +9,13 @@ describe('matchOfficials', () => {
   it('testOfficialsNone', async () => {
     const competitionJSON = await readFile(new URL(path.join('officials', 'officials-team.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    assert.equal(competition.getStageByID('L').getGroupByID('LG').getMatchByID('LG2').getOfficials(), null)
+    assert.equal(competition.getStage('L').getGroup('LG').getMatch('LG2').getOfficials(), null)
   })
 
   it('testOfficialsTeam', async () => {
     const competitionJSON = await readFile(new URL(path.join('officials', 'officials-team.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const matchOfficials = competition.getStageByID('L').getGroupByID('LG').getMatchByID('LG1').getOfficials()
+    const matchOfficials = competition.getStage('L').getGroup('LG').getMatch('LG1').getOfficials()
 
     assert(matchOfficials.isTeam())
     assert.equal(matchOfficials.getTeamID(), 'TM1')
@@ -40,7 +40,7 @@ describe('matchOfficials', () => {
   it('testOfficialsPerson', async () => {
     const competitionJSON = await readFile(new URL(path.join('officials', 'officials-persons.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const matchOfficials = competition.getStageByID('L').getGroupByID('LG').getMatchByID('LG1').getOfficials()
+    const matchOfficials = competition.getStage('L').getGroup('LG').getMatch('LG1').getOfficials()
 
     assert(!matchOfficials.isTeam())
     assert.equal(matchOfficials.getTeamID(), null)
@@ -60,7 +60,7 @@ describe('matchOfficials', () => {
   it('testOfficialsSetters', async () => {
     const competitionJSON = await readFile(new URL(path.join('officials', 'officials-team.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const matchOfficials = competition.getStageByID('L').getGroupByID('LG').getMatchByID('LG1').getOfficials()
+    const matchOfficials = competition.getStage('L').getGroup('LG').getMatch('LG1').getOfficials()
 
     assert(matchOfficials.isTeam())
 
@@ -125,7 +125,7 @@ describe('matchOfficials', () => {
   it('testOfficialsExceptionSettingInvalidTeam', async () => {
     const competitionJSON = await readFile(new URL(path.join('officials', 'officials-team.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const matchOfficials = competition.getStageByID('L').getGroupByID('LG').getMatchByID('LG1').getOfficials()
+    const matchOfficials = competition.getStage('L').getGroup('LG').getMatch('LG1').getOfficials()
 
     assert.throws(() => {
       matchOfficials.setTeamID('{L:LG:LG2')

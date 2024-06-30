@@ -1,11 +1,10 @@
 import Ajv from 'ajv'
 import addFormats from 'ajv-formats'
-// import { readFile } from 'node:fs/promises'
-// import path from 'node:path'
 
 import { competitionSchema } from './schema.js'
 import CompetitionTeam from './competitionTeam.js'
 import Club from './club.js'
+import Player from './player.js'
 import Stage from './stage.js'
 
 /**
@@ -82,6 +81,13 @@ class Competition {
   #teams
 
   /**
+   * A list of players in the competition
+   * @type {array}
+   * @private
+   */
+  #players
+
+  /**
    * The stages of the competition. Stages are phases of a competition that happen in order.  There may be only one stage (e.g. for a flat league) or multiple in sequence
    * (e.g. for a tournament with pools, then crossovers, then finals)
    * @type {array}
@@ -95,6 +101,13 @@ class Competition {
    * @private
    */
   #teamLookup
+
+  /**
+   * A Lookup table from player IDs to the player
+   * @type {object}
+   * @private
+   */
+  #playerLookup
 
   /**
    * A Lookup table from stage IDs to the stage
@@ -147,8 +160,10 @@ class Competition {
     this.#notes = null
     this.#clubs = []
     this.#teams = []
+    this.#players = []
     this.#stages = []
     this.#teamLookup = {}
+    this.#playerLookup = {}
     this.#stageLookup = {}
     this.#clubLookup = {}
 
@@ -160,7 +175,7 @@ class Competition {
    *
    * @param {string} competitionJSON The competition JSON data
    *
-   * @return {Promise<Competition>} a loaded Competition, rejects when the JSON data is invalid
+   * @returns {Promise<Competition>} a loaded Competition, rejects when the JSON data is invalid
    */
   static async loadFromCompetitionJSON (competitionJSON) {
     let competitionData
@@ -204,6 +219,12 @@ class Competition {
       competition.addTeam(new CompetitionTeam(competition, teamData.id, teamData.name).loadFromData(teamData))
     })
 
+    if (Array.isArray(competitionData.players)) {
+      competitionData.players.forEach(playerData => {
+        competition.addPlayer(new Player(competition, playerData.id, playerData.name).loadFromData(playerData))
+      })
+    }
+
     competitionData.stages.forEach(stageData => {
       const stage = new Stage(competition, stageData.id)
       competition.addStage(stage)
@@ -216,7 +237,7 @@ class Competition {
   /**
    * Return the competition definition in a form suitable for serializing
    *
-   * @return {object} The competition as an object suitable for serializing into JSON
+   * @returns {object} The competition as an object suitable for serializing into JSON
    */
   serialize () {
     const competition = {
@@ -245,6 +266,13 @@ class Competition {
       competition.teams.push(team.serialize())
     })
 
+    if (this.#players.length > 0) {
+      competition.players = []
+      this.#players.forEach(player => {
+        competition.players.push(player.serialize())
+      })
+    }
+
     competition.stages = []
     this.#stages.forEach(stage => {
       competition.stages.push(stage.serialize())
@@ -269,7 +297,7 @@ class Competition {
   /**
    * Get the schema version for this competition, as a semver string
    *
-   * @return {string} the schema version
+   * @returns {string} the schema version
    */
   getVersion () {
     return this.#version
@@ -280,7 +308,7 @@ class Competition {
    *
    * @param {string} version the version for the competition data
    *
-   * @return {Competition} the competition
+   * @returns {Competition} the competition
    */
   setVersion (version) {
     this.#version = version
@@ -290,7 +318,7 @@ class Competition {
   /**
    * Get the name for this competition
    *
-   * @return {string} the competition name
+   * @returns {string} the competition name
    */
   getName () {
     return this.#name
@@ -301,7 +329,7 @@ class Competition {
    *
    * @param {string} name the new name for the competition
    *
-   * @return {Competition} the competition
+   * @returns {Competition} the competition
    */
   setName (name) {
     if (name.length > 1000 || name.length < 1) {
@@ -318,7 +346,7 @@ class Competition {
    *
    * @param {string} key The key of the metadata
    * @param {string} value The value of the metadata
-   * @return {Competition} Returns the current Competition instance for method chaining
+   * @returns {Competition} Returns the current Competition instance for method chaining
    * @throws {Error} If the key or value is invalid
    */
   setMetadataByID (key, value) {
@@ -348,7 +376,7 @@ class Competition {
    * This function checks if the competition has metadata with the specified key.
    *
    * @param {string} key The key to check
-   * @return {bool} Returns true if the metadata value exists, false otherwise
+   * @returns {bool} Returns true if the metadata value exists, false otherwise
    */
   hasMetadataByKey (key) {
     for (let i = 0; i < this.#metadata.length; i++) {
@@ -362,7 +390,7 @@ class Competition {
   /**
    * Check if the competition has any metadata defined.
    *
-   * @return {bool} Returns true if the metadata exists, false otherwise
+   * @returns {bool} Returns true if the metadata exists, false otherwise
    */
   hasMetadata () {
     return this.#metadata.length > 0
@@ -374,7 +402,7 @@ class Competition {
    * This function retrieves the value of the metadata associated with the provided key.
    *
    * @param {string} key The key of the metadata
-   * @return {string|null} Returns the value of the metadata if found, otherwise null
+   * @returns {string|null} Returns the value of the metadata if found, otherwise null
    */
   getMetadataByKey (key) {
     for (let i = 0; i < this.#metadata.length; i++) {
@@ -390,7 +418,7 @@ class Competition {
    *
    * This function retrieves the value of the metadata associated with the provided key.
    *
-   * @return {array|null} Returns the metadata array or null if no metadata is defined
+   * @returns {array|null} Returns the metadata array or null if no metadata is defined
    */
   getMetadata () {
     if (this.hasMetadata()) {
@@ -405,7 +433,7 @@ class Competition {
    * This function deletes the metadata with the provided key from the competition.
    *
    * @param {string} key The key of the metadata to delete
-   * @return {Competition} Returns the current Competition instance for method chaining
+   * @returns {Competition} Returns the current Competition instance for method chaining
    */
   deleteMetadataByKey (key) {
     this.#metadata = this.#metadata.filter(el => el.key !== key)
@@ -415,7 +443,7 @@ class Competition {
   /**
    * Get the notes for this competition
    *
-   * @return {string|null} the notes for this competition
+   * @returns {string|null} the notes for this competition
    */
   getNotes () {
     return this.#notes
@@ -426,7 +454,7 @@ class Competition {
    *
    * @param {string|null} notes the notes for this competition
    *
-   * @return {Competition} the competition
+   * @returns {Competition} the competition
    */
   setNotes (notes) {
     if (notes.length < 1) {
@@ -443,13 +471,13 @@ class Competition {
    *
    * @throws {Error} If the input parameters are invalid or if a team with the requested ID already exists
    *
-   * @return {Competition} This competition
+   * @returns {Competition} This competition
    */
   addTeam (team) {
     if (team.getCompetition() !== this) {
       throw new Error('Team was initialised with a different Competition')
     }
-    if (this.hasTeamWithID(team.getID())) {
+    if (this.hasTeam(team.getID())) {
       return this
     }
     this.#teams.push(team)
@@ -460,7 +488,7 @@ class Competition {
   /**
    * Get the teams in this competition
    *
-   * @return {array} The teams in this competition
+   * @returns {array} The teams in this competition
    */
   getTeams () {
     return this.#teams
@@ -469,16 +497,16 @@ class Competition {
   /**
    * Gets the Team for the given team ID
    *
-   * @param {string} teamID The team ID to look up. This may be a pure ID, a reference, or a ternary
+   * @param {string} id The team ID to look up. This may be a pure ID, a reference, or a ternary
    *
-   * @return {CompetitionTeam} The team
+   * @returns {CompetitionTeam} The team
    */
-  getTeamByID (teamID) {
+  getTeam (id) {
     this.#processMatches()
 
-    if (!teamID.startsWith('{')) {
-      if (Object.hasOwn(this.#teamLookup, teamID)) {
-        return this.#teamLookup[teamID]
+    if (!id.startsWith('{')) {
+      if (Object.hasOwn(this.#teamLookup, id)) {
+        return this.#teamLookup[id]
       }
     }
 
@@ -487,20 +515,20 @@ class Competition {
      * Note that we only allow one level of ternary, i.e. this does not resolve:
      *  { {ta}=={tb}?{tTrue}:{tFalse} }=={T2}?{TTrue}:{TFalse}
      */
-    const lrMatches = teamID.match(/^([^=]*)==([^?]*)\?(.*)/)
+    const lrMatches = id.match(/^([^=]*)==([^?]*)\?(.*)/)
     if (lrMatches !== null) {
-      const leftTeam = this.getTeamByID(lrMatches[1])
-      const rightTeam = this.getTeamByID(lrMatches[2])
+      const leftTeam = this.getTeam(lrMatches[1])
+      const rightTeam = this.getTeam(lrMatches[2])
       let trueTeam = null
 
       let tfMatches
       let falseTeam
       if ((tfMatches = lrMatches[3].match(/^({[^}]*}):(.*)/)) !== null) {
-        trueTeam = this.getTeamByID(tfMatches[1])
-        falseTeam = this.getTeamByID(tfMatches[2])
+        trueTeam = this.getTeam(tfMatches[1])
+        falseTeam = this.getTeam(tfMatches[2])
       } else if ((tfMatches = lrMatches[3].match(/^([^:]*):(.*)/)) !== null) {
-        trueTeam = this.getTeamByID(tfMatches[1])
-        falseTeam = this.getTeamByID(tfMatches[2])
+        trueTeam = this.getTeam(tfMatches[1])
+        falseTeam = this.getTeam(tfMatches[2])
       }
 
       if (trueTeam !== null) {
@@ -508,10 +536,10 @@ class Competition {
       }
     }
 
-    const teamRefParts = teamID.match(/^{([^:]*):([^:]*):([^:]*):([^:]*)}/)
+    const teamRefParts = id.match(/^{([^:]*):([^:]*):([^:]*):([^:]*)}/)
     if (teamRefParts !== null) {
       try {
-        return this.getStageByID(teamRefParts[1]).getGroupByID(teamRefParts[2]).getTeamByID(teamRefParts[3], teamRefParts[4])
+        return this.getStage(teamRefParts[1]).getGroup(teamRefParts[2]).getTeam(teamRefParts[3], teamRefParts[4])
       } catch (_) {
         return this.#unknownTeam
       }
@@ -523,29 +551,29 @@ class Competition {
   /**
    * Check if a team with the given ID exists in the competition
    *
-   * @param {string} teamID The ID of the team to check
+   * @param {string} id The ID of the team to check
    *
-   * @return {bool} True if the team exists, false otherwise
+   * @returns {bool} True if the team exists, false otherwise
    */
-  hasTeamWithID (teamID) {
-    return Object.hasOwn(this.#teamLookup, teamID)
+  hasTeam (id) {
+    return Object.hasOwn(this.#teamLookup, id)
   }
 
   /**
    * Delete a team from the competition
    *
-   * @param {string} teamID The ID of the team to delete
+   * @param {string} id The ID of the team to delete
    *
-   * @return {Competition} This competition
+   * @returns {Competition} This competition
    */
-  deleteTeam (teamID) {
-    if (!this.hasTeamWithID(teamID)) {
+  deleteTeam (id) {
+    if (!this.hasTeam(id)) {
       return this
     }
 
     let teamMatches = []
     this.#stages.forEach(stage => {
-      const stageMatches = stage.getMatches(teamID, Competition.VBC_MATCH_PLAYING | Competition.VBC_MATCH_OFFICIATING)
+      const stageMatches = stage.getMatches(id, Competition.VBC_MATCH_PLAYING | Competition.VBC_MATCH_OFFICIATING)
       teamMatches = teamMatches.concat(stageMatches)
     })
 
@@ -556,13 +584,129 @@ class Competition {
 
     // Also remove team from any club's list
     this.#clubs.forEach(club => {
-      club.deleteTeam(teamID)
+      club.deleteTeam(id)
     })
 
     // Then delete the team
-    delete this.#teamLookup[teamID]
-    this.#teams = this.#teams.filter(team => team.getID() !== teamID)
+    delete this.#teamLookup[id]
+    this.#teams = this.#teams.filter(team => team.getID() !== id)
 
+    return this
+  }
+
+  /**
+   * Add a player to this competition
+   *
+   * @param {Player} player The player to add to this competition
+   *
+   * @returns {Competition} This Competition instance
+   *
+   * @throws {Error} If a player with a duplicate ID within the competition is added
+   */
+  addPlayer (player) {
+    if (player.getID() !== Player.UNREGISTERED_PLAYER_ID && this.hasPlayer(player.getID())) {
+      throw new Error('players with duplicate IDs within a competition not allowed')
+    }
+
+    this.#players.push(player)
+    this.#playerLookup[player.getID()] = player
+    return this
+  }
+
+  /**
+   * Get the players in this competition
+   *
+   * @returns {array<Player>} The players in this competition
+   */
+  getPlayers () {
+    return this.#players
+  }
+
+  /**
+   * Get the players in the team with the given ID
+   *
+   * @param {string} id the ID of the team to get the players for
+   *
+   * @returns {array<Player>} The players in the team with the given ID
+   */
+  getPlayersInTeam (id) {
+    return this.#players.filter(player => player.getLatestTeamEntry()?.getID() === id)
+  }
+
+  /**
+   * Returns the Player with the requested ID, or throws if the ID is not found
+   *
+   * @param {string} id The ID of the player in this competition to return
+   *
+   * @throws {Error} If a Player with the requested ID was not found
+   *
+   * @returns {Player} The requested player for this competition
+   */
+  getPlayer (id) {
+    if (!Object.hasOwn(this.#playerLookup, id)) {
+      throw new Error(`Player with ID "${id}" not found`)
+    }
+    return this.#playerLookup[id]
+  }
+
+  /**
+   * Check if this competition has any players
+   *
+   * @returns {bool} True if the competition has players, otherwise false
+   */
+  hasPlayers () {
+    return this.#players.length > 0
+  }
+
+  /**
+   * Check if a player with the given ID exists in this competition
+   *
+   * @param {string} id The ID of the player to check
+   *
+   * @returns {bool} True if the player exists, otherwise false
+   */
+  hasPlayer (id) {
+    return Object.hasOwn(this.#playerLookup, id)
+  }
+
+  /**
+   * Check if the team with the given ID has any players defined
+   *
+   * @param {string} id the ID of the team to check
+   *
+   * @returns {boolean} True if the team with the given ID has any players defined
+   */
+  hasPlayersInTeam (id) {
+    return this.#players.some(player => player.getLatestTeamEntry()?.getID() === id)
+  }
+
+  /**
+   * Check if the player with the given ID exists in the team with the given ID
+   *
+   * @param {string} playerID the ID of the player to check
+   * @param {string} teamID the ID of the team to check
+   *
+   * @returns {boolean} True if the player with the given ID exists in the team with the given ID
+   */
+  hasPlayerInTeam (playerID, teamID) {
+    return this.hasPlayer(playerID) && this.getPlayer(playerID).getLatestTeamEntry()?.getID() === teamID
+  }
+
+  /**
+   * Delete a player from the competition
+   *
+   * @param {string} id The ID of the player to delete
+   *
+   * @returns {Competition} This Competition instance
+   */
+  deletePlayer (id) {
+    // TODO check if this player is in any matches
+    if (!this.hasPlayer(id)) {
+      return this
+    }
+
+    delete this.#playerLookup[id]
+    this.#players = this.#players.filter(el => el.getID() !== id)
     return this
   }
 
@@ -573,7 +717,7 @@ class Competition {
    *
    * @throws {Error} If a stage with the requested ID already exists
    *
-   * @return {Competition} This competition
+   * @returns {Competition} This competition
    */
   addStage (stage) {
     if (stage.getCompetition() !== this) {
@@ -587,7 +731,7 @@ class Competition {
   /**
    * Get the stages in this competition
    *
-   * @return array The stages in this competition
+   * @returns array The stages in this competition
    */
   getStages () {
     return this.#stages
@@ -600,9 +744,9 @@ class Competition {
    *
    * @throws {Error} When no stage with the provided ID is found
    *
-   * @return {Stage} The requested stage
+   * @returns {Stage} The requested stage
    */
-  getStageByID (id) {
+  getStage (id) {
     if (!Object.hasOwn(this.#stageLookup, id)) {
       throw new Error(`Stage with ID ${id} not found`)
     }
@@ -614,20 +758,20 @@ class Competition {
    *
    * @param {string} id The ID of the stage to check
    *
-   * @return {bool} True if the stage exists, false otherwise
+   * @returns {bool} True if the stage exists, false otherwise
    */
-  hasStageWithID (id) {
+  hasStage (id) {
     return Object.hasOwn(this.#stageLookup, id)
   }
 
   /**
    * Delete a stage from the competition
    *
-   * @param {string} stageID The ID of the stage to delete
+   * @param {string} id The ID of the stage to delete
    *
-   * @return {Competition} This competition
+   * @returns {Competition} This competition
    */
-  deleteStage (stageID) {
+  deleteStage (id) {
     let stageFound = false
     this.#stages.forEach(stage => {
       if (stageFound) {
@@ -645,14 +789,14 @@ class Competition {
             teamReferences.forEach(reference => {
               let parts
               if ((parts = reference.match(/^{([^:]*):.*}/)) !== null) {
-                if (parts[1] === stageID) {
-                  throw new Error(`Cannot delete stage with id "${stageID}" as it is referenced in match {${stage.getID()}:${group.getID()}:${match.getID()}}`)
+                if (parts[1] === id) {
+                  throw new Error(`Cannot delete stage with id "${id}" as it is referenced in match {${stage.getID()}:${group.getID()}:${match.getID()}}`)
                 }
               }
             })
           })
         })
-      } else if (stage.getID() === stageID) {
+      } else if (stage.getID() === id) {
         stageFound = true
       }
     })
@@ -661,8 +805,8 @@ class Competition {
       return this
     }
 
-    delete this.#stageLookup[stageID]
-    this.#stages = this.#stages.filter(el => el.getID() === stageID)
+    delete this.#stageLookup[id]
+    this.#stages = this.#stages.filter(el => el.getID() === id)
 
     return this
   }
@@ -674,7 +818,7 @@ class Competition {
    *
    * @throws {Error} If the input parameters are invalid or if a club with the requested ID already exists
    *
-   * @return {Competition} This competition
+   * @returns {Competition} This competition
    */
   addClub (club) {
     if (club.getCompetition() !== this) {
@@ -688,7 +832,7 @@ class Competition {
   /**
    * Get the clubs in this competition
    *
-   * @return {array} The clubs in this competition
+   * @returns {array} The clubs in this competition
    */
   getClubs () {
     return this.#clubs
@@ -697,50 +841,59 @@ class Competition {
   /**
    * Returns the Club with the requested ID, or throws if the ID is not found
    *
-   * @param {string} clubID The ID of the club to return
+   * @param {string} id The ID of the club to return
    *
    * @throws {Error} When no club with the provided ID is found
    *
-   * @return {Club} The requested club
+   * @returns {Club} The requested club
    */
-  getClubByID (clubID) {
-    if (!Object.hasOwn(this.#clubLookup, clubID)) {
-      throw new Error(`Club with ID "${clubID}" not found`)
+  getClub (id) {
+    if (!Object.hasOwn(this.#clubLookup, id)) {
+      throw new Error(`Club with ID "${id}" not found`)
     }
-    return this.#clubLookup[clubID]
+    return this.#clubLookup[id]
+  }
+
+  /**
+   * Check if this competition has any clubs
+   *
+   * @returns {bool} True if the competition has clubs, otherwise false
+   */
+  hasClubs () {
+    return this.#clubs.length > 0
   }
 
   /**
    * Check if a club with the given ID exists in the competition
    *
-   * @param {string} clubID The ID of the club to check
+   * @param {string} id The ID of the club to check
    *
-   * @return {bool} True if the club exists, false otherwise
+   * @returns {bool} True if the club exists, false otherwise
    */
-  hasClubWithID (clubID) {
-    return Object.hasOwn(this.#clubLookup, clubID)
+  hasClub (id) {
+    return Object.hasOwn(this.#clubLookup, id)
   }
 
   /**
    * Delete a club from the competition
    *
-   * @param {string} clubID The ID of the club to delete
+   * @param {string} id The ID of the club to delete
    *
-   * @return {Competition} This competition
+   * @returns {Competition} This competition
    */
-  deleteClub (clubID) {
-    if (!this.hasClubWithID(clubID)) {
+  deleteClub (id) {
+    if (!this.hasClub(id)) {
       return this
     }
 
-    const club = this.getClubByID(clubID)
+    const club = this.getClub(id)
     const teamsInClub = club.getTeams()
     if (teamsInClub.length > 0) {
       throw new Error(`Club still contains teams with IDs: ${teamsInClub.map(t => `{${t.getID()}}`).join(', ')}`)
     }
 
-    delete this.#clubLookup[clubID]
-    this.#clubs = this.#clubs.filter(club => club.getID() !== clubID)
+    delete this.#clubLookup[id]
+    this.#clubs = this.#clubs.filter(club => club.getID() !== id)
 
     return this
   }
@@ -827,13 +980,13 @@ class Competition {
   /**
    * Takes in an exact, resolved team ID and checks that the team exists
    *
-   * @param {string} teamID The team ID to check. This must be a resolved team ID, not a team reference or a ternary
+   * @param {string} id The team ID to check. This must be a resolved team ID, not a team reference or a ternary
    *
    * @throws {Error} An exception if the team does not exist
    */
-  #validateTeamExists (teamID) {
-    if (!this.hasTeamID(teamID)) {
-      throw new Error(`Team with ID "${teamID}" does not exist`)
+  #validateTeamExists (id) {
+    if (!this.hasTeam(id)) {
+      throw new Error(`Team with ID "${id}" does not exist`)
     }
   }
 
@@ -860,13 +1013,13 @@ class Competition {
       let group
 
       try {
-        stage = this.getStageByID(parts[1])
+        stage = this.getStage(parts[1])
       } catch (_) {
         throw new Error(`Invalid Stage part: Stage with ID "${parts[1]}" does not exist`)
       }
 
       try {
-        group = stage.getGroupByID(parts[2])
+        group = stage.getGroup(parts[2])
       } catch (_) {
         throw new Error(`Invalid Group part: Group with ID "${parts[2]}" does not exist in stage with ID "${parts[1]}"`)
       }
@@ -886,7 +1039,7 @@ class Competition {
         }
       } else {
         try {
-          group.getMatchByID(parts[3])
+          group.getMatch(parts[3])
         } catch (_) {
           throw new Error(`Invalid Match part in reference ${teamRef} : Match with ID "${parts[3]}" does not exist in stage:group with IDs "${parts[1]}:${parts[2]}"`)
         }
@@ -905,7 +1058,7 @@ class Competition {
    *
    * @param {string} teamReference The string containing team references.
    *
-   * @return {Array<string>} An array containing unique team references extracted from the input string.
+   * @returns {Array<string>} An array containing unique team references extracted from the input string.
    */
   #stripTeamReferences (teamReference) {
     let references = []
@@ -928,21 +1081,10 @@ class Competition {
   }
 
   /**
-   * Checks whether the given team ID is in the list of teams for this competition
-   *
-   * @param {string} teamID The team ID (or a team reference) to look up
-   *
-   * @return {bool} Whether a team with the given ID exists
-   */
-  hasTeamID (teamID) {
-    return Object.hasOwn(this.#teamLookup, teamID)
-  }
-
-  /**
    * Check whether all stages are complete, i.e. all matches in all stages have results
    * and the competition results can be fully calculated
    *
-   * @return {bool} Whether the competition is complete or not
+   * @returns {bool} Whether the competition is complete or not
    */
   isComplete () {
     for (let i = 0; i < this.#stages.length; i++) {

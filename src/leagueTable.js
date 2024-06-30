@@ -67,7 +67,7 @@ class LeagueTable {
   /**
    * Get the league associated with this table.
    *
-   * @return {League} The league associated with this table
+   * @returns {League} The league associated with this table
    */
   getLeague () {
     return this.#league
@@ -76,7 +76,7 @@ class LeagueTable {
   /**
    * Get the text representation of the ordering criteria for the league table.
    *
-   * @return {string} The text representation of the ordering criteria
+   * @returns {string} The text representation of the ordering criteria
    */
   getOrderingText () {
     let orderingText = `Position is decided by ${LeagueTable.#mapOrderingToString(this.#ordering[0])}`
@@ -90,7 +90,7 @@ class LeagueTable {
    * Maps ordering string to human-readable format.
    *
    * @param {string} orderingString The ordering string to map
-   * @return {string} The human-readable representation of the ordering string
+   * @returns {string} The human-readable representation of the ordering string
    */
   static #mapOrderingToString (orderingString) {
     switch (orderingString) {
@@ -124,7 +124,7 @@ class LeagueTable {
   /**
    * Get the text representation of the scoring system used in the league.
    *
-   * @return {string} The text representation of the league's scoring system
+   * @returns {string} The text representation of the league's scoring system
    */
   getScoringText () {
     const textBuilder = (points, action) => {
@@ -168,7 +168,7 @@ class LeagueTable {
   /**
    * Checks if draws are allowed in the league.
    *
-   * @return {boolean} True if draws are allowed, false otherwise
+   * @returns {boolean} True if draws are allowed, false otherwise
    */
   hasDraws () {
     return this.#hasDraws
@@ -177,7 +177,7 @@ class LeagueTable {
   /**
    * Checks if the league uses sets.
    *
-   * @return {boolean} True if the league uses sets, false otherwise
+   * @returns {boolean} True if the league uses sets, false otherwise
    */
   hasSets () {
     return this.#hasSets
@@ -186,7 +186,7 @@ class LeagueTable {
   /**
    * Get the group ID associated with this league table.
    *
-   * @return {string} The group ID associated with this league table
+   * @returns {string} The group ID associated with this league table
    */
   getGroupID () {
     return this.#league.getID()

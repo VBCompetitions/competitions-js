@@ -53,11 +53,11 @@ class League extends Group {
       const awayTeamID = match.getAwayTeam().getID()
 
       if (!teamResults[homeTeamID]) {
-        teamResults[homeTeamID] = new LeagueTableEntry(this, homeTeamID, this._competition.getTeamByID(homeTeamID).getName())
+        teamResults[homeTeamID] = new LeagueTableEntry(this, homeTeamID, this._competition.getTeam(homeTeamID).getName())
       }
 
       if (!teamResults[awayTeamID]) {
-        teamResults[awayTeamID] = new LeagueTableEntry(this, awayTeamID, this._competition.getTeamByID(awayTeamID).getName())
+        teamResults[awayTeamID] = new LeagueTableEntry(this, awayTeamID, this._competition.getTeam(awayTeamID).getName())
       }
 
       if (match.isComplete()) {
@@ -387,7 +387,7 @@ class League extends Group {
    * @returns {CompetitionTeam} The CompetitionTeam instance
    * @throws {Error} If the entity is invalid
    */
-  getTeamByID (type, entity) {
+  getTeam (type, entity) {
     if (type === 'league') {
       this.processMatches()
       if (!this.isComplete()) {
@@ -396,16 +396,16 @@ class League extends Group {
       if (parseInt(entity) > this.#table.entries.length) {
         throw new Error('Invalid League position: position is bigger than the number of teams')
       }
-      return this._competition.getTeamByID(this.#table.entries[parseInt(entity) - 1].getTeamID())
+      return this._competition.getTeam(this.#table.entries[parseInt(entity) - 1].getTeamID())
     }
 
-    const match = this.getMatchByID(type)
+    const match = this.getMatch(type)
 
     switch (entity) {
       case 'winner':
-        return this._competition.getTeamByID(match.getWinnerTeamID())
+        return this._competition.getTeam(match.getWinnerTeamID())
       case 'loser':
-        return this._competition.getTeamByID(match.getLoserTeamID())
+        return this._competition.getTeam(match.getLoserTeamID())
       default:
         throw new Error(`Invalid entity "${entity}" in team reference`)
     }

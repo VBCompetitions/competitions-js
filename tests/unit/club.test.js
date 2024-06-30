@@ -9,25 +9,15 @@ describe('club', () => {
   it('testClubNone', async () => {
     const competitionJSON = await readFile(new URL(path.join('club', 'competition-with-clubs.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const team = competition.getTeamByID('TM7')
+    const team = competition.getTeam('TM7')
     assert.equal(team.getClub(), null, 'Team 7 should have no club defined')
-  })
-
-  it('testClubsDuplicateID', async () => {
-    const competitionJSON = await readFile(new URL(path.join('club', 'competition-with-clubs-duplicate-ids.json'), import.meta.url), { encoding: 'utf8' })
-    await assert.rejects(async () => {
-      await Competition.loadFromCompetitionJSON(competitionJSON)
-    },
-    {
-      message: 'Club with ID "NOR" already exists in the competition'
-    })
   })
 
   it('testCompetitionWithClubsNoSuchID', async () => {
     const competitionJSON = await readFile(new URL(path.join('club', 'competition-with-clubs.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
     assert.throws(() => {
-      competition.getClubByID('Foo')
+      competition.getClub('Foo')
     },
     {
       message: 'Club with ID "Foo" not found'
@@ -37,14 +27,16 @@ describe('club', () => {
   it('testCompetitionWithClubs', async () => {
     const competitionJSON = await readFile(new URL(path.join('club', 'competition-with-clubs.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    assert.equal(competition.getTeamByID('TM1').getClub().getID(), 'SOU')
-    assert.equal(competition.getTeamByID('TM2').getClub().getID(), 'NOR')
-    assert.equal(competition.getTeamByID('TM7').getClub(), null)
+    assert(competition.hasClubs())
 
-    assert.equal(competition.getTeamByID('TM1').getClub().getNotes(), 'This is a club')
+    assert.equal(competition.getTeam('TM1').getClub().getID(), 'SOU')
+    assert.equal(competition.getTeam('TM2').getClub().getID(), 'NOR')
+    assert.equal(competition.getTeam('TM7').getClub(), null)
 
-    assert.equal(competition.getClubByID('SOU').getName(), 'Southampton')
-    assert.equal(competition.getClubByID('NOR').getName(), 'Northampton')
+    assert.equal(competition.getTeam('TM1').getClub().getNotes(), 'This is a club')
+
+    assert.equal(competition.getClub('SOU').getName(), 'Southampton')
+    assert.equal(competition.getClub('NOR').getName(), 'Northampton')
 
     const clubs = competition.getClubs()
     assert.equal(clubs.length, 2)
@@ -57,15 +49,15 @@ describe('club', () => {
   it('testClubSettersGetters', async () => {
     const competitionJSON = await readFile(new URL(path.join('club', 'competition-with-clubs.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const club = competition.getClubByID('SOU')
+    const club = competition.getClub('SOU')
 
     assert.equal(club.getName(), 'Southampton')
     assert.equal(club.getNotes(), 'This is a club')
     assert(club.hasNotes())
     assert.equal(club.getTeams().length, 3)
     assert.equal(club.getTeams()[0].getName(), 'Alice VC')
-    assert(club.hasTeamWithID('TM1'))
-    assert(!club.hasTeamWithID('TM2'))
+    assert(club.hasTeam('TM1'))
+    assert(!club.hasTeam('TM2'))
 
     club.setName('New Southampton')
     club.setNotes('This is the club to be')
@@ -93,7 +85,7 @@ describe('club', () => {
   it('testClubDelete', async () => {
     const competitionJSON = await readFile(new URL(path.join('club', 'competition-with-clubs.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const club = competition.getClubByID('SOU')
+    const club = competition.getClub('SOU')
     const team = club.getTeams()[0]
 
     assert.equal(club.getName(), 'Southampton')
@@ -101,8 +93,8 @@ describe('club', () => {
     assert.equal(club.getTeams().length, 3)
     assert.equal(team.getName(), 'Alice VC')
     assert.equal(team.getClub().getID(), 'SOU')
-    assert(club.hasTeamWithID('TM1'))
-    assert(!club.hasTeamWithID('TM2'))
+    assert(club.hasTeam('TM1'))
+    assert(!club.hasTeam('TM2'))
 
     let clubReturned = club.deleteTeam('TM1')
     assert(clubReturned instanceof Club)

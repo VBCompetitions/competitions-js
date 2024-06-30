@@ -258,7 +258,7 @@ class IfUnknown {
    * @param {mixed} id The ID of the match
    * @returns {boolean} True if match exists, false otherwise
    */
-  hasMatchWithID (id) {
+  hasMatch (id) {
     return Object.hasOwn(this.#matchLookup, id)
   }
 
@@ -283,15 +283,15 @@ class IfUnknown {
   /**
    * Get the match with the specified ID
    *
-   * @param {string} matchID The ID of the match
+   * @param {string} id The ID of the match
    * @returns {IfUnknownMatch} The requested match
    * @throws {OutOfBoundsException} When the match with the specified ID is not found
    */
-  getMatchByID (matchID) {
-    if (Object.hasOwn(this.#matchLookup, matchID)) {
-      return this.#matchLookup[matchID]
+  getMatch (id) {
+    if (Object.hasOwn(this.#matchLookup, id)) {
+      return this.#matchLookup[id]
     }
-    throw new Error(`Match with ID ${matchID} not found`)
+    throw new Error(`Match with ID ${id} not found`)
   }
 
   /**

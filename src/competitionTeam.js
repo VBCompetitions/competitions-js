@@ -1,6 +1,5 @@
 import Contact from './contact.js'
 import ContactRole from './contactRole.js'
-import Player from './player.js'
 
 class CompetitionTeam {
   static UNKNOWN_TEAM_ID = 'UNKNOWN'
@@ -26,13 +25,6 @@ class CompetitionTeam {
    * @private
    */
   #contacts
-
-  /**
-   * A list of players for a team
-   * @type {array}
-   * @private
-   */
-  #players
 
   /**
    * The club this team is in
@@ -63,13 +55,6 @@ class CompetitionTeam {
   #contactLookup
 
   /**
-   * A Lookup table from player IDs to the contact
-   * @type {object}
-   * @private
-   */
-  #playerLookup
-
-  /**
    * Contains the team data of a competition, creating any metadata needed
    *
    * @param {Competition} competition A link back to the Competition this Team is in
@@ -85,7 +70,7 @@ class CompetitionTeam {
       throw new Error('Invalid team ID: must contain only ASCII printable characters excluding " : { } ? =')
     }
 
-    if (competition.hasTeamWithID(id)) {
+    if (competition.hasTeam(id)) {
       throw new Error(`Team with ID "${id}" already exists in the competition`)
     }
 
@@ -93,11 +78,9 @@ class CompetitionTeam {
     this.#id = id
     this.setName(name)
     this.#contacts = []
-    this.#players = []
     this.#club = null
     this.#notes = null
     this.#contactLookup = {}
-    this.#playerLookup = {}
   }
 
   /**
@@ -105,7 +88,7 @@ class CompetitionTeam {
    *
    * @param {object} teamData The data defining this Team
    *
-   * @return {CompetitionTeam}
+   * @returns {CompetitionTeam}
    */
   loadFromData (teamData) {
     if (Object.hasOwn(teamData, 'contacts')) {
@@ -140,12 +123,6 @@ class CompetitionTeam {
       })
     }
 
-    if (Object.hasOwn(teamData, 'players')) {
-      teamData.players.forEach(playerData => {
-        this.addPlayer((new Player(this, playerData.id, playerData.name)).loadFromData(playerData))
-      })
-    }
-
     if (Object.hasOwn(teamData, 'club')) {
       this.setClubID(teamData.club)
       this.getClub().addTeam(this)
@@ -161,7 +138,7 @@ class CompetitionTeam {
   /**
    * Return the list of team definition in a form suitable for serializing
    *
-   * @return {Object}
+   * @returns {Object}
    */
   serialize () {
     const team = {
@@ -172,12 +149,6 @@ class CompetitionTeam {
       team.contacts = []
       this.#contacts.forEach(contacts => {
         team.contacts.push(contacts.serialize())
-      })
-    }
-    if (this.#players.length > 0) {
-      team.players = []
-      this.#players.forEach(players => {
-        team.players.push(players.serialize())
       })
     }
     if (this.#club !== null) {
@@ -193,7 +164,7 @@ class CompetitionTeam {
   /**
    * Get the competition this team is in
    *
-   * @return {Competition}
+   * @returns {Competition}
    */
   getCompetition () {
     return this.#competition
@@ -202,7 +173,7 @@ class CompetitionTeam {
   /**
    * Get the ID for this team
    *
-   * @return {string} The ID for this team
+   * @returns {string} The ID for this team
    */
   getID () {
     return this.#id
@@ -213,7 +184,7 @@ class CompetitionTeam {
    *
    * @param {string} name The name for this team
    *
-   * @return {CompetitionTeam} This CompetitionTeam
+   * @returns {CompetitionTeam} This CompetitionTeam
    */
   setName (name) {
     if (name.length > 1000 || name.length < 1) {
@@ -226,7 +197,7 @@ class CompetitionTeam {
   /**
    * Get the name for this team
    *
-   * @return {string} The name for this team
+   * @returns {string} The name for this team
    */
   getName () {
     return this.#name
@@ -235,28 +206,28 @@ class CompetitionTeam {
   /**
    * Set the club ID for this team
    *
-   * @param {string|null} clubID The ID of the club this team is in
+   * @param {string|null} id The ID of the club this team is in
    *
-   * @return CompetitionTeam This competition team
+   * @returns CompetitionTeam This competition team
    */
-  setClubID (clubID) {
-    if (clubID === null) {
-      if (this.#club.hasTeamWithID(this.#id)) {
+  setClubID (id) {
+    if (id === null) {
+      if (this.#club.hasTeam(this.#id)) {
         this.#club.deleteTeam(this.#id)
       }
       this.#club = null
       return this
     }
 
-    if (this.#club !== null && clubID === this.#club.getID()) {
+    if (this.#club !== null && id === this.#club.getID()) {
       return this
     }
 
-    if (!this.#competition.hasClubWithID(clubID)) {
-      throw new Error(`No club with ID "${clubID}" exists`)
+    if (!this.#competition.hasClub(id)) {
+      throw new Error(`No club with ID "${id}" exists`)
     }
 
-    this.#club = this.#competition.getClubByID(clubID)
+    this.#club = this.#competition.getClub(id)
     this.#club.addTeam(this)
 
     return this
@@ -265,7 +236,7 @@ class CompetitionTeam {
   /**
    * Get the club for this team
    *
-   * @return {Club|null} The club this team is in
+   * @returns {Club|null} The club this team is in
    */
   getClub () {
     return this.#club
@@ -274,7 +245,7 @@ class CompetitionTeam {
   /**
    * Does this team have a club that it belongs to
    *
-   * @return {bool} True if the team belongs to a club, otherwise false
+   * @returns {bool} True if the team belongs to a club, otherwise false
    */
   hasClub () {
     return this.#club !== null
@@ -283,7 +254,7 @@ class CompetitionTeam {
   /**
    * Get the notes for this team
    *
-   * @return {string|null} the notes for this team
+   * @returns {string|null} the notes for this team
    */
   getNotes () {
     return this.#notes
@@ -294,7 +265,7 @@ class CompetitionTeam {
    *
    * @param {string|nul} notes the notes for this team
    *
-   * @return {CompetitionTeam} This competition team
+   * @returns {CompetitionTeam} This competition team
    */
   setNotes (notes) {
     this.#notes = notes
@@ -304,7 +275,7 @@ class CompetitionTeam {
   /**
    * Does this team have any notes attached
    *
-   * @return {bool} True if the team has notes, otherwise false
+   * @returns {bool} True if the team has notes, otherwise false
    */
   hasNotes () {
     return this.#notes !== null
@@ -315,12 +286,12 @@ class CompetitionTeam {
    *
    * @param {Contact} contact The contact to add to this team
    *
-   * @return {CompetitionTeam} This CompetitionTeam instance
+   * @returns {CompetitionTeam} This CompetitionTeam instance
    *
    * @throws {Error} If a contact with a duplicate ID within the team is added
    */
   addContact (contact) {
-    if (this.hasContactWithID(contact.getID())) {
+    if (this.hasContact(contact.getID())) {
       throw new Error('team contacts with duplicate IDs within a team not allowed')
     }
     this.#contacts.push(contact)
@@ -331,7 +302,7 @@ class CompetitionTeam {
   /**
    * Returns an array of Contacts for this team
    *
-   * @return {array<Contact>|null} The contacts for this team
+   * @returns {array<Contact>|null} The contacts for this team
    */
   getContacts () {
     return this.#contacts
@@ -340,34 +311,34 @@ class CompetitionTeam {
   /**
    * Returns the Contact with the requested ID, or throws if the ID is not found
    *
-   * @param {string} contactID The ID of the contact in this team to return
+   * @param {string} id The ID of the contact in this team to return
    *
    * @throws {Error} If a Contact with the requested ID was not found
    *
-   * @return {Contact} The requested contact for this team
+   * @returns {Contact} The requested contact for this team
    */
-  getContactByID (contactID) {
-    if (!Object.hasOwn(this.#contactLookup, contactID)) {
-      throw new Error(`Contact with ID "${contactID}" not found`)
+  getContact (id) {
+    if (!Object.hasOwn(this.#contactLookup, id)) {
+      throw new Error(`Contact with ID "${id}" not found`)
     }
-    return this.#contactLookup[contactID]
+    return this.#contactLookup[id]
   }
 
   /**
    * Check if a contact with the given ID exists in this team
    *
-   * @param {string} contactID The ID of the contact to check
+   * @param {string} id The ID of the contact to check
    *
-   * @return {bool} True if the contact exists, otherwise false
+   * @returns {bool} True if the contact exists, otherwise false
    */
-  hasContactWithID (contactID) {
-    return Object.hasOwn(this.#contactLookup, contactID)
+  hasContact (id) {
+    return Object.hasOwn(this.#contactLookup, id)
   }
 
   /**
    * Check if this team has any contacts
    *
-   * @return bool True if the team has contacts, otherwise false
+   * @returns bool True if the team has contacts, otherwise false
    */
   hasContacts () {
     return this.#contacts.length > 0
@@ -376,99 +347,47 @@ class CompetitionTeam {
   /**
    * Delete a contact from the team
    *
-   * @param {string} contactID The ID of the contact to delete
+   * @param {string} id The ID of the contact to delete
    *
-   * @return {CompetitionTeam} This CompetitionTeam instance
+   * @returns {CompetitionTeam} This CompetitionTeam instance
    */
-  deleteContact (contactID) {
-    if (!this.hasContactWithID(contactID)) {
+  deleteContact (id) {
+    if (!this.hasContact(id)) {
       return this
     }
 
-    delete this.#contactLookup[contactID]
-    this.#contacts = this.#contacts.filter(el => el.getID() !== contactID)
-    return this
-  }
-
-  /**
-   * Add a player to this team
-   *
-   * @param {Player} player The player to add to this team
-   *
-   * @return {CompetitionTeam} This CompetitionTeam instance
-   *
-   * @throws {Error} If a player with a duplicate ID within the team is added
-   */
-  addPlayer (player) {
-    if (this.hasPlayerWithID(player.getID())) {
-      throw new Error('team players with duplicate IDs within a team not allowed')
-    }
-
-    this.#players.push(player)
-    this.#playerLookup[player.getID()] = player
+    delete this.#contactLookup[id]
+    this.#contacts = this.#contacts.filter(el => el.getID() !== id)
     return this
   }
 
   /**
    * Get the players for this team
    *
-   * @return {array<Player>|null} The players for this team
+   * @returns {array<Player>} The players for this team
    */
   getPlayers () {
-    return this.#players
-  }
-
-  /**
-   * Returns the Player with the requested ID, or throws if the ID is not found
-   *
-   * @param {string} playerID The ID of the player in this team to return
-   *
-   * @throws {Error} If a Player with the requested ID was not found
-   *
-   * @return {Player} The requested player for this team
-   */
-  getPlayerByID (playerID) {
-    if (!Object.hasOwn(this.#playerLookup, playerID)) {
-      throw new Error(`Player with ID "${playerID}" not found`)
-    }
-    return this.#playerLookup[playerID]
+    return this.#competition.getPlayersInTeam(this.#id)
   }
 
   /**
    * Check if a player with the given ID exists in this team
    *
-   * @param {string} playerID The ID of the player to check
+   * @param {string} id The ID of the player to check
    *
-   * @return {bool} True if the player exists, otherwise false
+   * @returns {bool} True if the player exists, otherwise false
    */
-  hasPlayerWithID (playerID) {
-    return Object.hasOwn(this.#playerLookup, playerID)
+  hasPlayer (id) {
+    return this.#competition.hasPlayerInTeam(id, this.#id)
   }
 
   /**
    * Check if this team has any players
    *
-   * @return {bool} True if the team has players, otherwise false
+   * @returns {bool} True if the team has players, otherwise false
    */
   hasPlayers () {
-    return this.#players.length > 0
-  }
-
-  /**
-   * Delete a player from the team
-   *
-   * @param {string} playerID The ID of the player to delete
-   *
-   * @return {CompetitionTeam} This CompetitionTeam instance
-   */
-  deletePlayer (playerID) {
-    if (!this.hasPlayerWithID(playerID)) {
-      return this
-    }
-
-    delete this.#playerLookup[playerID]
-    this.#players = this.#players.filter(el => el.getID() !== playerID)
-    return this
+    return this.#competition.hasPlayersInTeam(this.#id)
   }
 }
 

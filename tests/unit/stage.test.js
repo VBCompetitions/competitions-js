@@ -9,7 +9,7 @@ describe('stage', () => {
   it('testStageGetters', async () => {
     const competitionJSON = await readFile(new URL(path.join('stage', 'competition.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const stage = competition.getStageByID('L')
+    const stage = competition.getStage('L')
     const groups = stage.getGroups()
 
     assert.equal(groups[0].getName(), 'Recreational League')
@@ -20,7 +20,7 @@ describe('stage', () => {
   it('testStageMatchesWithAllOptionalFields', async () => {
     const competitionJSON = await readFile(new URL(path.join('stage', 'stage-matches-with-everything.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const stage = competition.getStageByID('L')
+    const stage = competition.getStage('L')
 
     assert.equal(stage.getCompetition().getName(), 'Matches with Everything')
     assert.equal(stage.getName(), 'League')
@@ -44,7 +44,7 @@ describe('stage', () => {
   it('testStageSetters', async () => {
     const competitionJSON = await readFile(new URL(path.join('stage', 'stage-matches-with-everything.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const stage = competition.getStageByID('L')
+    const stage = competition.getStage('L')
 
     assert.equal(stage.getName(), 'League')
     stage.setName('New League')
@@ -67,7 +67,7 @@ describe('stage', () => {
   it('testStageMatchesWithNoOptionalFields', async () => {
     const competitionJSON = await readFile(new URL(path.join('stage', 'stage-matches-with-nothing.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const stage = competition.getStageByID('L')
+    const stage = competition.getStage('L')
 
     assert.equal(stage.getName(), null)
     assert.equal(stage.getNotes(), null)
@@ -96,16 +96,16 @@ describe('stage', () => {
   it('testStageGetTeamIDsFixed', async () => {
     const incompleteCompetitionJSON = await readFile(new URL(path.join('stage', 'pools-knockout-incomplete.json'), import.meta.url), { encoding: 'utf8' })
     const incompleteCompetition = await Competition.loadFromCompetitionJSON(incompleteCompetitionJSON)
-    const incompletePoolTeamIDs = incompleteCompetition.getStageByID('P').getTeamIDs()
-    const incompleteDivisionTeamIDs = incompleteCompetition.getStageByID('D').getTeamIDs()
+    const incompletePoolTeamIDs = incompleteCompetition.getStage('P').getTeamIDs()
+    const incompleteDivisionTeamIDs = incompleteCompetition.getStage('D').getTeamIDs()
 
     assert.equal(incompletePoolTeamIDs.length, 8)
     assert.equal(incompleteDivisionTeamIDs.length, 0)
 
     const completeCompetitionJSON = await readFile(new URL(path.join('stage', 'pools-knockout-complete.json'), import.meta.url), { encoding: 'utf8' })
     const completeCompetition = await Competition.loadFromCompetitionJSON(completeCompetitionJSON)
-    const completePoolTeamIDs = completeCompetition.getStageByID('P').getTeamIDs()
-    const completeDivisionTeamIDs = completeCompetition.getStageByID('D').getTeamIDs()
+    const completePoolTeamIDs = completeCompetition.getStage('P').getTeamIDs()
+    const completeDivisionTeamIDs = completeCompetition.getStage('D').getTeamIDs()
 
     assert.equal(completePoolTeamIDs.length, 8)
     assert.equal(completeDivisionTeamIDs.length, 0)
@@ -114,16 +114,16 @@ describe('stage', () => {
   it('testStageGetTeamIDsKnown', async () => {
     const incompleteCompetitionJSON = await readFile(new URL(path.join('stage', 'pools-knockout-incomplete.json'), import.meta.url), { encoding: 'utf8' })
     const incompleteCompetition = await Competition.loadFromCompetitionJSON(incompleteCompetitionJSON)
-    const incompletePoolTeamIDs = incompleteCompetition.getStageByID('P').getTeamIDs(Competition.VBC_TEAMS_KNOWN)
-    const incompleteDivisionTeamIDs = incompleteCompetition.getStageByID('D').getTeamIDs(Competition.VBC_TEAMS_KNOWN)
+    const incompletePoolTeamIDs = incompleteCompetition.getStage('P').getTeamIDs(Competition.VBC_TEAMS_KNOWN)
+    const incompleteDivisionTeamIDs = incompleteCompetition.getStage('D').getTeamIDs(Competition.VBC_TEAMS_KNOWN)
 
     assert.equal(incompletePoolTeamIDs.length, 8)
     assert.equal(incompleteDivisionTeamIDs.length, 0)
 
     const completeCompetitionJSON = await readFile(new URL(path.join('stage', 'pools-knockout-complete.json'), import.meta.url), { encoding: 'utf8' })
     const completeCompetition = await Competition.loadFromCompetitionJSON(completeCompetitionJSON)
-    const completePoolTeamIDs = completeCompetition.getStageByID('P').getTeamIDs(Competition.VBC_TEAMS_KNOWN)
-    const completeDivisionTeamIDs = completeCompetition.getStageByID('D').getTeamIDs(Competition.VBC_TEAMS_KNOWN)
+    const completePoolTeamIDs = completeCompetition.getStage('P').getTeamIDs(Competition.VBC_TEAMS_KNOWN)
+    const completeDivisionTeamIDs = completeCompetition.getStage('D').getTeamIDs(Competition.VBC_TEAMS_KNOWN)
 
     assert.equal(completePoolTeamIDs.length, 8)
     assert.equal(completeDivisionTeamIDs.length, 18)
@@ -132,16 +132,16 @@ describe('stage', () => {
   it('testStageGetTeamIDsMaybe', async () => {
     const incompleteCompetitionJSON = await readFile(new URL(path.join('stage', 'pools-knockout-incomplete.json'), import.meta.url), { encoding: 'utf8' })
     const incompleteCompetition = await Competition.loadFromCompetitionJSON(incompleteCompetitionJSON)
-    const incompletePoolTeamIDs = incompleteCompetition.getStageByID('P').getTeamIDs(Competition.VBC_TEAMS_MAYBE)
-    const incompleteDivisionTeamIDs = incompleteCompetition.getStageByID('D').getTeamIDs(Competition.VBC_TEAMS_MAYBE)
+    const incompletePoolTeamIDs = incompleteCompetition.getStage('P').getTeamIDs(Competition.VBC_TEAMS_MAYBE)
+    const incompleteDivisionTeamIDs = incompleteCompetition.getStage('D').getTeamIDs(Competition.VBC_TEAMS_MAYBE)
 
     assert.equal(incompletePoolTeamIDs.length, 0)
     assert.equal(incompleteDivisionTeamIDs.length, 8)
 
     const completeCompetitionJSON = await readFile(new URL(path.join('stage', 'pools-knockout-complete.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(completeCompetitionJSON)
-    const completePoolTeamIDs = competition.getStageByID('P').getTeamIDs(Competition.VBC_TEAMS_MAYBE)
-    const completeDivisionTeamIDs = competition.getStageByID('D').getTeamIDs(Competition.VBC_TEAMS_MAYBE)
+    const completePoolTeamIDs = competition.getStage('P').getTeamIDs(Competition.VBC_TEAMS_MAYBE)
+    const completeDivisionTeamIDs = competition.getStage('D').getTeamIDs(Competition.VBC_TEAMS_MAYBE)
 
     assert.equal(completePoolTeamIDs.length, 0)
     assert.equal(completeDivisionTeamIDs.length, 0)
@@ -150,16 +150,16 @@ describe('stage', () => {
   it('testStageGetTeamIDsAll', async () => {
     const incompleteCompetitionJSON = await readFile(new URL(path.join('stage', 'pools-knockout-incomplete.json'), import.meta.url), { encoding: 'utf8' })
     const incompleteCompetition = await Competition.loadFromCompetitionJSON(incompleteCompetitionJSON)
-    const incompletePoolTeamIDs = incompleteCompetition.getStageByID('P').getTeamIDs(Competition.VBC_TEAMS_ALL)
-    const incompleteDivisionTeamIDs = incompleteCompetition.getStageByID('D').getTeamIDs(Competition.VBC_TEAMS_ALL)
+    const incompletePoolTeamIDs = incompleteCompetition.getStage('P').getTeamIDs(Competition.VBC_TEAMS_ALL)
+    const incompleteDivisionTeamIDs = incompleteCompetition.getStage('D').getTeamIDs(Competition.VBC_TEAMS_ALL)
 
     assert.equal(incompletePoolTeamIDs.length, 8)
     assert.equal(incompleteDivisionTeamIDs.length, 18)
 
     const completeCompetitionJSON = await readFile(new URL(path.join('stage', 'pools-knockout-complete.json'), import.meta.url), { encoding: 'utf8' })
     const completeCompetition = await Competition.loadFromCompetitionJSON(completeCompetitionJSON)
-    const completePoolTeamIDs = completeCompetition.getStageByID('P').getTeamIDs(Competition.VBC_TEAMS_ALL)
-    const completeDivisionTeamIDs = completeCompetition.getStageByID('D').getTeamIDs(Competition.VBC_TEAMS_ALL)
+    const completePoolTeamIDs = completeCompetition.getStage('P').getTeamIDs(Competition.VBC_TEAMS_ALL)
+    const completeDivisionTeamIDs = completeCompetition.getStage('D').getTeamIDs(Competition.VBC_TEAMS_ALL)
 
     assert.equal(completePoolTeamIDs.length, 8)
     assert.equal(completeDivisionTeamIDs.length, 18)
@@ -168,16 +168,16 @@ describe('stage', () => {
   it('testStageGetTeamIDsPlaying', async () => {
     const incompleteCompetitionJSON = await readFile(new URL(path.join('stage', 'pools-knockout-incomplete.json'), import.meta.url), { encoding: 'utf8' })
     const incompleteCompetition = await Competition.loadFromCompetitionJSON(incompleteCompetitionJSON)
-    const incompletePoolTeamIDs = incompleteCompetition.getStageByID('P').getTeamIDs(Competition.VBC_TEAMS_PLAYING)
-    const incompleteDivisionTeamIDs = incompleteCompetition.getStageByID('D').getTeamIDs(Competition.VBC_TEAMS_PLAYING)
+    const incompletePoolTeamIDs = incompleteCompetition.getStage('P').getTeamIDs(Competition.VBC_TEAMS_PLAYING)
+    const incompleteDivisionTeamIDs = incompleteCompetition.getStage('D').getTeamIDs(Competition.VBC_TEAMS_PLAYING)
 
     assert.equal(incompletePoolTeamIDs.length, 8)
     assert.equal(incompleteDivisionTeamIDs.length, 16)
 
     const completeCompetitionJSON = await readFile(new URL(path.join('stage', 'pools-knockout-complete.json'), import.meta.url), { encoding: 'utf8' })
     const completeCompetition = await Competition.loadFromCompetitionJSON(completeCompetitionJSON)
-    const completePoolTeamIDs = completeCompetition.getStageByID('P').getTeamIDs(Competition.VBC_TEAMS_PLAYING)
-    const completeDivisionTeamIDs = completeCompetition.getStageByID('D').getTeamIDs(Competition.VBC_TEAMS_PLAYING)
+    const completePoolTeamIDs = completeCompetition.getStage('P').getTeamIDs(Competition.VBC_TEAMS_PLAYING)
+    const completeDivisionTeamIDs = completeCompetition.getStage('D').getTeamIDs(Competition.VBC_TEAMS_PLAYING)
 
     assert.equal(completePoolTeamIDs.length, 8)
     assert.equal(completeDivisionTeamIDs.length, 16)
@@ -186,16 +186,16 @@ describe('stage', () => {
   it('testStageGetTeamIDsOfficiating', async () => {
     const incompleteCompetitionJSON = await readFile(new URL(path.join('stage', 'pools-knockout-incomplete.json'), import.meta.url), { encoding: 'utf8' })
     const incompleteCompetition = await Competition.loadFromCompetitionJSON(incompleteCompetitionJSON)
-    const incompletePoolTeamIDs = incompleteCompetition.getStageByID('P').getTeamIDs(Competition.VBC_TEAMS_OFFICIATING)
-    const incompleteDivisionTeamIDs = incompleteCompetition.getStageByID('D').getTeamIDs(Competition.VBC_TEAMS_OFFICIATING)
+    const incompletePoolTeamIDs = incompleteCompetition.getStage('P').getTeamIDs(Competition.VBC_TEAMS_OFFICIATING)
+    const incompleteDivisionTeamIDs = incompleteCompetition.getStage('D').getTeamIDs(Competition.VBC_TEAMS_OFFICIATING)
 
     assert.equal(incompletePoolTeamIDs.length, 8)
     assert.equal(incompleteDivisionTeamIDs.length, 8)
 
     const completeCompetitionJSON = await readFile(new URL(path.join('stage', 'pools-knockout-complete.json'), import.meta.url), { encoding: 'utf8' })
     const completeCompetition = await Competition.loadFromCompetitionJSON(completeCompetitionJSON)
-    const completePoolTeamIDs = completeCompetition.getStageByID('P').getTeamIDs(Competition.VBC_TEAMS_OFFICIATING)
-    const completeDivisionTeamIDs = completeCompetition.getStageByID('D').getTeamIDs(Competition.VBC_TEAMS_OFFICIATING)
+    const completePoolTeamIDs = completeCompetition.getStage('P').getTeamIDs(Competition.VBC_TEAMS_OFFICIATING)
+    const completeDivisionTeamIDs = completeCompetition.getStage('D').getTeamIDs(Competition.VBC_TEAMS_OFFICIATING)
 
     assert.equal(completePoolTeamIDs.length, 8)
     assert.equal(completeDivisionTeamIDs.length, 8)
@@ -207,11 +207,11 @@ describe('stage', () => {
     const completeCompetitionJSON = await readFile(new URL(path.join('stage', 'pools-knockout-complete.json'), import.meta.url), { encoding: 'utf8' })
     const completeCompetition = await Competition.loadFromCompetitionJSON(completeCompetitionJSON)
 
-    assert(incompleteCompetition.getStageByID('P').teamHasMatches('TM1'))
-    assert(completeCompetition.getStageByID('P').teamHasMatches('TM1'))
+    assert(incompleteCompetition.getStage('P').teamHasMatches('TM1'))
+    assert(completeCompetition.getStage('P').teamHasMatches('TM1'))
 
-    assert(!incompleteCompetition.getStageByID('D').teamHasMatches('TM1'))
-    assert(completeCompetition.getStageByID('D').teamHasMatches('TM1'))
+    assert(!incompleteCompetition.getStage('D').teamHasMatches('TM1'))
+    assert(completeCompetition.getStage('D').teamHasMatches('TM1'))
   })
 
   it('testStageTeamHasOfficiating', async () => {
@@ -220,11 +220,11 @@ describe('stage', () => {
     const completeCompetitionJSON = await readFile(new URL(path.join('stage', 'pools-knockout-complete.json'), import.meta.url), { encoding: 'utf8' })
     const completeCompetition = await Competition.loadFromCompetitionJSON(completeCompetitionJSON)
 
-    assert(incompleteCompetition.getStageByID('P').teamHasOfficiating('TM1'))
-    assert(completeCompetition.getStageByID('P').teamHasOfficiating('TM1'))
+    assert(incompleteCompetition.getStage('P').teamHasOfficiating('TM1'))
+    assert(completeCompetition.getStage('P').teamHasOfficiating('TM1'))
 
-    assert(!incompleteCompetition.getStageByID('D').teamHasOfficiating('TM1'))
-    assert(completeCompetition.getStageByID('D').teamHasOfficiating('TM1'))
+    assert(!incompleteCompetition.getStage('D').teamHasOfficiating('TM1'))
+    assert(completeCompetition.getStage('D').teamHasOfficiating('TM1'))
   })
 
   it('testStageTeamMayHaveMatches', async () => {
@@ -235,23 +235,23 @@ describe('stage', () => {
     const reffingRefCompetitionJSON = await readFile(new URL(path.join('stage', 'pools-knockout-incomplete-reffing-reference.json'), import.meta.url), { encoding: 'utf8' })
     const reffingRefCompetition = await Competition.loadFromCompetitionJSON(reffingRefCompetitionJSON)
 
-    assert(!incompleteCompetition.getStageByID('P').teamMayHaveMatches('TM1'))
-    assert(!completeCompetition.getStageByID('P').teamMayHaveMatches('TM1'))
-    assert(!reffingRefCompetition.getStageByID('P').teamMayHaveMatches('TM1'))
+    assert(!incompleteCompetition.getStage('P').teamMayHaveMatches('TM1'))
+    assert(!completeCompetition.getStage('P').teamMayHaveMatches('TM1'))
+    assert(!reffingRefCompetition.getStage('P').teamMayHaveMatches('TM1'))
 
-    assert(incompleteCompetition.getStageByID('D').teamMayHaveMatches('TM1'))
-    assert(!completeCompetition.getStageByID('D').teamMayHaveMatches('TM1'))
-    assert(reffingRefCompetition.getStageByID('D').teamMayHaveMatches('TM1'))
+    assert(incompleteCompetition.getStage('D').teamMayHaveMatches('TM1'))
+    assert(!completeCompetition.getStage('D').teamMayHaveMatches('TM1'))
+    assert(reffingRefCompetition.getStage('D').teamMayHaveMatches('TM1'))
   })
 
   it('testStageGetMatchesAllInStage', async () => {
     const incompleteCompetitionJSON = await readFile(new URL(path.join('stage', 'pools-knockout-incomplete.json'), import.meta.url), { encoding: 'utf8' })
     const incompleteCompetition = await Competition.loadFromCompetitionJSON(incompleteCompetitionJSON)
 
-    assert.equal(incompleteCompetition.getStageByID('P').getMatches().length, 12)
+    assert.equal(incompleteCompetition.getStage('P').getMatches().length, 12)
     // Check cached answer
-    assert.equal(incompleteCompetition.getStageByID('P').getMatches().length, 12)
-    assert.equal(incompleteCompetition.getStageByID('D').getMatches().length, 8)
+    assert.equal(incompleteCompetition.getStage('P').getMatches().length, 12)
+    assert.equal(incompleteCompetition.getStage('D').getMatches().length, 8)
   })
 
   it('testStageGetMatchesAllInGroup', async () => {
@@ -260,11 +260,11 @@ describe('stage', () => {
     const completeCompetitionJSON = await readFile(new URL(path.join('stage', 'pools-knockout-complete.json'), import.meta.url), { encoding: 'utf8' })
     const completeCompetition = await Competition.loadFromCompetitionJSON(completeCompetitionJSON)
 
-    assert.equal(incompleteCompetition.getStageByID('P').getMatches('TM1', Competition.VBC_MATCH_ALL_IN_GROUP).length, 6)
-    assert.equal(incompleteCompetition.getStageByID('D').getMatches('TM1', Competition.VBC_MATCH_ALL_IN_GROUP).length, 0)
+    assert.equal(incompleteCompetition.getStage('P').getMatches('TM1', Competition.VBC_MATCH_ALL_IN_GROUP).length, 6)
+    assert.equal(incompleteCompetition.getStage('D').getMatches('TM1', Competition.VBC_MATCH_ALL_IN_GROUP).length, 0)
 
-    assert.equal(completeCompetition.getStageByID('P').getMatches('TM1', Competition.VBC_MATCH_ALL_IN_GROUP).length, 6)
-    assert.equal(completeCompetition.getStageByID('D').getMatches('TM1', Competition.VBC_MATCH_ALL_IN_GROUP).length, 4)
+    assert.equal(completeCompetition.getStage('P').getMatches('TM1', Competition.VBC_MATCH_ALL_IN_GROUP).length, 6)
+    assert.equal(completeCompetition.getStage('D').getMatches('TM1', Competition.VBC_MATCH_ALL_IN_GROUP).length, 4)
   })
 
   it('testStageGetMatchesPlaying', async () => {
@@ -273,11 +273,11 @@ describe('stage', () => {
     const completeCompetitionJSON = await readFile(new URL(path.join('stage', 'pools-knockout-complete.json'), import.meta.url), { encoding: 'utf8' })
     const completeCompetition = await Competition.loadFromCompetitionJSON(completeCompetitionJSON)
 
-    assert.equal(incompleteCompetition.getStageByID('P').getMatches('TM1', Competition.VBC_MATCH_PLAYING).length, 3)
-    assert.equal(incompleteCompetition.getStageByID('D').getMatches('TM1', Competition.VBC_MATCH_PLAYING).length, 0)
+    assert.equal(incompleteCompetition.getStage('P').getMatches('TM1', Competition.VBC_MATCH_PLAYING).length, 3)
+    assert.equal(incompleteCompetition.getStage('D').getMatches('TM1', Competition.VBC_MATCH_PLAYING).length, 0)
 
-    assert.equal(completeCompetition.getStageByID('P').getMatches('TM1', Competition.VBC_MATCH_PLAYING).length, 3)
-    assert.equal(completeCompetition.getStageByID('D').getMatches('TM1', Competition.VBC_MATCH_PLAYING).length, 2)
+    assert.equal(completeCompetition.getStage('P').getMatches('TM1', Competition.VBC_MATCH_PLAYING).length, 3)
+    assert.equal(completeCompetition.getStage('D').getMatches('TM1', Competition.VBC_MATCH_PLAYING).length, 2)
   })
 
   it('testStageGetMatchesOfficiating', async () => {
@@ -288,14 +288,14 @@ describe('stage', () => {
     const crossGroupCompetitionJSON = await readFile(new URL(path.join('stage', 'pools-knockout-cross-group-reffing.json'), import.meta.url), { encoding: 'utf8' })
     const crossGroupCompetition = await Competition.loadFromCompetitionJSON(crossGroupCompetitionJSON)
 
-    assert.equal(incompleteCompetition.getStageByID('P').getMatches('TM1', Competition.VBC_MATCH_OFFICIATING).length, 1)
-    assert.equal(incompleteCompetition.getStageByID('D').getMatches('TM1', Competition.VBC_MATCH_OFFICIATING).length, 0)
+    assert.equal(incompleteCompetition.getStage('P').getMatches('TM1', Competition.VBC_MATCH_OFFICIATING).length, 1)
+    assert.equal(incompleteCompetition.getStage('D').getMatches('TM1', Competition.VBC_MATCH_OFFICIATING).length, 0)
 
-    assert.equal(completeCompetition.getStageByID('P').getMatches('TM1', Competition.VBC_MATCH_OFFICIATING).length, 1)
-    assert.equal(completeCompetition.getStageByID('D').getMatches('TM1', Competition.VBC_MATCH_OFFICIATING).length, 1)
+    assert.equal(completeCompetition.getStage('P').getMatches('TM1', Competition.VBC_MATCH_OFFICIATING).length, 1)
+    assert.equal(completeCompetition.getStage('D').getMatches('TM1', Competition.VBC_MATCH_OFFICIATING).length, 1)
 
-    assert.equal(crossGroupCompetition.getStageByID('P').getMatches('TM1', Competition.VBC_MATCH_OFFICIATING).length, 2)
-    assert.equal(crossGroupCompetition.getStageByID('D').getMatches('TM1', Competition.VBC_MATCH_OFFICIATING).length, 0)
+    assert.equal(crossGroupCompetition.getStage('P').getMatches('TM1', Competition.VBC_MATCH_OFFICIATING).length, 2)
+    assert.equal(crossGroupCompetition.getStage('D').getMatches('TM1', Competition.VBC_MATCH_OFFICIATING).length, 0)
   })
 
   it('testStageGetMatchesPlayingAndOfficiating', async () => {
@@ -306,21 +306,21 @@ describe('stage', () => {
     const crossGroupCompetitionJSON = await readFile(new URL(path.join('stage', 'pools-knockout-cross-group-reffing.json'), import.meta.url), { encoding: 'utf8' })
     const crossGroupCompetition = await Competition.loadFromCompetitionJSON(crossGroupCompetitionJSON)
 
-    assert.equal(incompleteCompetition.getStageByID('P').getMatches('TM1', Competition.VBC_MATCH_PLAYING | Competition.VBC_MATCH_OFFICIATING).length, 4)
-    assert.equal(incompleteCompetition.getStageByID('D').getMatches('TM1', Competition.VBC_MATCH_PLAYING | Competition.VBC_MATCH_OFFICIATING).length, 0)
+    assert.equal(incompleteCompetition.getStage('P').getMatches('TM1', Competition.VBC_MATCH_PLAYING | Competition.VBC_MATCH_OFFICIATING).length, 4)
+    assert.equal(incompleteCompetition.getStage('D').getMatches('TM1', Competition.VBC_MATCH_PLAYING | Competition.VBC_MATCH_OFFICIATING).length, 0)
 
-    assert.equal(completeCompetition.getStageByID('P').getMatches('TM1', Competition.VBC_MATCH_PLAYING | Competition.VBC_MATCH_OFFICIATING).length, 4)
-    assert.equal(completeCompetition.getStageByID('D').getMatches('TM1', Competition.VBC_MATCH_PLAYING | Competition.VBC_MATCH_OFFICIATING).length, 3)
+    assert.equal(completeCompetition.getStage('P').getMatches('TM1', Competition.VBC_MATCH_PLAYING | Competition.VBC_MATCH_OFFICIATING).length, 4)
+    assert.equal(completeCompetition.getStage('D').getMatches('TM1', Competition.VBC_MATCH_PLAYING | Competition.VBC_MATCH_OFFICIATING).length, 3)
 
-    assert.equal(crossGroupCompetition.getStageByID('P').getMatches('TM1', Competition.VBC_MATCH_PLAYING | Competition.VBC_MATCH_OFFICIATING).length, 5)
-    assert.equal(crossGroupCompetition.getStageByID('D').getMatches('TM1', Competition.VBC_MATCH_PLAYING | Competition.VBC_MATCH_OFFICIATING).length, 0)
+    assert.equal(crossGroupCompetition.getStage('P').getMatches('TM1', Competition.VBC_MATCH_PLAYING | Competition.VBC_MATCH_OFFICIATING).length, 5)
+    assert.equal(crossGroupCompetition.getStage('D').getMatches('TM1', Competition.VBC_MATCH_PLAYING | Competition.VBC_MATCH_OFFICIATING).length, 0)
   })
 
   it('testStageGetMatchDates', async () => {
     const competitionJSON = await readFile(new URL(path.join('stage', 'group-with-dates.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const stageA = competition.getStageByID('HVAGP')
-    const stageB = competition.getStageByID('HVAGP2')
+    const stageA = competition.getStage('HVAGP')
+    const stageB = competition.getStage('HVAGP2')
     const datesA = stageA.getMatchDates()
     const datesB = stageB.getMatchDates()
 
@@ -333,8 +333,8 @@ describe('stage', () => {
   it('testStageGetMatchDatesForTeam', async () => {
     const competitionJSON = await readFile(new URL(path.join('stage', 'group-with-dates.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const stageA = competition.getStageByID('HVAGP')
-    const stageB = competition.getStageByID('HVAGP2')
+    const stageA = competition.getStage('HVAGP')
+    const stageB = competition.getStage('HVAGP2')
     const datesTMKA = stageA.getMatchDates('TMK')
     const datesTMKB = stageB.getMatchDates('TMK')
 
@@ -347,8 +347,8 @@ describe('stage', () => {
   it('testStageGetMatchDatesForTeamPlaying', async () => {
     const competitionJSON = await readFile(new URL(path.join('stage', 'group-with-dates.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const stageA = competition.getStageByID('HVAGP')
-    const stageB = competition.getStageByID('HVAGP2')
+    const stageA = competition.getStage('HVAGP')
+    const stageB = competition.getStage('HVAGP2')
     const datesTMKA = stageA.getMatchDates('TMK', Competition.VBC_MATCH_PLAYING)
     const datesTMKB = stageB.getMatchDates('TMK', Competition.VBC_MATCH_PLAYING)
 
@@ -361,8 +361,8 @@ describe('stage', () => {
   it('testStageGetMatchDatesForTeamOfficiating', async () => {
     const competitionJSON = await readFile(new URL(path.join('stage', 'group-with-dates.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const stageA = competition.getStageByID('HVAGP')
-    const stageB = competition.getStageByID('HVAGP2')
+    const stageA = competition.getStage('HVAGP')
+    const stageB = competition.getStage('HVAGP2')
     const datesTMMA = stageA.getMatchDates('TMM', Competition.VBC_MATCH_OFFICIATING)
     const datesTMMB = stageB.getMatchDates('TMM', Competition.VBC_MATCH_OFFICIATING)
 
@@ -375,7 +375,7 @@ describe('stage', () => {
   it('testStageGetMatchesOnDate', async () => {
     const competitionJSON = await readFile(new URL(path.join('stage', 'group-with-dates.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const stageA = competition.getStageByID('HVAGP')
+    const stageA = competition.getStage('HVAGP')
     const matchesA = stageA.getMatchesOnDate('2023-10-22')
     const matchesB = stageA.getMatchesOnDate('2023-11-26')
 
@@ -388,7 +388,7 @@ describe('stage', () => {
   it('testStageGetMatchesOnDateForTeam', async () => {
     const competitionJSON = await readFile(new URL(path.join('stage', 'group-with-dates.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const stageA = competition.getStageByID('HVAGP')
+    const stageA = competition.getStage('HVAGP')
 
     const matchesTMC = stageA.getMatchesOnDate('2024-01-21', 'TMC')
     assert.equal(matchesTMC.length, 12)
@@ -398,12 +398,12 @@ describe('stage', () => {
   it('testStageGetMatchesOnDateForTeamPlaying', async () => {
     const competitionJSON = await readFile(new URL(path.join('stage', 'group-with-dates.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const stageA = competition.getStageByID('HVAGP')
+    const stageA = competition.getStage('HVAGP')
     const matchesTMC = stageA.getMatchesOnDate('2023-10-22', 'TMC', Competition.VBC_MATCH_PLAYING | Competition.VBC_MATCH_OFFICIATING)
     assert.equal(matchesTMC.length, 1)
     assert(matchesTMC[0] instanceof GroupBreak)
 
-    const stageB = competition.getStageByID('HVAGP2')
+    const stageB = competition.getStage('HVAGP2')
     const matchesTMK = stageB.getMatchesOnDate('2023-11-26', 'TMK', Competition.VBC_MATCH_PLAYING)
     assert.equal(matchesTMK.length, 3)
     assert.equal(matchesTMK[1].getID(), 'GP1CM7')
@@ -412,7 +412,7 @@ describe('stage', () => {
   it('testStageGetMatchesOnDateForTeamOfficiating', async () => {
     const competitionJSON = await readFile(new URL(path.join('stage', 'group-with-dates.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const stageB = competition.getStageByID('HVAGP2')
+    const stageB = competition.getStage('HVAGP2')
     const matchesTMM = stageB.getMatchesOnDate('2024-02-25', 'TMM', Competition.VBC_MATCH_OFFICIATING)
     assert.equal(matchesTMM.length, 1)
     assert.equal(matchesTMM[0].getID(), 'GP2CM9')
@@ -486,7 +486,7 @@ describe('stage', () => {
   it('testStageGetMatchesNoTimeNoDate', async () => {
     const competitionJSON = await readFile(new URL(path.join('stage', 'stage-matches-with-nothing.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const stage = competition.getStageByID('L')
+    const stage = competition.getStage('L')
     const matches = stage.getMatches()
 
     assert.deepEqual(matches.filter(match => match instanceof GroupMatch).map(match => match.getID()), ['LG1', 'LG2', 'LG3', 'LG4', 'LG5', 'LG6', 'LG1', 'LG2', 'LG3', 'LG4', 'LG5', 'LG6'])
@@ -495,7 +495,7 @@ describe('stage', () => {
   it('testStageGetMatchesTimeDate', async () => {
     const competitionJSON = await readFile(new URL(path.join('stage', 'stage-matches-with-everything.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const stage = competition.getStageByID('L')
+    const stage = competition.getStage('L')
     const matches = stage.getMatches()
 
     assert.deepEqual(matches.filter(match => match instanceof GroupMatch).map(match => match.getID()), ['LG1', 'LG2', 'LG3', 'LG4', 'LG5', 'LG6', 'LG1', 'LG2', 'LG3', 'LG4', 'LG5', 'LG6'])
@@ -504,7 +504,7 @@ describe('stage', () => {
   it('testStageGetMatchesForTeamNoTimeNoDate', async () => {
     const competitionJSON = await readFile(new URL(path.join('stage', 'stage-matches-with-nothing.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const stage = competition.getStageByID('L')
+    const stage = competition.getStage('L')
     const matches = stage.getMatches('TM1', Competition.VBC_MATCH_PLAYING)
 
     assert.deepEqual(matches.filter(match => match instanceof GroupMatch).map(match => match.getID()), ['LG2', 'LG4', 'LG6'])
@@ -513,7 +513,7 @@ describe('stage', () => {
   it('testStageGetMatchesForTeamTimeDate', async () => {
     const competitionJSON = await readFile(new URL(path.join('stage', 'stage-matches-with-everything.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const stage = competition.getStageByID('L')
+    const stage = competition.getStage('L')
     const matches = stage.getMatches('TM5', Competition.VBC_MATCH_PLAYING)
 
     assert.deepEqual(matches.filter(match => match instanceof GroupMatch).map(match => match.getID()), ['LG2', 'LG4', 'LG6'])
@@ -522,7 +522,7 @@ describe('stage', () => {
   it('testStageGetMatchesForTeamOnDate', async () => {
     const competitionJSON = await readFile(new URL(path.join('stage', 'stage-matches-with-everything.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const stage = competition.getStageByID('L')
+    const stage = competition.getStage('L')
     const matches = stage.getMatchesOnDate('2023-11-05', 'TM5', Competition.VBC_MATCH_PLAYING)
 
     assert.deepEqual(matches.filter(match => match instanceof GroupMatch).map(match => match.getID()), ['LG2', 'LG4', 'LG6'])

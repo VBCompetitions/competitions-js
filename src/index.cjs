@@ -47,25 +47,25 @@ class Club {
    * Contains the club data of a competition, creating any metadata needed
    *
    * @param {Competition} competition A link back to the Competition this Stage is in
-   * @param {string} clubID The ID of this Team
+   * @param {string} id The ID of this Team
    * @param {string} clubName The name of this Team
    * @throws {Error} When the provided club ID is invalid or already exists in the competition
    */
-  constructor (competition, clubID, clubName) {
-    if (clubID.length > 100 || clubID.length < 1) {
+  constructor (competition, id, clubName) {
+    if (id.length > 100 || id.length < 1) {
       throw new Error('Invalid club ID: must be between 1 and 100 characters long')
     }
 
-    if (!/^((?![":{}?=])[\x20-\x7F])+$/.test(clubID)) {
+    if (!/^((?![":{}?=])[\x20-\x7F])+$/.test(id)) {
       throw new Error('Invalid club ID: must contain only ASCII printable characters excluding " : { } ? =')
     }
 
-    if (competition.hasClubWithID(clubID)) {
-      throw new Error(`Club with ID "${clubID}" already exists in the competition`)
+    if (competition.hasClub(id)) {
+      throw new Error(`Club with ID "${id}" already exists in the competition`)
     }
 
     this.#competition = competition;
-    this.#id = clubID;
+    this.#id = id;
     this.setName(clubName);
     this.#notes = null;
     this.#teamLookup = {};
@@ -76,7 +76,7 @@ class Club {
    * from the Competitions JSON file for this club
    *
    * @param {object} clubData Data from a Competitions JSON file for a single club
-   * @return {Club} the updated club object
+   * @returns {Club} the updated club object
    */
   loadFromData (clubData) {
     if (Object.hasOwn(clubData, 'notes')) {
@@ -88,7 +88,7 @@ class Club {
   /**
    * Return the club definition in a form suitable for serializing
    *
-   * @return {Object}
+   * @returns {Object}
    */
   serialize () {
     const team = {
@@ -106,7 +106,7 @@ class Club {
   /**
    * Get the competition this club is in
    *
-   * @return {Competition}
+   * @returns {Competition}
    */
   getCompetition () {
     return this.#competition
@@ -115,7 +115,7 @@ class Club {
   /**
    * Get the ID for this club
    *
-   * @return {string} the id for this club
+   * @returns {string} the id for this club
    */
   getID () {
     return this.#id
@@ -125,7 +125,7 @@ class Club {
    * Set the name for this club
    *
    * @param {string} name the name for this club
-   * @return {Club} this Club
+   * @returns {Club} this Club
    * @throws {Error} When the provided club name is invalid
    */
   setName (name) {
@@ -139,7 +139,7 @@ class Club {
   /**
    * Get the name for this club
    *
-   * @return {string} the name for this club
+   * @returns {string} the name for this club
    */
   getName () {
     return this.#name
@@ -149,7 +149,7 @@ class Club {
    * Set the notes for this club
    *
    * @param {string|null} notes the notes for this club
-   * @return {Club} this Club
+   * @returns {Club} this Club
    */
   setNotes (notes) {
     this.#notes = notes;
@@ -159,7 +159,7 @@ class Club {
   /**
    * Get the notes for this club
    *
-   * @return {string|null} the notes for this club
+   * @returns {string|null} the notes for this club
    */
   getNotes () {
     return this.#notes
@@ -168,7 +168,7 @@ class Club {
   /**
    * Does this club have any notes attached
    *
-   * @return {bool} True if the club has notes, otherwise false
+   * @returns {bool} True if the club has notes, otherwise false
    */
   hasNotes () {
     return this.#notes !== null
@@ -178,10 +178,10 @@ class Club {
    * Add a team to this club
    *
    * @param {CompetitionTeam} team the team to add
-   * @return {Club} this Club
+   * @returns {Club} this Club
    */
   addTeam (team) {
-    if (this.hasTeamWithID(team.getID())) {
+    if (this.hasTeam(team.getID())) {
       return this
     }
     this.#teamLookup[team.getID()] = team;
@@ -192,7 +192,7 @@ class Club {
   /**
    * Get the teams in this club
    *
-   * @return {array<CompetitionTeam>}
+   * @returns {array<CompetitionTeam>}
    */
   getTeams () {
     return Object.values(this.#teamLookup)
@@ -201,30 +201,30 @@ class Club {
   /**
    * Check if the club has a team with the specified ID
    *
-   * @param {string} teamID The ID of the team
-   * @return {bool}
+   * @param {string} id The ID of the team
+   * @returns {bool}
    */
-  hasTeamWithID (teamID) {
-    return Object.hasOwn(this.#teamLookup, teamID)
+  hasTeam (id) {
+    return Object.hasOwn(this.#teamLookup, id)
   }
 
   /**
    * Delete a team from this club
    *
-   * @param {string} teamID The ID of the team to delete
-   * @return void
+   * @param {string} id The ID of the team to delete
+   * @returns void
    */
-  deleteTeam (teamID) {
-    if (this.hasTeamWithID(teamID)) {
-      const team = this.#teamLookup[teamID];
-      delete this.#teamLookup[teamID];
+  deleteTeam (id) {
+    if (this.hasTeam(id)) {
+      const team = this.#teamLookup[id];
+      delete this.#teamLookup[id];
       team.setClubID(null);
     }
     return this
   }
 }
 
-var e={d:(t,i)=>{for(var n in i)e.o(i,n)&&!e.o(t,n)&&Object.defineProperty(t,n,{enumerable:!0,get:i[n]});},o:(e,t)=>Object.prototype.hasOwnProperty.call(e,t)},t={};e.d(t,{f:()=>i});const i=JSON.parse('{"$schema":"http://json-schema.org/draft-07/schema#","$id":"https://github.com/monkeysppp/VBCompetitions-schema/tree/1.0.0","title":"Definition of a competition in VolleyTourney","description":"This document contains the teams, the competition structure, the matches and the results of a volleyball competition","type":"object","properties":{"version":{"description":"The version of schema that the document conforms to.  Defaults to 1.0.0","type":"string","default":"1.0.0","enum":["1.0.0"]},"metadata":{"description":"A list of key-value pairs representing metadata about the competition, where each key must be unique. This can be used for functionality such as associating a competition with a season, and searching for competitions with matching metadata","type":"array","minItems":1,"maxItems":1000,"items":{"description":"A key-value pair","type":"object","additionalProperties":false,"properties":{"key":{"description":"The key for a metadata entry","type":"string","minLength":1,"maxLength":100},"value":{"description":"The value for a metadata entry.  Note that this must be a string, so values such as \\"true\\", \\"false\\" or \\"null\\" must be represented as a string","type":"string","minLength":1,"maxLength":1000}},"required":["key","value"]}},"name":{"description":"A name for the competition","type":"string","minLength":1,"maxLength":10000},"notes":{"description":"Free form string to add notes about the competition.  This can be used for arbitrary content that various implementations can use","type":"string","minLength":1},"clubs":{"description":"A list of clubs that the teams are in","type":"array","items":{"description":"A club definition","type":"object","additionalProperties":false,"properties":{"id":{"description":"An ID for the club, e.g. \'CLUB1\'.  This must be unique within the competition.  It must contain only ASCII printable characters excluding \\" : { } ? =","type":"string","minLength":1,"maxLength":100,"pattern":"^((?![\\":{}?=])[\\\\x20-\\\\x7F])+$"},"name":{"description":"The name for the club","type":"string","minLength":1,"maxLength":1000},"notes":{"description":"Free form string to add notes about a club.  This can be used for arbitrary content that various implementations can use","type":"string","minLength":1}},"required":["id","name"]}},"teams":{"description":"The list of all teams in this competition","type":"array","items":{"description":"A team definition","type":"object","additionalProperties":false,"properties":{"id":{"description":"An ID for the team, e.g. \'TM1\'.  This is used in the rest of the instance document to specify the team so must be unique within the competition.  It must contain only ASCII printable characters excluding \\" : { } ? =","type":"string","minLength":1,"maxLength":100,"pattern":"^((?![\\":{}?=])[\\\\x20-\\\\x7F])+$"},"name":{"description":"The name for the team","type":"string","minLength":1,"maxLength":1000},"contacts":{"description":"A list of contact details for a team","type":"array","items":{"description":"A single contact for a team","type":"object","additionalProperties":false,"properties":{"id":{"description":"A unique ID for this contact, e.g. \'TM1Contact1\'.  This must be unique within the team.  It must contain only ASCII printable characters excluding \\" : { } ? =","type":"string","minLength":1,"maxLength":100,"pattern":"^((?![\\":{}?=])[\\\\x20-\\\\x7F])+$"},"name":{"description":"The name of this contact","type":"string","minLength":1,"maxLength":1000},"roles":{"description":"The roles of this contact within the team","type":"array","minItems":1,"uniqueItems":true,"items":{"description":"A role of this contact","type":"string","default":"secretary","enum":["secretary","treasurer","manager","captain","coach","assistantCoach","medic"]}},"emails":{"description":"The email addresses for this contact","type":"array","minItems":1,"uniqueItems":true,"items":{"description":"An email address for this contact","type":"string","format":"email","minLength":3}},"phones":{"description":"The telephone numbers for this contact","type":"array","minItems":1,"uniqueItems":true,"items":{"description":"A telephone number for this contact","type":"string","minLength":1,"maxLength":50}}},"required":["id","roles"]}},"players":{"description":"A list of players for a team","type":"array","items":{"description":"A single player in a team","type":"object","additionalProperties":false,"properties":{"id":{"description":"A unique ID for this player. This may be the player\'s registration number.  This must be unique within the team.  It must contain only ASCII printable characters excluding \\" : { } ? =","type":"string","minLength":1,"maxLength":100,"pattern":"^((?![\\":{}?=])[\\\\x20-\\\\x7F])+$"},"name":{"description":"The name of this contact","type":"string","minLength":1,"maxLength":1000},"number":{"description":"The player\'s shirt number","type":"integer","minimum":1},"notes":{"description":"Free form string to add notes about the player.  This can be used for arbitrary content that various implementations can use","type":"string","minLength":1}},"required":["id","name"]}},"club":{"description":"The ID of the club this team is in","type":"string","minLength":1,"maxLength":100},"notes":{"description":"Free form string to add notes about a team.  This can be used for arbitrary content that various implementations can use","type":"string","minLength":1}},"required":["id","name"]}},"stages":{"description":"The stages of the competition.  Stages are phases of a competition that happen in order.  There may be only one stage (e.g. for a flat league) or multiple in sequence (e.g. for a tournament with pools, then crossovers, then finals)","type":"array","items":{"description":"A single competition stage","type":"object","additionalProperties":false,"properties":{"id":{"description":"A unique ID for this stage, e.g. \'LG\'.  It must contain only ASCII printable characters excluding \\" : { } ? =","type":"string","minLength":1,"maxLength":100,"pattern":"^((?![\\":{}?=])[\\\\x20-\\\\x7F])+$"},"name":{"description":"Descriptive title for the stage, e.g. \'Pools\'","type":"string","minLength":1,"maxLength":1000},"notes":{"description":"Free form string to add notes about this stage.  This can be used for arbitrary content that various implementations can use","type":"string","minLength":1},"description":{"description":"An array of string values as a verbose description of the nature of the stage, e.g. \'The first stage of the competition will consist of separate pools, where....\'","type":"array","items":{"description":"A part of the description of this stage","type":"string","minLength":1}},"groups":{"description":"The groups within a stage of the competition.  There may be only one group (e.g. for a flat league) or multiple in parallel (e.g. pool 1, pool 2)","type":"array","items":{"description":"A group within this stage of the competition","type":"object","additionalProperties":false,"properties":{"id":{"description":"A unique ID for this group, e.g. \'P1\'.  It must contain only ASCII printable characters excluding \\" : { } ? =","type":"string","minLength":1,"maxLength":100,"pattern":"^((?![\\":{}?=])[\\\\x20-\\\\x7F])+$"},"name":{"description":"Descriptive title for the group, e.g. \'Pool 1\'","type":"string","minLength":1,"maxLength":1000},"notes":{"description":"Free form string to add notes about this group.  This can be used for arbitrary content that various implementations can use","type":"string","minLength":1},"description":{"description":"An array of string values as a verbose description of the nature of the group, e.g. \'For the pool stage, teams will play each other once, with the top 2 teams going through to....\'","type":"array","items":{"description":"A part of the description of this stage","type":"string","minLength":1}},"type":{"description":"The type of competition applying to this group, which may dictate how the results are processed.  If this has the value \'league\' then the property \'league\' must be defined","type":"string","enum":["league","crossover","knockout"]},"knockout":{"description":"Configuration for the knockout group","type":"object","additionalProperties":false,"properties":{"standing":{"description":"Configuration for the knockout group","type":"array","items":{"description":"An ordered mapping from a position to a team ID","type":"object","additionalProperties":false,"properties":{"position":{"description":"The text description of the position, e.g. \\"1st\\", \\"2nd\\".  Having this field allows multiple teams to have the same \\"position\\", for example if there are no play-off games then two entries can have the value \\"3rd\\"","type":"string","minLength":1},"id":{"description":"The identifier for the team.  This must be a team reference (see the documentation), for example for the team in \\"1st\\", this would refer to the winner of the final in this stage->group","type":"string","minLength":1}},"required":["position","id"]},"minItems":1}},"required":["standing"]},"league":{"description":"Configuration for the league","type":"object","additionalProperties":false,"properties":{"ordering":{"description":"An array of parameters that define how the league positions are worked out, where the array position determines the precedence of that parameter, e.g. [ \\"PTS\\", \\"SD\\" ] means that league position is determined by league points, with ties decided by set difference.  Valid parameters are \'PTS\'=league points, \'WINS\'=wins, \'LOSSES\'=losses, \'H2H\'=head to head, PF\'=points for, \'PA\'=points against, \'PD\'=points difference, \'SF\'=sets for, \'SA\'=sets against, \'SD\'=set difference, \'BP\'=bonus points, \'PP\'=penalty points.  When comparing teams, a higher value for a parameter results in a higher league position except when comparing \'LOSSES\', \'PA\', \'SA\', and \'PP\' (where a lower value results in a higher league position).  Note that \'H2H\' only considers wins and losses between two teams; this means that, depending on whether draws are allowed or whether teams play each other multiple times, the head to head comparison may not be able to distinguish between two teams","type":"array","items":{"description":"A parameter that defines the league position","type":"string","enum":["PTS","WINS","LOSSES","H2H","PF","PA","PD","SF","SA","SD","BP","PP"]},"minItems":1},"points":{"description":"Properties defining how to calculate the league points based on match results","type":"object","additionalProperties":false,"properties":{"played":{"description":"Number of league points for playing the match.  Note that a forfeit counts as a \\"played\\" match, so if this has a non-zero value and the desire is for a forfeit to yield zero points then the \\"forfeit\\" value should be set to the same as this value","type":"integer","default":0},"perSet":{"description":"Number of league points for each set won","type":"integer","default":0},"win":{"description":"Number of league points for winning (by 2 sets or more if playing sets)","type":"integer","default":3},"winByOne":{"description":"Number of league points for winning by 1 set","type":"integer","default":0},"lose":{"description":"Number of league points for losing (by 2 sets or more if playing sets)","type":"integer","default":0},"loseByOne":{"description":"Number of league points for losing by 1 set","type":"integer","default":0},"forfeit":{"description":"Number of league penalty points for forfeiting a match.  This should be a positive number and will be subtracted from a team\'s league points for each forfeited match","type":"integer","default":0}}}},"required":["ordering","points"]},"matchType":{"description":"Are the matches played in sets or continuous points.  If this has the value \'sets\' then the property \'sets\' must be defined","type":"string","enum":["sets","continuous"]},"sets":{"description":"Configuration defining the nature of a set","type":"object","additionalProperties":false,"properties":{"maxSets":{"description":"The maximum number of sets that could be played, often known as \'best of\', e.g. if this has the value \'5\' then the match is played as \'best of 5 sets\'","type":"integer","default":5,"minimum":1},"setsToWin":{"description":"The number of sets that must be won to win the match.  This is usually one more than half the \'maxSets\', but may be needed if draws are allowed, e.g. if a competition dictates that exactly 2 sets must be played (by setting \'maxSets\' to \'2\') and that draws are allowed, then \'setsToWin\' should still be set to \'2\' to indicate that 2 sets are needed to win the match","type":"integer","default":3,"minimum":1},"clearPoints":{"description":"The number of points lead that the winning team must have, e.g. if this has the value \'2\' then teams must \'win by 2 clear points\'.  Note that if \'maxPoints\' has a value then that takes precedence, i.e. if \'maxPoints\' is set to \'35\' then a team can win \'35-34\' irrespective of the value of \'clearPoints\'","type":"integer","default":2,"minimum":1},"minPoints":{"description":"The minimum number of points that either team must score for a set to count as valid.  Usually only used for time-limited matches","type":"integer","default":1,"minimum":1},"pointsToWin":{"description":"The minimum number of points required to win all but the last set","type":"integer","default":25,"minimum":1},"lastSetPointsToWin":{"description":"The minimum number of points required to win the last set","type":"integer","default":15,"minimum":1},"maxPoints":{"description":"The upper limit of points that can be scored in a set","type":"integer","default":1000,"minimum":1},"lastSetMaxPoints":{"description":"The upper limit of points that can be scored in the last set","type":"integer","default":1000,"minimum":1}}},"drawsAllowed":{"description":"Sets whether drawn matches are allowed","default":false,"type":"boolean"},"matches":{"$ref":"#/$defs/matches"}},"allOf":[{"if":{"properties":{"type":{"const":"league"}},"required":["type"]},"then":{"required":["league"]}},{"if":{"properties":{"type":{"const":"crossover"}},"required":["type"]},"then":{"anyOf":[{"properties":{"drawsAllowed":{"enum":[false]}}},{"not":{"required":["drawsAllowed"]}}]}},{"if":{"properties":{"type":{"const":"knockout"}},"required":["type"]},"then":{"anyOf":[{"properties":{"drawsAllowed":{"enum":[false]}}},{"not":{"required":["drawsAllowed"]}}]}},{"if":{"properties":{"matchType":{"const":"continuous"}},"required":["matchType"]},"then":{"properties":{"matches":{"type":"array","items":{"type":"object","properties":{"homeTeam":{"type":"object","properties":{"scores":{"type":"array","maxItems":1}}},"awayTeam":{"type":"object","properties":{"scores":{"type":"array","maxItems":1}}}}}}},"allOf":[{"not":{"required":["sets"]}}]}},{"if":{"properties":{"matchType":{"const":"continuous"}},"required":["matchType"]},"then":{"allOf":[{"not":{"required":["sets"]}}]}},{"if":{"properties":{"matchType":{"const":"continuous"},"matches":{"type":"array","items":{"type":"object","properties":{"type":{"const":"match"}}}}},"required":["matchType"]},"then":{"properties":{"matches":{"type":"array","items":{"type":"object","required":["complete"]}}}}}],"required":["id","type","matchType","matches"]}},"ifUnknown":{"description":"It can be useful to still present something to the user about the later stages of a competition, even if the teams playing in that stage is not yet known.  This defines what should be presented in any application handling this competition\'s data in such cases","type":"object","additionalProperties":false,"properties":{"description":{"description":"An array of string values to be presented in the case that the teams in this stage are not yet known, typically as an explanation of what this stage will contain (e.g. \'The crossover games will be between the top two teams in each pool\')","type":"array","items":{"description":"A part of the description of this stage","type":"string","minLength":1}},"matches":{"$ref":"#/$defs/matches"}},"required":["description"]}},"required":["id","groups"]}}},"required":["name","teams","stages"],"$defs":{"team":{"description":"A team playing in the match","type":"object","additionalProperties":false,"properties":{"id":{"description":"The identifier for the team.  This can either be a team ID or a team reference (see the documentation)","type":"string","minLength":1,"maxLength":1000},"scores":{"description":"The array of set scores.  If the matchType is \'continuous\' then only the first value in the array is used","type":"array","items":{"description":"The set score","type":"integer","minimum":0}},"mvp":{"description":"This team\'s most valuable player award.  This can either be a name or a player reference","type":"string","minLength":1},"forfeit":{"description":"Did this team forfeit the match","type":"boolean","default":false},"bonusPoints":{"description":"Does this team get any bonus points in the league.  This is separate from any league points calculated from the match result, and is added to their league points","type":"integer","default":0,"minimum":0},"penaltyPoints":{"description":"Does this team receive any penalty points in the league.  This is separate from any league points calculated from the match result, and is subtracted from their league points","type":"integer","default":0,"minimum":0},"notes":{"description":"Free form string to add notes about the team relating to this match.  This can be used for arbitrary content that various implementations can use","type":"string","minLength":1},"players":{"description":"The list of players from this team that played in this match","type":"array","items":{"description":"The ID of the player as a player reference","type":"string","minLength":1}}},"required":["id","scores"]},"matches":{"description":"An array of matches (or breaks in play) in this group.  Note that a team ID and each unique team references can ony appear in one group, i.e. a team cannot play in multiple groups in a stage; if they did then those two groups would technically be the same group","type":"array","items":{"oneOf":[{"description":"A match between two teams","type":"object","additionalProperties":false,"properties":{"id":{"description":"An identifier for this match, i.e. a match number.  It must contain only ASCII printable characters excluding \\" : { } ? =","type":"string","minLength":1,"maxLength":100,"pattern":"^((?![\\":{}?=])[\\\\x20-\\\\x7F])+$"},"court":{"description":"The court that a match takes place on","type":"string","minLength":1,"maxLength":1000},"venue":{"description":"The venue that a match takes place at","type":"string","minLength":1,"maxLength":10000},"type":{"description":"The type of match, i.e. \'match\'","type":"string","enum":["match"]},"date":{"description":"The date of the match in the format YYYY-MM-DD","type":"string","format":"date"},"warmup":{"description":"The start time for the warmup in the format HH:mm using a 24 hour clock","type":"string","pattern":"^([0-1][0-9]|2[0-3]):[0-5][0-9]$"},"start":{"description":"The start time for the match in the format HH:mm using a 24 hour clock","type":"string","pattern":"^([0-1][0-9]|2[0-3]):[0-5][0-9]$"},"duration":{"description":"The maximum duration of the match in the format HH:mm","type":"string","pattern":"^[0-9]+:[0-5][0-9]$"},"complete":{"description":"Whether the match is complete.  This must be set when a match has a \\"duration\\" or when the matchType is \\"continuous\\".  What about a \\"continuous\\" match with no \\"duration\\" and a target score?  This can be represented by a \\"sets\\" match with \\"maxSets\\" = 1","type":"boolean"},"homeTeam":{"$ref":"#/$defs/team","description":"The \'home\' team for the match"},"awayTeam":{"$ref":"#/$defs/team","description":"The \'away\' team for the match"},"officials":{"oneOf":[{"description":"The officials for this match","type":"object","additionalProperties":false,"properties":{"team":{"description":"The team assigned to referee the match.  This can either be a team ID or a team reference","type":"string","minLength":1,"maxLength":1000}},"required":["team"]},{"description":"The officials for this match","type":"object","additionalProperties":false,"properties":{"first":{"description":"The first referee","type":"string","minLength":1},"second":{"description":"The second referee","type":"string","minLength":1},"challenge":{"description":"The challenge referee, responsible for resolving challenges from the teams","type":"string","minLength":1},"assistantChallenge":{"description":"The assistant challenge referee, who assists the challenge referee","type":"string","minLength":1},"reserve":{"description":"The reserve referee","type":"string","minLength":1},"scorer":{"description":"The scorer","type":"string","minLength":1},"assistantScorer":{"description":"The assistant scorer","type":"string","minLength":1},"linespersons":{"description":"The list of linespersons","type":"array","maxItems":4,"items":{"description":"A linesperson","type":"string","minLength":1}},"ballCrew":{"description":"The list of people in charge of managing the game balls","type":"array","maxItems":100,"items":{"description":"A ball person","type":"string","minLength":1}}},"required":["first"]}]},"mvp":{"description":"A most valuable player award for the match. This can either be a name a player reference of the form {TEAM-ID:PLAYER-ID}","type":"string","minLength":1,"maxLength":203},"manager":{"oneOf":[{"description":"The court manager in charge of this match","type":"string","minLength":1,"maxLength":1000},{"description":"The court managers for this match","type":"object","additionalProperties":false,"properties":{"team":{"description":"The team assigned to manage the match.  This can either be a team ID or a team reference","type":"string","minLength":1,"maxLength":1000}},"required":["team"]}]},"friendly":{"description":"Whether the match is a friendly.  These matches do not contribute toward a league position.  If a team only participates in friendly matches then they are not included in the league table at all","type":"boolean","default":false},"notes":{"description":"Free form string to add notes about a match","type":"string","minLength":1}},"dependencies":{"duration":["complete"]},"required":["id","type","homeTeam","awayTeam"]},{"description":"A break in play, possibly while other matches are going on in other competitions running in parallel","type":"object","additionalProperties":false,"properties":{"type":{"description":"The type of match, i.e. \'break\'","type":"string","enum":["break"]},"start":{"description":"The start time for the break in the format HH:mm using a 24 hour clock","type":"string","pattern":"^([0-1][0-9]|2[0-3]):[0-5][0-9]$"},"date":{"description":"The date of the break in the format YYYY-MM-DD","type":"string","format":"date"},"duration":{"description":"The duration of the break","type":"string","pattern":"^[0-9]+:[0-5][0-9]$"},"name":{"description":"The name for the break, e.g. \'Lunch break\'","default":"Break","type":"string","minLength":1,"maxLength":1000}},"required":["type"]}]}}}}');var n=t.f;
+var e={d:(t,i)=>{for(var n in i)e.o(i,n)&&!e.o(t,n)&&Object.defineProperty(t,n,{enumerable:!0,get:i[n]});},o:(e,t)=>Object.prototype.hasOwnProperty.call(e,t)},t={};e.d(t,{f:()=>i});const i=JSON.parse('{"$schema":"http://json-schema.org/draft-07/schema#","$id":"https://github.com/monkeysppp/VBCompetitions-schema/tree/1.0.0","title":"Definition of a competition in VolleyTourney","description":"This document contains the teams, the competition structure, the matches and the results of a volleyball competition","type":"object","properties":{"version":{"description":"The version of schema that the document conforms to.  Defaults to 1.0.0","type":"string","default":"1.0.0","enum":["1.0.0"]},"metadata":{"description":"A list of key-value pairs representing metadata about the competition, where each key must be unique. This can be used for functionality such as associating a competition with a season, and searching for competitions with matching metadata","type":"array","minItems":1,"maxItems":1000,"items":{"description":"A key-value pair","type":"object","additionalProperties":false,"properties":{"key":{"description":"The key for a metadata entry","type":"string","minLength":1,"maxLength":100},"value":{"description":"The value for a metadata entry.  Note that this must be a string, so values such as \\"true\\", \\"false\\" or \\"null\\" must be represented as a string","type":"string","minLength":1,"maxLength":1000}},"required":["key","value"]}},"name":{"description":"A name for the competition","type":"string","minLength":1,"maxLength":10000},"notes":{"description":"Free form string to add notes about the competition.  This can be used for arbitrary content that various implementations can use","type":"string","minLength":1},"clubs":{"description":"A list of clubs that the teams are in","type":"array","items":{"description":"A club definition","type":"object","additionalProperties":false,"properties":{"id":{"description":"An ID for the club, e.g. \'CLUB1\'.  This must be unique within the competition.  It must contain only ASCII printable characters excluding \\" : { } ? =","type":"string","minLength":1,"maxLength":100,"pattern":"^((?![\\":{}?=])[\\\\x20-\\\\x7F])+$"},"name":{"description":"The name for the club","type":"string","minLength":1,"maxLength":1000},"notes":{"description":"Free form string to add notes about a club.  This can be used for arbitrary content that various implementations can use","type":"string","minLength":1}},"required":["id","name"]}},"teams":{"description":"The list of all teams in this competition","type":"array","items":{"description":"A team definition","type":"object","additionalProperties":false,"properties":{"id":{"description":"An ID for the team, e.g. \'TM1\'.  This is used in the rest of the instance document to specify the team so must be unique within the competition.  It must contain only ASCII printable characters excluding \\" : { } ? =","type":"string","minLength":1,"maxLength":100,"pattern":"^((?![\\":{}?=])[\\\\x20-\\\\x7F])+$"},"name":{"description":"The name for the team","type":"string","minLength":1,"maxLength":1000},"contacts":{"description":"A list of contact details for a team","type":"array","items":{"description":"A single contact for a team","type":"object","additionalProperties":false,"properties":{"id":{"description":"A unique ID for this contact, e.g. \'TM1Contact1\'.  This must be unique within the team.  It must contain only ASCII printable characters excluding \\" : { } ? =","type":"string","minLength":1,"maxLength":100,"pattern":"^((?![\\":{}?=])[\\\\x20-\\\\x7F])+$"},"name":{"description":"The name of this contact","type":"string","minLength":1,"maxLength":1000},"roles":{"description":"The roles of this contact within the team","type":"array","minItems":1,"uniqueItems":true,"items":{"description":"A role of this contact","type":"string","default":"secretary","enum":["secretary","treasurer","manager","captain","coach","assistantCoach","medic"]}},"emails":{"description":"The email addresses for this contact","type":"array","minItems":1,"uniqueItems":true,"items":{"description":"An email address for this contact","type":"string","format":"email","minLength":3}},"phones":{"description":"The telephone numbers for this contact","type":"array","minItems":1,"uniqueItems":true,"items":{"description":"A telephone number for this contact","type":"string","minLength":1,"maxLength":50}}},"required":["id","roles"]}},"club":{"description":"The ID of the club this team is in","type":"string","minLength":1,"maxLength":100},"notes":{"description":"Free form string to add notes about a team.  This can be used for arbitrary content that various implementations can use","type":"string","minLength":1}},"required":["id","name"]}},"players":{"description":"A list of players","type":"array","items":{"description":"A single player","type":"object","additionalProperties":false,"properties":{"id":{"description":"A unique ID for this player. This may be the player\'s registration number.  This must be unique within the competition.  It must contain only ASCII printable characters excluding \\" : { } ? =","type":"string","minLength":1,"maxLength":100,"pattern":"^((?![\\":{}?=])[\\\\x20-\\\\x7F])+$"},"name":{"description":"The name of this contact","type":"string","minLength":1,"maxLength":1000},"number":{"description":"The player\'s shirt number","type":"integer","minimum":1},"teams":{"description":"An ordered list of teams the player is/has been registered for in this competition, in the order that they have been registered (and therefore transferred in the case of more than one entry).  A player can only be registered with one team at any time within this competition, meaning that if there are multiple teams listed, either all but the last entry MUST have an \\"until\\" value, or there must be no \\"from\\" or \\"until\\" values in any entry","type":"array","items":{"description":"A Player\'s team registration entry, linking them to the specified team, potentially for the time period covered by \\"from\\" to \\"until\\"","type":"object","additionalProperties":false,"properties":{"id":{"description":"The team ID that the player is/was registered with","type":"string","minLength":1,"maxLength":100,"pattern":"^((?![\\":{}?=])[\\\\x20-\\\\x7F])+$"},"from":{"description":"The date from which the player is/was registered with this team.  When this is not present, there should not be any \\"from\\" or \\"until\\" values in any entry in this player\'s \\"teams\\" array","type":"string","format":"date"},"until":{"description":"The date up to which the player was registered with this team.  When a \\"from\\" date is specified and this is not, it should be taken that a player is still registered with this team","type":"string","format":"date"},"notes":{"description":"Free form string to add notes about this player\'s team entry.  This can be used for arbitrary content that various implementations can use","type":"string","minLength":1}},"required":["id"]}},"notes":{"description":"Free form string to add notes about the player.  This can be used for arbitrary content that various implementations can use","type":"string","minLength":1}},"required":["id","name"]}},"stages":{"description":"The stages of the competition.  Stages are phases of a competition that happen in order.  There may be only one stage (e.g. for a flat league) or multiple in sequence (e.g. for a tournament with pools, then crossovers, then finals)","type":"array","items":{"description":"A single competition stage","type":"object","additionalProperties":false,"properties":{"id":{"description":"A unique ID for this stage, e.g. \'LG\'.  It must contain only ASCII printable characters excluding \\" : { } ? =","type":"string","minLength":1,"maxLength":100,"pattern":"^((?![\\":{}?=])[\\\\x20-\\\\x7F])+$"},"name":{"description":"Descriptive title for the stage, e.g. \'Pools\'","type":"string","minLength":1,"maxLength":1000},"notes":{"description":"Free form string to add notes about this stage.  This can be used for arbitrary content that various implementations can use","type":"string","minLength":1},"description":{"description":"An array of string values as a verbose description of the nature of the stage, e.g. \'The first stage of the competition will consist of separate pools, where....\'","type":"array","items":{"description":"A part of the description of this stage","type":"string","minLength":1}},"groups":{"description":"The groups within a stage of the competition.  There may be only one group (e.g. for a flat league) or multiple in parallel (e.g. pool 1, pool 2)","type":"array","items":{"description":"A group within this stage of the competition","type":"object","additionalProperties":false,"properties":{"id":{"description":"A unique ID for this group, e.g. \'P1\'.  It must contain only ASCII printable characters excluding \\" : { } ? =","type":"string","minLength":1,"maxLength":100,"pattern":"^((?![\\":{}?=])[\\\\x20-\\\\x7F])+$"},"name":{"description":"Descriptive title for the group, e.g. \'Pool 1\'","type":"string","minLength":1,"maxLength":1000},"notes":{"description":"Free form string to add notes about this group.  This can be used for arbitrary content that various implementations can use","type":"string","minLength":1},"description":{"description":"An array of string values as a verbose description of the nature of the group, e.g. \'For the pool stage, teams will play each other once, with the top 2 teams going through to....\'","type":"array","items":{"description":"A part of the description of this stage","type":"string","minLength":1}},"type":{"description":"The type of competition applying to this group, which may dictate how the results are processed.  If this has the value \'league\' then the property \'league\' must be defined","type":"string","enum":["league","crossover","knockout"]},"knockout":{"description":"Configuration for the knockout group","type":"object","additionalProperties":false,"properties":{"standing":{"description":"Configuration for the knockout group","type":"array","items":{"description":"An ordered mapping from a position to a team ID","type":"object","additionalProperties":false,"properties":{"position":{"description":"The text description of the position, e.g. \\"1st\\", \\"2nd\\".  Having this field allows multiple teams to have the same \\"position\\", for example if there are no play-off games then two entries can have the value \\"3rd\\"","type":"string","minLength":1},"id":{"description":"The identifier for the team.  This must be a team reference (see the documentation), for example for the team in \\"1st\\", this would refer to the winner of the final in this stage->group","type":"string","minLength":1}},"required":["position","id"]},"minItems":1}},"required":["standing"]},"league":{"description":"Configuration for the league","type":"object","additionalProperties":false,"properties":{"ordering":{"description":"An array of parameters that define how the league positions are worked out, where the array position determines the precedence of that parameter, e.g. [ \\"PTS\\", \\"SD\\" ] means that league position is determined by league points, with ties decided by set difference.  Valid parameters are \'PTS\'=league points, \'WINS\'=wins, \'LOSSES\'=losses, \'H2H\'=head to head, PF\'=points for, \'PA\'=points against, \'PD\'=points difference, \'SF\'=sets for, \'SA\'=sets against, \'SD\'=set difference, \'BP\'=bonus points, \'PP\'=penalty points.  When comparing teams, a higher value for a parameter results in a higher league position except when comparing \'LOSSES\', \'PA\', \'SA\', and \'PP\' (where a lower value results in a higher league position).  Note that \'H2H\' only considers wins and losses between two teams; this means that, depending on whether draws are allowed or whether teams play each other multiple times, the head to head comparison may not be able to distinguish between two teams","type":"array","items":{"description":"A parameter that defines the league position","type":"string","enum":["PTS","WINS","LOSSES","H2H","PF","PA","PD","SF","SA","SD","BP","PP"]},"minItems":1},"points":{"description":"Properties defining how to calculate the league points based on match results","type":"object","additionalProperties":false,"properties":{"played":{"description":"Number of league points for playing the match.  Note that a forfeit counts as a \\"played\\" match, so if this has a non-zero value and the desire is for a forfeit to yield zero points then the \\"forfeit\\" value should be set to the same as this value","type":"integer","default":0},"perSet":{"description":"Number of league points for each set won","type":"integer","default":0},"win":{"description":"Number of league points for winning (by 2 sets or more if playing sets)","type":"integer","default":3},"winByOne":{"description":"Number of league points for winning by 1 set","type":"integer","default":0},"lose":{"description":"Number of league points for losing (by 2 sets or more if playing sets)","type":"integer","default":0},"loseByOne":{"description":"Number of league points for losing by 1 set","type":"integer","default":0},"forfeit":{"description":"Number of league penalty points for forfeiting a match.  This should be a positive number and will be subtracted from a team\'s league points for each forfeited match","type":"integer","default":0}}}},"required":["ordering","points"]},"matchType":{"description":"Are the matches played in sets or continuous points.  If this has the value \'sets\' then the property \'sets\' must be defined","type":"string","enum":["sets","continuous"]},"sets":{"description":"Configuration defining the nature of a set","type":"object","additionalProperties":false,"properties":{"maxSets":{"description":"The maximum number of sets that could be played, often known as \'best of\', e.g. if this has the value \'5\' then the match is played as \'best of 5 sets\'","type":"integer","default":5,"minimum":1},"setsToWin":{"description":"The number of sets that must be won to win the match.  This is usually one more than half the \'maxSets\', but may be needed if draws are allowed, e.g. if a competition dictates that exactly 2 sets must be played (by setting \'maxSets\' to \'2\') and that draws are allowed, then \'setsToWin\' should still be set to \'2\' to indicate that 2 sets are needed to win the match","type":"integer","default":3,"minimum":1},"clearPoints":{"description":"The number of points lead that the winning team must have, e.g. if this has the value \'2\' then teams must \'win by 2 clear points\'.  Note that if \'maxPoints\' has a value then that takes precedence, i.e. if \'maxPoints\' is set to \'35\' then a team can win \'35-34\' irrespective of the value of \'clearPoints\'","type":"integer","default":2,"minimum":1},"minPoints":{"description":"The minimum number of points that either team must score for a set to count as valid.  Usually only used for time-limited matches","type":"integer","default":1,"minimum":1},"pointsToWin":{"description":"The minimum number of points required to win all but the last set","type":"integer","default":25,"minimum":1},"lastSetPointsToWin":{"description":"The minimum number of points required to win the last set","type":"integer","default":15,"minimum":1},"maxPoints":{"description":"The upper limit of points that can be scored in a set","type":"integer","default":1000,"minimum":1},"lastSetMaxPoints":{"description":"The upper limit of points that can be scored in the last set","type":"integer","default":1000,"minimum":1}}},"drawsAllowed":{"description":"Sets whether drawn matches are allowed","default":false,"type":"boolean"},"matches":{"$ref":"#/$defs/matches"}},"allOf":[{"if":{"properties":{"type":{"const":"league"}},"required":["type"]},"then":{"required":["league"]}},{"if":{"properties":{"type":{"const":"crossover"}},"required":["type"]},"then":{"anyOf":[{"properties":{"drawsAllowed":{"enum":[false]}}},{"not":{"required":["drawsAllowed"]}}]}},{"if":{"properties":{"type":{"const":"knockout"}},"required":["type"]},"then":{"anyOf":[{"properties":{"drawsAllowed":{"enum":[false]}}},{"not":{"required":["drawsAllowed"]}}]}},{"if":{"properties":{"matchType":{"const":"continuous"}},"required":["matchType"]},"then":{"properties":{"matches":{"type":"array","items":{"type":"object","properties":{"homeTeam":{"type":"object","properties":{"scores":{"type":"array","maxItems":1}}},"awayTeam":{"type":"object","properties":{"scores":{"type":"array","maxItems":1}}}}}}},"allOf":[{"not":{"required":["sets"]}}]}},{"if":{"properties":{"matchType":{"const":"continuous"}},"required":["matchType"]},"then":{"allOf":[{"not":{"required":["sets"]}}]}},{"if":{"properties":{"matchType":{"const":"continuous"},"matches":{"type":"array","items":{"type":"object","properties":{"type":{"const":"match"}}}}},"required":["matchType"]},"then":{"properties":{"matches":{"type":"array","items":{"type":"object","required":["complete"]}}}}}],"required":["id","type","matchType","matches"]}},"ifUnknown":{"description":"It can be useful to still present something to the user about the later stages of a competition, even if the teams playing in that stage is not yet known.  This defines what should be presented in any application handling this competition\'s data in such cases","type":"object","additionalProperties":false,"properties":{"description":{"description":"An array of string values to be presented in the case that the teams in this stage are not yet known, typically as an explanation of what this stage will contain (e.g. \'The crossover games will be between the top two teams in each pool\')","type":"array","items":{"description":"A part of the description of this stage","type":"string","minLength":1}},"matches":{"$ref":"#/$defs/matches"}},"required":["description"]}},"required":["id","groups"]}}},"required":["name","teams","stages"],"$defs":{"team":{"description":"A team playing in the match","type":"object","additionalProperties":false,"properties":{"id":{"description":"The identifier for the team.  This can either be a team ID or a team reference (see the documentation)","type":"string","minLength":1,"maxLength":1000},"scores":{"description":"The array of set scores.  If the matchType is \'continuous\' then only the first value in the array is used","type":"array","items":{"description":"The set score","type":"integer","minimum":0}},"mvp":{"description":"This team\'s most valuable player award.  This can either be a name or a reference to a player ID.  A reference takes the form {PLAYER_ID}","type":"string","minLength":1},"forfeit":{"description":"Did this team forfeit the match","type":"boolean","default":false},"bonusPoints":{"description":"Does this team get any bonus points in the league.  This is separate from any league points calculated from the match result, and is added to their league points","type":"integer","default":0,"minimum":0},"penaltyPoints":{"description":"Does this team receive any penalty points in the league.  This is separate from any league points calculated from the match result, and is subtracted from their league points","type":"integer","default":0,"minimum":0},"notes":{"description":"Free form string to add notes about the team relating to this match.  This can be used for arbitrary content that various implementations can use","type":"string","minLength":1},"players":{"description":"The list of players from this team that played in this match.  This can be either a player\'s name or a reference to a player ID","type":"array","items":{"description":"Either the name of the player or a reference to a player ID.  A reference takes the form {PLAYER_ID}.  Not all entries need to be references, meaning that the document can allow a mix of registered players with a player ID, and unregistered players indicated just by name","type":"string","minLength":1}}},"required":["id","scores"]},"matches":{"description":"An array of matches (or breaks in play) in this group.  Note that a team ID and each unique team references can ony appear in one group, i.e. a team cannot play in multiple groups in a stage; if they did then those two groups would technically be the same group","type":"array","items":{"oneOf":[{"description":"A match between two teams","type":"object","additionalProperties":false,"properties":{"id":{"description":"An identifier for this match, i.e. a match number.  It must contain only ASCII printable characters excluding \\" : { } ? =","type":"string","minLength":1,"maxLength":100,"pattern":"^((?![\\":{}?=])[\\\\x20-\\\\x7F])+$"},"court":{"description":"The court that a match takes place on","type":"string","minLength":1,"maxLength":1000},"venue":{"description":"The venue that a match takes place at","type":"string","minLength":1,"maxLength":10000},"type":{"description":"The type of match, i.e. \'match\'","type":"string","enum":["match"]},"date":{"description":"The date of the match in the format YYYY-MM-DD","type":"string","format":"date"},"warmup":{"description":"The start time for the warmup in the format HH:mm using a 24 hour clock","type":"string","pattern":"^([0-1][0-9]|2[0-3]):[0-5][0-9]$"},"start":{"description":"The start time for the match in the format HH:mm using a 24 hour clock","type":"string","pattern":"^([0-1][0-9]|2[0-3]):[0-5][0-9]$"},"duration":{"description":"The maximum duration of the match in the format HH:mm","type":"string","pattern":"^[0-9]+:[0-5][0-9]$"},"complete":{"description":"Whether the match is complete.  This must be set when a match has a \\"duration\\" or when the matchType is \\"continuous\\".  What about a \\"continuous\\" match with no \\"duration\\" and a target score?  This can be represented by a \\"sets\\" match with \\"maxSets\\" = 1","type":"boolean"},"homeTeam":{"$ref":"#/$defs/team","description":"The \'home\' team for the match"},"awayTeam":{"$ref":"#/$defs/team","description":"The \'away\' team for the match"},"officials":{"oneOf":[{"description":"The officials for this match","type":"object","additionalProperties":false,"properties":{"team":{"description":"The team assigned to referee the match.  This can either be a team ID or a team reference","type":"string","minLength":1,"maxLength":1000}},"required":["team"]},{"description":"The officials for this match","type":"object","additionalProperties":false,"properties":{"first":{"description":"The first referee","type":"string","minLength":1},"second":{"description":"The second referee","type":"string","minLength":1},"challenge":{"description":"The challenge referee, responsible for resolving challenges from the teams","type":"string","minLength":1},"assistantChallenge":{"description":"The assistant challenge referee, who assists the challenge referee","type":"string","minLength":1},"reserve":{"description":"The reserve referee","type":"string","minLength":1},"scorer":{"description":"The scorer","type":"string","minLength":1},"assistantScorer":{"description":"The assistant scorer","type":"string","minLength":1},"linespersons":{"description":"The list of linespersons","type":"array","maxItems":4,"items":{"description":"A linesperson","type":"string","minLength":1}},"ballCrew":{"description":"The list of people in charge of managing the game balls","type":"array","maxItems":100,"items":{"description":"A ball person","type":"string","minLength":1}}},"required":["first"]}]},"mvp":{"description":"A most valuable player award for the match. This can either be a name or a reference to a player ID.  A reference takes the form {PLAYER_ID}","type":"string","minLength":1,"maxLength":203},"manager":{"oneOf":[{"description":"The court manager in charge of this match","type":"string","minLength":1,"maxLength":1000},{"description":"The court managers for this match","type":"object","additionalProperties":false,"properties":{"team":{"description":"The team assigned to manage the match.  This can either be a team ID or a team reference","type":"string","minLength":1,"maxLength":1000}},"required":["team"]}]},"friendly":{"description":"Whether the match is a friendly.  These matches do not contribute toward a league position.  If a team only participates in friendly matches then they are not included in the league table at all","type":"boolean","default":false},"notes":{"description":"Free form string to add notes about a match","type":"string","minLength":1}},"dependencies":{"duration":["complete"]},"required":["id","type","homeTeam","awayTeam"]},{"description":"A break in play, possibly while other matches are going on in other competitions running in parallel","type":"object","additionalProperties":false,"properties":{"type":{"description":"The type of match, i.e. \'break\'","type":"string","enum":["break"]},"start":{"description":"The start time for the break in the format HH:mm using a 24 hour clock","type":"string","pattern":"^([0-1][0-9]|2[0-3]):[0-5][0-9]$"},"date":{"description":"The date of the break in the format YYYY-MM-DD","type":"string","format":"date"},"duration":{"description":"The duration of the break","type":"string","pattern":"^[0-9]+:[0-5][0-9]$"},"name":{"description":"The name for the break, e.g. \'Lunch break\'","default":"Break","type":"string","minLength":1,"maxLength":1000}},"required":["type"]}]}}}}');var n=t.f;
 
 class ContactRole {
   static TREASURER = 'treasurer'
@@ -297,7 +297,7 @@ class Contact {
       throw new Error('Invalid contact ID: must contain only ASCII printable characters excluding " : { } ? =')
     }
 
-    if (team.hasContactWithID(id)) {
+    if (team.hasContact(id)) {
       throw new Error(`Contact with ID "${id}" already exists in the team`)
     }
 
@@ -361,7 +361,7 @@ class Contact {
   /**
    * Return the contact definition in a form suitable for serializing
    *
-   * @return {Object}
+   * @returns {Object}
    */
   serialize () {
     const contact = {
@@ -502,197 +502,6 @@ class Contact {
   }
 }
 
-/**
- * Represents a player in a team.
- */
-class Player {
-  /**
-   * Free form string to add notes about this stage.
-   * @type {string|null}
-   * @private
-   **/
-
-  /**
-   * A unique ID for this player. This may be the player's registration number. This must be unique within the team
-   * @type {string}
-   * @private
-   **/
-  #id
-
-  /**
-   * The name of this player
-   * @type {string}
-   * @private
-   **/
-  #name
-
-  /**
-   * The player's shirt number
-   * @type {int|null}
-   * @private
-   **/
-  #number
-
-  /**
-   * Free form string to add notes about the player. This can be used for arbitrary content that various implementations can use
-   * @type {string|null}
-   * @private
-   **/
-  #notes
-
-  /**
-   * The team this player belongs to
-   * @type {CompetitionTeam}
-   * @private
-   **/
-  #team
-
-  /**
-   * @param {CompetitionTeam} team The team to which this player belongs
-   * @param {string} id The ID of the player
-   * @param {string} name The name of the player
-   * @throws {Error} If the ID is invalid or already exists in the team
-   */
-  constructor (team, id, name) {
-    if (id.length > 100 || id.length < 1) {
-      throw new Error('Invalid player ID: must be between 1 and 100 characters long')
-    }
-
-    if (!/^((?![":{}?=])[\x20-\x7F])+$/.test(id)) {
-      throw new Error('Invalid player ID: must contain only ASCII printable characters excluding " : { } ? =')
-    }
-
-    if (team.hasPlayerWithID(id)) {
-      throw new Error(`Player with ID "${id}" already exists in the team`)
-    }
-
-    this.#team = team;
-    this.#id = id;
-    this.setName(name);
-    this.#number = null;
-    this.#notes = null;
-  }
-
-  /**
-   * Load player data from an object.
-   *
-   * @param {object} playerData The data defining this Player
-   * @return {Player} The updated Player object
-   */
-  loadFromData (playerData) {
-    if (playerData.number !== undefined) {
-      this.setNumber(playerData.number);
-    }
-
-    if (playerData.notes !== undefined) {
-      this.setNotes(playerData.notes);
-    }
-
-    return this
-  }
-
-  /**
-   * Return the list of player data in a form suitable for serializing
-   *
-   * @return {object}
-   */
-  serialize () {
-    const player = {
-      id: this.#id,
-      name: this.#name
-    };
-
-    if (this.#number !== null) {
-      player.number = this.#number;
-    }
-
-    if (this.#notes !== null) {
-      player.notes = this.#notes;
-    }
-
-    return player
-  }
-
-  /**
-   * Get the team this player belongs to
-   * @returns {CompetitionTeam} The team this player belongs to
-   */
-  getTeam () {
-    return this.#team
-  }
-
-  /**
-   * Get the ID for this player.
-   *
-   * @return {string} The ID for this player
-   */
-  getID () {
-    return this.#id
-  }
-
-  /**
-   * Get the name for this player.
-   *
-   * @return {string} The name for this player
-   */
-  getName () {
-    return this.#name
-  }
-
-  /**
-   * Set the name for this player.
-   *
-   * @param {string} name The name for this player
-   * @throws {Error} If the name is invalid
-   */
-  setName (name) {
-    if (name.length > 1000 || name.length < 1) {
-      throw new Error('Invalid player name: must be between 1 and 1000 characters long')
-    }
-    this.#name = name;
-  }
-
-  /**
-   * Get the shirt number for this player.
-   *
-   * @return {number|null} The shirt number for this player
-   */
-  getNumber () {
-    return this.#number
-  }
-
-  /**
-   * Set the shirt number for this player.
-   *
-   * @param {number|null} number The shirt number for this player
-   * @throws {Error} If the number is invalid
-   */
-  setNumber (number) {
-    if (number !== null && number < 1) {
-      throw new Error(`Invalid player number "${number}": must be greater than 1`)
-    }
-    this.#number = number;
-  }
-
-  /**
-   * Get the notes for this player.
-   *
-   * @return {string|null} The notes for this player
-   */
-  getNotes () {
-    return this.#notes
-  }
-
-  /**
-   * Set the notes for this player.
-   *
-   * @param {string|null} notes The notes for this player
-   */
-  setNotes (notes) {
-    this.#notes = notes;
-  }
-}
-
 class CompetitionTeam {
   static UNKNOWN_TEAM_ID = 'UNKNOWN'
   static UNKNOWN_TEAM_NAME = 'UNKNOWN'
@@ -717,13 +526,6 @@ class CompetitionTeam {
    * @private
    */
   #contacts
-
-  /**
-   * A list of players for a team
-   * @type {array}
-   * @private
-   */
-  #players
 
   /**
    * The club this team is in
@@ -754,13 +556,6 @@ class CompetitionTeam {
   #contactLookup
 
   /**
-   * A Lookup table from player IDs to the contact
-   * @type {object}
-   * @private
-   */
-  #playerLookup
-
-  /**
    * Contains the team data of a competition, creating any metadata needed
    *
    * @param {Competition} competition A link back to the Competition this Team is in
@@ -776,7 +571,7 @@ class CompetitionTeam {
       throw new Error('Invalid team ID: must contain only ASCII printable characters excluding " : { } ? =')
     }
 
-    if (competition.hasTeamWithID(id)) {
+    if (competition.hasTeam(id)) {
       throw new Error(`Team with ID "${id}" already exists in the competition`)
     }
 
@@ -784,11 +579,9 @@ class CompetitionTeam {
     this.#id = id;
     this.setName(name);
     this.#contacts = [];
-    this.#players = [];
     this.#club = null;
     this.#notes = null;
     this.#contactLookup = {};
-    this.#playerLookup = {};
   }
 
   /**
@@ -796,7 +589,7 @@ class CompetitionTeam {
    *
    * @param {object} teamData The data defining this Team
    *
-   * @return {CompetitionTeam}
+   * @returns {CompetitionTeam}
    */
   loadFromData (teamData) {
     if (Object.hasOwn(teamData, 'contacts')) {
@@ -831,12 +624,6 @@ class CompetitionTeam {
       });
     }
 
-    if (Object.hasOwn(teamData, 'players')) {
-      teamData.players.forEach(playerData => {
-        this.addPlayer((new Player(this, playerData.id, playerData.name)).loadFromData(playerData));
-      });
-    }
-
     if (Object.hasOwn(teamData, 'club')) {
       this.setClubID(teamData.club);
       this.getClub().addTeam(this);
@@ -852,7 +639,7 @@ class CompetitionTeam {
   /**
    * Return the list of team definition in a form suitable for serializing
    *
-   * @return {Object}
+   * @returns {Object}
    */
   serialize () {
     const team = {
@@ -863,12 +650,6 @@ class CompetitionTeam {
       team.contacts = [];
       this.#contacts.forEach(contacts => {
         team.contacts.push(contacts.serialize());
-      });
-    }
-    if (this.#players.length > 0) {
-      team.players = [];
-      this.#players.forEach(players => {
-        team.players.push(players.serialize());
       });
     }
     if (this.#club !== null) {
@@ -884,7 +665,7 @@ class CompetitionTeam {
   /**
    * Get the competition this team is in
    *
-   * @return {Competition}
+   * @returns {Competition}
    */
   getCompetition () {
     return this.#competition
@@ -893,7 +674,7 @@ class CompetitionTeam {
   /**
    * Get the ID for this team
    *
-   * @return {string} The ID for this team
+   * @returns {string} The ID for this team
    */
   getID () {
     return this.#id
@@ -904,7 +685,7 @@ class CompetitionTeam {
    *
    * @param {string} name The name for this team
    *
-   * @return {CompetitionTeam} This CompetitionTeam
+   * @returns {CompetitionTeam} This CompetitionTeam
    */
   setName (name) {
     if (name.length > 1000 || name.length < 1) {
@@ -917,7 +698,7 @@ class CompetitionTeam {
   /**
    * Get the name for this team
    *
-   * @return {string} The name for this team
+   * @returns {string} The name for this team
    */
   getName () {
     return this.#name
@@ -926,28 +707,28 @@ class CompetitionTeam {
   /**
    * Set the club ID for this team
    *
-   * @param {string|null} clubID The ID of the club this team is in
+   * @param {string|null} id The ID of the club this team is in
    *
-   * @return CompetitionTeam This competition team
+   * @returns CompetitionTeam This competition team
    */
-  setClubID (clubID) {
-    if (clubID === null) {
-      if (this.#club.hasTeamWithID(this.#id)) {
+  setClubID (id) {
+    if (id === null) {
+      if (this.#club.hasTeam(this.#id)) {
         this.#club.deleteTeam(this.#id);
       }
       this.#club = null;
       return this
     }
 
-    if (this.#club !== null && clubID === this.#club.getID()) {
+    if (this.#club !== null && id === this.#club.getID()) {
       return this
     }
 
-    if (!this.#competition.hasClubWithID(clubID)) {
-      throw new Error(`No club with ID "${clubID}" exists`)
+    if (!this.#competition.hasClub(id)) {
+      throw new Error(`No club with ID "${id}" exists`)
     }
 
-    this.#club = this.#competition.getClubByID(clubID);
+    this.#club = this.#competition.getClub(id);
     this.#club.addTeam(this);
 
     return this
@@ -956,7 +737,7 @@ class CompetitionTeam {
   /**
    * Get the club for this team
    *
-   * @return {Club|null} The club this team is in
+   * @returns {Club|null} The club this team is in
    */
   getClub () {
     return this.#club
@@ -965,7 +746,7 @@ class CompetitionTeam {
   /**
    * Does this team have a club that it belongs to
    *
-   * @return {bool} True if the team belongs to a club, otherwise false
+   * @returns {bool} True if the team belongs to a club, otherwise false
    */
   hasClub () {
     return this.#club !== null
@@ -974,7 +755,7 @@ class CompetitionTeam {
   /**
    * Get the notes for this team
    *
-   * @return {string|null} the notes for this team
+   * @returns {string|null} the notes for this team
    */
   getNotes () {
     return this.#notes
@@ -985,7 +766,7 @@ class CompetitionTeam {
    *
    * @param {string|nul} notes the notes for this team
    *
-   * @return {CompetitionTeam} This competition team
+   * @returns {CompetitionTeam} This competition team
    */
   setNotes (notes) {
     this.#notes = notes;
@@ -995,7 +776,7 @@ class CompetitionTeam {
   /**
    * Does this team have any notes attached
    *
-   * @return {bool} True if the team has notes, otherwise false
+   * @returns {bool} True if the team has notes, otherwise false
    */
   hasNotes () {
     return this.#notes !== null
@@ -1006,12 +787,12 @@ class CompetitionTeam {
    *
    * @param {Contact} contact The contact to add to this team
    *
-   * @return {CompetitionTeam} This CompetitionTeam instance
+   * @returns {CompetitionTeam} This CompetitionTeam instance
    *
    * @throws {Error} If a contact with a duplicate ID within the team is added
    */
   addContact (contact) {
-    if (this.hasContactWithID(contact.getID())) {
+    if (this.hasContact(contact.getID())) {
       throw new Error('team contacts with duplicate IDs within a team not allowed')
     }
     this.#contacts.push(contact);
@@ -1022,7 +803,7 @@ class CompetitionTeam {
   /**
    * Returns an array of Contacts for this team
    *
-   * @return {array<Contact>|null} The contacts for this team
+   * @returns {array<Contact>|null} The contacts for this team
    */
   getContacts () {
     return this.#contacts
@@ -1031,34 +812,34 @@ class CompetitionTeam {
   /**
    * Returns the Contact with the requested ID, or throws if the ID is not found
    *
-   * @param {string} contactID The ID of the contact in this team to return
+   * @param {string} id The ID of the contact in this team to return
    *
    * @throws {Error} If a Contact with the requested ID was not found
    *
-   * @return {Contact} The requested contact for this team
+   * @returns {Contact} The requested contact for this team
    */
-  getContactByID (contactID) {
-    if (!Object.hasOwn(this.#contactLookup, contactID)) {
-      throw new Error(`Contact with ID "${contactID}" not found`)
+  getContact (id) {
+    if (!Object.hasOwn(this.#contactLookup, id)) {
+      throw new Error(`Contact with ID "${id}" not found`)
     }
-    return this.#contactLookup[contactID]
+    return this.#contactLookup[id]
   }
 
   /**
    * Check if a contact with the given ID exists in this team
    *
-   * @param {string} contactID The ID of the contact to check
+   * @param {string} id The ID of the contact to check
    *
-   * @return {bool} True if the contact exists, otherwise false
+   * @returns {bool} True if the contact exists, otherwise false
    */
-  hasContactWithID (contactID) {
-    return Object.hasOwn(this.#contactLookup, contactID)
+  hasContact (id) {
+    return Object.hasOwn(this.#contactLookup, id)
   }
 
   /**
    * Check if this team has any contacts
    *
-   * @return bool True if the team has contacts, otherwise false
+   * @returns bool True if the team has contacts, otherwise false
    */
   hasContacts () {
     return this.#contacts.length > 0
@@ -1067,98 +848,533 @@ class CompetitionTeam {
   /**
    * Delete a contact from the team
    *
-   * @param {string} contactID The ID of the contact to delete
+   * @param {string} id The ID of the contact to delete
    *
-   * @return {CompetitionTeam} This CompetitionTeam instance
+   * @returns {CompetitionTeam} This CompetitionTeam instance
    */
-  deleteContact (contactID) {
-    if (!this.hasContactWithID(contactID)) {
+  deleteContact (id) {
+    if (!this.hasContact(id)) {
       return this
     }
 
-    delete this.#contactLookup[contactID];
-    this.#contacts = this.#contacts.filter(el => el.getID() !== contactID);
-    return this
-  }
-
-  /**
-   * Add a player to this team
-   *
-   * @param {Player} player The player to add to this team
-   *
-   * @return {CompetitionTeam} This CompetitionTeam instance
-   *
-   * @throws {Error} If a player with a duplicate ID within the team is added
-   */
-  addPlayer (player) {
-    if (this.hasPlayerWithID(player.getID())) {
-      throw new Error('team players with duplicate IDs within a team not allowed')
-    }
-
-    this.#players.push(player);
-    this.#playerLookup[player.getID()] = player;
+    delete this.#contactLookup[id];
+    this.#contacts = this.#contacts.filter(el => el.getID() !== id);
     return this
   }
 
   /**
    * Get the players for this team
    *
-   * @return {array<Player>|null} The players for this team
+   * @returns {array<Player>} The players for this team
    */
   getPlayers () {
-    return this.#players
-  }
-
-  /**
-   * Returns the Player with the requested ID, or throws if the ID is not found
-   *
-   * @param {string} playerID The ID of the player in this team to return
-   *
-   * @throws {Error} If a Player with the requested ID was not found
-   *
-   * @return {Player} The requested player for this team
-   */
-  getPlayerByID (playerID) {
-    if (!Object.hasOwn(this.#playerLookup, playerID)) {
-      throw new Error(`Player with ID "${playerID}" not found`)
-    }
-    return this.#playerLookup[playerID]
+    return this.#competition.getPlayersInTeam(this.#id)
   }
 
   /**
    * Check if a player with the given ID exists in this team
    *
-   * @param {string} playerID The ID of the player to check
+   * @param {string} id The ID of the player to check
    *
-   * @return {bool} True if the player exists, otherwise false
+   * @returns {bool} True if the player exists, otherwise false
    */
-  hasPlayerWithID (playerID) {
-    return Object.hasOwn(this.#playerLookup, playerID)
+  hasPlayer (id) {
+    return this.#competition.hasPlayerInTeam(id, this.#id)
   }
 
   /**
    * Check if this team has any players
    *
-   * @return {bool} True if the team has players, otherwise false
+   * @returns {bool} True if the team has players, otherwise false
    */
   hasPlayers () {
-    return this.#players.length > 0
+    return this.#competition.hasPlayersInTeam(this.#id)
+  }
+}
+
+/**
+ * Represents a team that the player is/has been registered to
+ */
+class PlayerTeam {
+  /**
+   * The team ID that the player is/was registered with
+   * @type {string}
+   * @private
+   **/
+  #id
+
+  /**
+   * The date from which the player is/was registered with this team.  When this is not present, there should not be any \"from\"
+   * or \"until\" values in any entry in this player's \"teams\" array
+   * @type {string|null}
+   * @private
+   **/
+  #from
+
+  /**
+   * The date up to which the player was registered with this team.  When a \"from\" date is specified and this is not, it should
+   * be taken that a player is still registered with this team
+   * @type {string|null}
+   * @private
+   **/
+  #until
+
+  /**
+   * Free form string to add notes about this team registration entry for the player
+   * @type {string|null}
+   * @private
+   **/
+  #notes
+
+  /**
+   * The player associated with this record
+   * @type {Player}
+   * @private
+   */
+  #player
+
+  /**
+   * @param {Player} player A link back to the Player for this record
+   * @param {string} id The ID of the team that the player's registry represents
+   * @throws {Error} If the ID is invalid
+   */
+  constructor (player, id) {
+    if (id.length > 100 || id.length < 1) {
+      throw new Error('Invalid team ID: must be between 1 and 100 characters long')
+    }
+
+    if (!/^((?![":{}?=])[\x20-\x7F])+$/.test(id)) {
+      throw new Error('Invalid team ID: must contain only ASCII printable characters excluding " : { } ? =')
+    }
+
+    this.#player = player;
+    this.#id = id;
+    this.#from = null;
+    this.#until = null;
+    this.#notes = null;
   }
 
   /**
-   * Delete a player from the team
+   * Load player team data from an object.
    *
-   * @param {string} playerID The ID of the player to delete
-   *
-   * @return {CompetitionTeam} This CompetitionTeam instance
+   * @param {object} playerData The data defining this PlayerTeam entry
+   * @returns {Player} The updated PlayerTeam object
    */
-  deletePlayer (playerID) {
-    if (!this.hasPlayerWithID(playerID)) {
-      return this
+  loadFromData (playerTeamData) {
+    if (Object.hasOwn(playerTeamData, 'from')) {
+      this.setFrom(playerTeamData.from);
     }
 
-    delete this.#playerLookup[playerID];
-    this.#players = this.#players.filter(el => el.getID() !== playerID);
+    if (Object.hasOwn(playerTeamData, 'until')) {
+      this.setUntil(playerTeamData.until);
+    }
+
+    if (Object.hasOwn(playerTeamData, 'notes')) {
+      this.setNotes(playerTeamData.notes);
+    }
+
+    return this
+  }
+
+  /**
+   * Return the playerTeam data in a form suitable for serializing
+   *
+   * @returns {object}
+   */
+  serialize () {
+    const playerTeam = {
+      id: this.#id
+    };
+
+    if (this.#from !== null) {
+      playerTeam.from = this.#from;
+    }
+
+    if (this.#until !== null) {
+      playerTeam.until = this.#until;
+    }
+
+    if (this.#notes !== null) {
+      playerTeam.notes = this.#notes;
+    }
+
+    return playerTeam
+  }
+
+  /**
+   * Get the player this player team entry belongs to
+   * @returns {Player} The player this player team entry belongs to
+   */
+  getPlayer () {
+    return this.#player
+  }
+
+  /**
+   * Get the ID for the Team this entry represents.
+   *
+   * @returns {string} The ID of the team for this playerTeam entry
+   */
+  getID () {
+    return this.#id
+  }
+
+  /**
+   * Get the from date for this player team entry.
+   *
+   * @returns {string} The from date for this player team entry
+   */
+  getFrom () {
+    return this.#from
+  }
+
+  /**
+   * Set the from date for this player team entry
+   *
+   * @param {string} from The from date for this player team entry
+   * @throws {Error} If the from date is invalid
+   * @returns {PlayerTeam} This player team entry
+   */
+  setFrom (from) {
+    if (!/^[0-9]{4}-(0[0-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/.test(from)) {
+      throw new Error(`Invalid date "${from}": must contain a value of the form "YYYY-MM-DD"`)
+    }
+
+    const d = new Date(from);
+    if (`${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${(d.getDate()).toString().padStart(2, '0')}` !== from) {
+      throw new Error(`Invalid date "${from}": date does not exist`)
+    }
+
+    this.#from = from;
+    return this
+  }
+
+  /**
+   * Get the until date for this player team entry
+   *
+   * @returns {string|null} The until date for this player team entry
+   */
+  getUntil () {
+    return this.#until
+  }
+
+  /**
+   * Set the until date for this player team entry
+   *
+   * @param {string|null} until The until date for this player team entry
+   * @throws {Error} If the until date is invalid
+   * @returns {PlayerTeam} This player team entry
+   */
+  setUntil (until) {
+    if (!/^[0-9]{4}-(0[0-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/.test(until)) {
+      throw new Error(`Invalid date "${until}": must contain a value of the form "YYYY-MM-DD"`)
+    }
+
+    const d = new Date(until);
+    if (`${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${(d.getDate()).toString().padStart(2, '0')}` !== until) {
+      throw new Error(`Invalid date "${until}": date does not exist`)
+    }
+
+    this.#until = until;
+    return this
+  }
+
+  /**
+   * Get the notes for this player.
+   *
+   * @returns {string|null} The notes for this player
+   */
+  getNotes () {
+    return this.#notes
+  }
+
+  /**
+   * Set the notes for this player.
+   *
+   * @param {string|null} notes The notes for this player
+   * @returns {PlayerTeam} This player team entry
+   */
+  setNotes (notes) {
+    this.#notes = notes;
+    return this
+  }
+}
+
+/**
+ * Represents a player in a team.
+ */
+class Player {
+  static UNREGISTERED_PLAYER_ID = 'UNKNOWN'
+
+  /**
+   * A unique ID for this player. This may be the player's registration number. This must be unique within the team
+   * @type {string}
+   * @private
+   **/
+  #id
+
+  /**
+   * The name of this player
+   * @type {string}
+   * @private
+   **/
+  #name
+
+  /**
+   * The player's shirt number
+   * @type {int|null}
+   * @private
+   **/
+  #number
+
+  /**
+   * An ordered list of teams the player is/has been registered for in this competition, in the order that they have been
+   * registered (and therefore transferred in the case of more than one entry).  A player can only be registered with one
+   * team at any time within this competition, meaning that if there are multiple teams listed, either all but the last
+   * entry MUST have an \"until\" value, or there must be no \"from\" or \"until\" values in any entry
+   * @type {Array<PlayerTeam}
+   * @private
+   */
+  #teams
+
+  /**
+   * Free form string to add notes about the player. This can be used for arbitrary content that various implementations can use
+   * @type {string|null}
+   * @private
+   **/
+  #notes
+
+  /**
+   * The Competition this player is in
+   * @type {Competition}
+   * @private
+   */
+  #competition
+
+  /**
+   * @param {Competition} competition A link back to the Competition this Player is in
+   * @param {string} id The ID of the player
+   * @param {string} name The name of the player
+   * @throws {Error} If the ID is invalid or already exists in the team
+   */
+  constructor (competition, id, name) {
+    if (id.length > 100 || id.length < 1) {
+      throw new Error('Invalid player ID: must be between 1 and 100 characters long')
+    }
+
+    if (!/^((?![":{}?=])[\x20-\x7F])+$/.test(id)) {
+      throw new Error('Invalid player ID: must contain only ASCII printable characters excluding " : { } ? =')
+    }
+
+    if (competition.hasPlayer(id)) {
+      throw new Error(`Player with ID "${id}" already exists in the competition`)
+    }
+
+    this.#competition = competition;
+    this.#id = id;
+    this.setName(name);
+    this.#teams = [];
+    this.#number = null;
+    this.#notes = null;
+  }
+
+  /**
+   * Load player data from an object.
+   *
+   * @param {object} playerData The data defining this Player
+   * @returns {Player} The updated Player object
+   */
+  loadFromData (playerData) {
+    if (Object.hasOwn(playerData, 'number')) {
+      this.setNumber(playerData.number);
+    }
+
+    if (Array.isArray(playerData.teams)) {
+      playerData.teams.forEach(playerTeamData => {
+        this.appendTeamEntry(new PlayerTeam(this, playerTeamData.id).loadFromData(playerTeamData));
+      });
+    }
+
+    if (Object.hasOwn(playerData, 'notes')) {
+      this.setNotes(playerData.notes);
+    }
+
+    return this
+  }
+
+  /**
+   * Return the list of player data in a form suitable for serializing
+   *
+   * @returns {object}
+   */
+  serialize () {
+    const player = {
+      id: this.#id,
+      name: this.#name
+    };
+
+    if (this.#number !== null) {
+      player.number = this.#number;
+    }
+
+    if (this.#teams.length > 0) {
+      player.teams = [];
+      this.#teams.forEach(team => {
+        player.teams.push(team.serialize());
+      });
+    }
+
+    if (this.#notes !== null) {
+      player.notes = this.#notes;
+    }
+
+    return player
+  }
+
+  /**
+   * Get the competition this player belongs to
+   * @returns {Competition} The competition this player belongs to
+   */
+  getCompetition () {
+    return this.#competition
+  }
+
+  /**
+   * Get the ID for this player.
+   *
+   * @returns {string} The ID for this player
+   */
+  getID () {
+    return this.#id
+  }
+
+  /**
+   * Get the name for this player.
+   *
+   * @returns {string} The name for this player
+   */
+  getName () {
+    return this.#name
+  }
+
+  /**
+   * Set the name for this player.
+   *
+   * @param {string} name The name for this player
+   * @throws {Error} If the name is invalid
+   */
+  setName (name) {
+    if (name.length > 1000 || name.length < 1) {
+      throw new Error('Invalid player name: must be between 1 and 1000 characters long')
+    }
+    this.#name = name;
+  }
+
+  /**
+   * Get the shirt number for this player.
+   *
+   * @returns {number|null} The shirt number for this player
+   */
+  getNumber () {
+    return this.#number
+  }
+
+  /**
+   * Set the shirt number for this player.
+   *
+   * @param {number|null} number The shirt number for this player
+   * @throws {Error} If the number is invalid
+   */
+  setNumber (number) {
+    if (number !== null && number < 1) {
+      throw new Error(`Invalid player number "${number}": must be greater than 1`)
+    }
+    this.#number = number;
+  }
+
+  /**
+   * Append a PlayerTeam entry to the end of the list of teams that the player has been registered with
+   *
+   * @param {PlayerTeam} teamEntry the PlayerTeam entry to add
+   * @returns {Player} this Player
+   */
+  appendTeamEntry (teamEntry) {
+    this.#teams.push(teamEntry);
+    return this
+  }
+
+  /**
+   * Get the list of teams this player has been registered with
+   *
+   * @returns {Array<PlayerTeam>} The team this player belongs to
+   */
+  getTeamEntries () {
+    return this.#teams
+  }
+
+  /**
+   * Get the most recent PlayerTeam that the player has been registered with
+   *
+   * @returns {?PlayerTeam} The most recent PlayerTeam that the player has been registered with
+   */
+  getLatestTeamEntry () {
+    if (this.#teams.length === 0) {
+      return null
+    }
+
+    return this.#teams[this.#teams.length - 1]
+  }
+
+  /**
+   * Get the most recent CompetitionTeam that the player has been registered with
+   *
+   * @returns {?CompetitionTeam} The most recent CompetitionTeam that the player has been registered with
+   */
+  getCurrentTeam () {
+    const id = this.#teams.length > 0 ? this.#teams[this.#teams.length - 1].getID() : '';
+    return this.#competition.getTeam(id)
+  }
+
+  /**
+   * Check if a team entry exists with the given team ID
+   *
+   * @param {string} id the team ID to check for
+   * @returns {boolean} whether the player has ever been registered to the team with the given ID
+   */
+  hasTeamEntry (id) {
+    return this.#teams.some(team => team.getID() === id)
+  }
+
+  /**
+   * Removes up to "count" elements from the array of team entries, starting at element "start".
+   * This calls "splice" directly so has the same behaviour in terms of negative values and
+   * values out of bounds
+   *
+   * @param {number} start
+   * @param {number} count
+   * @returns {Player} this Player
+   */
+  spliceTeamEntries (start, count) {
+    this.#teams.splice(start, count);
+    return this
+  }
+
+  /**
+   * Get the notes for this player.
+   *
+   * @returns {string|null} The notes for this player
+   */
+  getNotes () {
+    return this.#notes
+  }
+
+  /**
+   * Set the notes for this player.
+   *
+   * @param {string|null} notes The notes for this player
+   * @returns {Player} this Player
+   */
+  setNotes (notes) {
+    this.#notes = notes;
     return this
   }
 }
@@ -1219,19 +1435,19 @@ class GroupBreak {
   /**
    * Load the match break data from an object
    * @param {object} breakData The data defining this Break
-   * @return {GroupBreak} This GroupBreak instance
+   * @returns {GroupBreak} This GroupBreak instance
    */
   loadFromData (breakData) {
-    if (breakData.start !== undefined) {
+    if (Object.hasOwn(breakData, 'start')) {
       this.setStart(breakData.start);
     }
-    if (breakData.date !== undefined) {
+    if (Object.hasOwn(breakData, 'date')) {
       this.setDate(breakData.date);
     }
-    if (breakData.duration !== undefined) {
+    if (Object.hasOwn(breakData, 'duration')) {
       this.setDuration(breakData.duration);
     }
-    if (breakData.name !== undefined) {
+    if (Object.hasOwn(breakData, 'name')) {
       this.setName(breakData.name);
     }
     return this
@@ -1240,7 +1456,7 @@ class GroupBreak {
   /**
    * Return the match break data in a form suitable for serializing
    *
-   * @return {object} The match break data
+   * @returns {object} The match break data
    */
   serialize () {
     const breakData = { type: 'break' };
@@ -1261,7 +1477,7 @@ class GroupBreak {
 
   /**
    * Get the Group this break is in
-   * @return {Group} The group this break is in
+   * @returns {Group} The group this break is in
    */
   getGroup () {
     return this.#group
@@ -1270,16 +1486,19 @@ class GroupBreak {
   /**
    * Set the start time for this break
    * @param {string|null} start The start time for this break
-   * @return {GroupBreak} This GroupBreak instance
+   * @returns {GroupBreak} This GroupBreak instance
    */
   setStart (start) {
+    if (!/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/.test(start)) {
+      throw new Error(`Invalid start time "${start}": must contain a value of the form "HH:mm" using a 24 hour clock`)
+    }
     this.#start = start;
     return this
   }
 
   /**
    * Get the start time for this break
-   * @return {string|null} The start time for this break
+   * @returns {string|null} The start time for this break
    */
   getStart () {
     return this.#start
@@ -1288,16 +1507,25 @@ class GroupBreak {
   /**
    * Set the date for this break
    * @param {string|null} date The date for this break
-   * @return {GroupBreak} This GroupBreak instance
+   * @returns {GroupBreak} This GroupBreak instance
    */
   setDate (date) {
+    if (!/^[0-9]{4}-(0[0-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/.test(date)) {
+      throw new Error(`Invalid date "${date}": must contain a value of the form "YYYY-MM-DD"`)
+    }
+
+    const d = new Date(date);
+    if (`${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${(d.getDate()).toString().padStart(2, '0')}` !== date) {
+      throw new Error(`Invalid date "${date}": date does not exist`)
+    }
+
     this.#date = date;
     return this
   }
 
   /**
    * Get the date for this break
-   * @return {string|null} The date for this break
+   * @returns {string|null} The date for this break
    */
   getDate () {
     return this.#date
@@ -1306,16 +1534,19 @@ class GroupBreak {
   /**
    * Set the duration for this break
    * @param {string|null} duration The duration for this break
-   * @return {GroupBreak} This GroupBreak instance
+   * @returns {GroupBreak} This GroupBreak instance
    */
   setDuration (duration) {
+    if (!/^[0-9]+:[0-5][0-9]$/.test(duration)) {
+      throw new Error(`Invalid duration "${duration}": must contain a value of the form "HH:mm"`)
+    }
     this.#duration = duration;
     return this
   }
 
   /**
    * Get the duration for this break
-   * @return {string|null} The duration for this break
+   * @returns {string|null} The duration for this break
    */
   getDuration () {
     return this.#duration
@@ -1324,16 +1555,19 @@ class GroupBreak {
   /**
    * Set the name for this break
    * @param {string|null} name The name for this break
-   * @return {GroupBreak} This GroupBreak instance
+   * @returns {GroupBreak} This GroupBreak instance
    */
   setName (name) {
+    if (name.length > 1000 || name.length < 1) {
+      throw new Error('Invalid break name: must be between 1 and 1000 characters long')
+    }
     this.#name = name;
     return this
   }
 
   /**
    * Get the name for this break
-   * @return {string|null} The name for this break
+   * @returns {string|null} The name for this break
    */
   getName () {
     return this.#name
@@ -1391,7 +1625,7 @@ class MatchManager {
    *
    * @param {MatchInterface} match The match this Manager is managing
    * @param {string|object} managerData The data for the match manager
-   * @return {MatchManager} The match manager instance
+   * @returns {MatchManager} The match manager instance
    */
   static loadFromData (match, managerData) {
     let manager;
@@ -1406,7 +1640,7 @@ class MatchManager {
   /**
    * Return the match manager definition in a form suitable for serializing
    *
-   * @return {Object|string} The serialized match manager data
+   * @returns {Object|string} The serialized match manager data
    */
   serialize () {
     if (this.#managerTeam !== null) {
@@ -1418,7 +1652,7 @@ class MatchManager {
   /**
    * Get the match this manager is managing.
    *
-   * @return {MatchInterface} The match being managed
+   * @returns {MatchInterface} The match being managed
    */
   getMatch () {
     return this.#match
@@ -1427,7 +1661,7 @@ class MatchManager {
   /**
    * Check whether the match manager is a team or not.
    *
-   * @return {boolean} True if the manager is a team, false otherwise
+   * @returns {boolean} True if the manager is a team, false otherwise
    */
   isTeam () {
     return this.#managerTeam !== null
@@ -1436,7 +1670,7 @@ class MatchManager {
   /**
    * Get the ID of the team managing the match.
    *
-   * @return {string|null} The team ID
+   * @returns {string|null} The team ID
    */
   getTeamID () {
     return this.#managerTeam
@@ -1445,19 +1679,19 @@ class MatchManager {
   /**
    * Set the ID for the team managing the match. Note that this unsets any manager name.
    *
-   * @param {string} teamID The ID for the team managing the match
+   * @param {string} id The ID for the team managing the match
    * @throws {Error} If the team ID is invalid
    */
-  setTeamID (teamID) {
-    this.#match.getGroup().getStage().getCompetition().validateTeamID(teamID, this.#match.getID(), 'manager');
-    this.#managerTeam = teamID;
+  setTeamID (id) {
+    this.#match.getGroup().getStage().getCompetition().validateTeamID(id, this.#match.getID(), 'manager');
+    this.#managerTeam = id;
     this.#managerName = null;
   }
 
   /**
    * Get the name of the manager.
    *
-   * @return {string|null} The name of the manager
+   * @returns {string|null} The name of the manager
    */
   getManagerName () {
     return this.#managerName
@@ -1491,7 +1725,7 @@ class MatchTeam {
 
   /**
    * This team's most valuable player award.
-   * @type {string|null}
+   * @type {Player|null}
    * @private
    */
   #mvp
@@ -1529,7 +1763,7 @@ class MatchTeam {
 
   /**
    * The list of players from this team that played in this match.
-   * @type {string[]}
+   * @type {Player[]}
    * @private
    */
   #players
@@ -1561,12 +1795,17 @@ class MatchTeam {
    * Load team data from a given object.
    * @param {MatchInterface} match The match this team is playing in.
    * @param {object} teamData The data defining this Team.
-   * @return {MatchTeam} The match team instance.
+   * @returns {MatchTeam} The match team instance.
    */
   static loadFromData (match, teamData) {
     const team = new MatchTeam(match, teamData.id);
     if (Object.hasOwn(teamData, 'mvp')) {
-      team.setMVP(teamData.mvp);
+      const mvpMatch = teamData.mvp.match(/^{(.*)}$/);
+      if (mvpMatch !== null) {
+        team.setMVP(match.getGroup().getStage().getCompetition().getPlayer(mvpMatch[1]));
+      } else {
+        team.setMVP(new Player(match.getGroup().getStage().getCompetition(), Player.UNREGISTERED_PLAYER_ID, teamData.mvp));
+      }
     }
     if (Object.hasOwn(teamData, 'forfeit')) {
       team.setForfeit(teamData.forfeit);
@@ -1581,7 +1820,16 @@ class MatchTeam {
       team.setNotes(teamData.notes);
     }
     if (Object.hasOwn(teamData, 'players')) {
-      team.setPlayers(teamData.players);
+      const players = [];
+      teamData.players.forEach(playerData => {
+        const playerRefMatch = playerData.match(/^{(.*)}$/);
+        if (playerRefMatch !== null) {
+          players.push(match.getGroup().getStage().getCompetition().getPlayer(playerRefMatch[1]));
+        } else {
+          players.push(new Player(match.getGroup().getStage().getCompetition(), Player.UNREGISTERED_PLAYER_ID, playerData));
+        }
+      });
+      team.setPlayers(players);
     }
     return team
   }
@@ -1589,21 +1837,38 @@ class MatchTeam {
   /**
    * Return the team data in a form suitable for serializing
    *
-   * @return {object} The serialized team data.
+   * @returns {object} The serialized team data.
    */
   serialize () {
     const matchTeam = {
       id: this.#id,
-      scores: this.getScores(),
-      forfeit: this.#forfeit,
-      bonusPoints: this.#bonusPoints,
-      penaltyPoints: this.#penaltyPoints,
-      players: this.#players
+      scores: this.getScores()
     };
 
     if (this.#mvp !== null) {
-      matchTeam.mvp = this.#mvp;
+      if (this.#mvp.getID() === Player.UNREGISTERED_PLAYER_ID) {
+        matchTeam.mvp = this.#mvp.getName();
+      } else {
+        matchTeam.mvp = `{${this.#mvp.getID()}}`;
+      }
     }
+
+    matchTeam.forfeit = this.#forfeit;
+    matchTeam.bonusPoints = this.#bonusPoints;
+    matchTeam.penaltyPoints = this.#penaltyPoints;
+
+    if (this.#players.length > 0) {
+      const players = [];
+      this.#players.forEach(player => {
+        if (player.getID() === Player.UNREGISTERED_PLAYER_ID) {
+          players.push(player.getName());
+        } else {
+          players.push(`{${player.getID()}}`);
+        }
+      });
+      matchTeam.players = players;
+    }
+
     if (this.#notes !== null) {
       matchTeam.notes = this.#notes;
     }
@@ -1613,7 +1878,7 @@ class MatchTeam {
 
   /**
    * Get the match the team is playing in.
-   * @return {MatchInterface} The match this team plays in.
+   * @returns {MatchInterface} The match this team plays in.
    */
   getMatch () {
     return this.#match
@@ -1621,16 +1886,16 @@ class MatchTeam {
 
   /**
    * Get the ID of the team.
-   * @return {string} The team ID.
+   * @returns {string} The team ID.
    */
   getID () {
     return this.#id
   }
 
   /**
-   * Set whether the team forfeited the match.
-   * @param {boolean} forfeit Whether the team forfeited the match.
-   * @return {MatchTeam} The MatchTeam instance.
+   * Set whether the team forfeited the match
+   * @param {boolean} forfeit Whether the team forfeited the match
+   * @returns {MatchTeam} The MatchTeam instance
    */
   setForfeit (forfeit) {
     this.#forfeit = forfeit;
@@ -1638,16 +1903,16 @@ class MatchTeam {
   }
 
   /**
-   * Get whether the team forfeited the match.
-   * @return {boolean} Whether the team forfeited the match.
+   * Get whether the team forfeited the match
+   * @returns {boolean} Whether the team forfeited the match
    */
   getForfeit () {
     return this.#forfeit
   }
 
   /**
-   * Get the array of scores for this team in this match.
-   * @return {number[]} The team's scores.
+   * Get the array of scores for this team in this match
+   * @returns {number[]} The team's scores
    */
   getScores () {
     if (this.#match.getHomeTeam().getID() === this.#id) {
@@ -1657,9 +1922,9 @@ class MatchTeam {
   }
 
   /**
-   * Set the bonus points for the team.
-   * @param {number} bonusPoints The bonus points for the team.
-   * @return {MatchTeam} The MatchTeam instance.
+   * Set the bonus points for the team
+   * @param {number} bonusPoints The bonus points for the team
+   * @returns {MatchTeam} The MatchTeam instance
    */
   setBonusPoints (bonusPoints) {
     this.#bonusPoints = bonusPoints;
@@ -1667,17 +1932,17 @@ class MatchTeam {
   }
 
   /**
-   * Get the bonus points for the team.
-   * @return {number} The bonus points for the team.
+   * Get the bonus points for the team
+   * @returns {number} The bonus points for the team
    */
   getBonusPoints () {
     return this.#bonusPoints
   }
 
   /**
-   * Set the penalty points for the team.
-   * @param {number} penaltyPoints The penalty points for the team.
-   * @return {MatchTeam} The MatchTeam instance.
+   * Set the penalty points for the team
+   * @param {number} penaltyPoints The penalty points for the team
+   * @returns {MatchTeam} The MatchTeam instance
    */
   setPenaltyPoints (penaltyPoints) {
     this.#penaltyPoints = penaltyPoints;
@@ -1685,17 +1950,17 @@ class MatchTeam {
   }
 
   /**
-   * Get the penalty points for the team.
-   * @return {number} The penalty points for the team.
+   * Get the penalty points for the team
+   * @returns {number} The penalty points for the team
    */
   getPenaltyPoints () {
     return this.#penaltyPoints
   }
 
   /**
-   * Set the most valuable player for the team.
-   * @param {?string} mvp The most valuable player for the team.
-   * @return {MatchTeam} The MatchTeam instance.
+   * Set the most valuable player for the team
+   * @param {Player|null} mvp The most valuable player for the team
+   * @returns {MatchTeam} The MatchTeam instance
    */
   setMVP (mvp) {
     this.#mvp = mvp;
@@ -1703,17 +1968,17 @@ class MatchTeam {
   }
 
   /**
-   * Get the most valuable player for the team.
-   * @return {?string} The most valuable player for the team.
+   * Get the most valuable player for the team
+   * @returns {Player|null} The most valuable player for the team
    */
   getMVP () {
     return this.#mvp
   }
 
   /**
-   * Set notes for the team.
-   * @param {?string} notes The notes for the team.
-   * @return {MatchTeam} The MatchTeam instance.
+   * Set notes for the team
+   * @param {string|null} notes The notes for the team
+   * @returns {MatchTeam} The MatchTeam instance
    */
   setNotes (notes) {
     this.#notes = notes;
@@ -1721,17 +1986,17 @@ class MatchTeam {
   }
 
   /**
-   * Get notes for the team.
-   * @return {?string} The notes for the team.
+   * Get notes for the team
+   * @returns {string|null} The notes for the team
    */
   getNotes () {
     return this.#notes
   }
 
   /**
-   * Set the players for the team.
-   * @param {string[]} players The players for the team.
-   * @return {MatchTeam} The MatchTeam instance.
+   * Set the players for the team
+   * @param {Array<Player>} players The players for the team
+   * @returns {MatchTeam} The MatchTeam instance
    */
   setPlayers (players) {
     this.#players = players;
@@ -1739,8 +2004,8 @@ class MatchTeam {
   }
 
   /**
-   * Get the players for the team.
-   * @return {string[]} The players for the team.
+   * Get the players for the team
+   * @returns {Player[]} The players for the team
    */
   getPlayers () {
     return this.#players
@@ -1864,7 +2129,7 @@ class IfUnknownMatch {
    * @throws {Error} If the two teams have scores arrays of different lengths
    */
   constructor (ifUnknown, id) {
-    if (ifUnknown.hasMatchWithID(id)) {
+    if (ifUnknown.hasMatch(id)) {
       throw new Error(`stage ID {${ifUnknown.getStage().getID()}}, ifUnknown: matches with duplicate IDs {${id}} not allowed`)
     }
 
@@ -1920,7 +2185,12 @@ class IfUnknownMatch {
       this.setOfficials(MatchOfficials$1.loadFromData(this, matchData.officials));
     }
     if (Object.hasOwn(matchData, 'mvp')) {
-      this.setMVP(matchData.mvp);
+      const mvpMatch = matchData.mvp.match(/^{(.*)}$/);
+      if (mvpMatch !== null) {
+        this.setMVP(this.getGroup().getStage().getCompetition().getPlayer(mvpMatch[1]));
+      } else {
+        this.setMVP(new Player(this.getGroup().getStage().getCompetition(), Player.UNREGISTERED_PLAYER_ID, matchData.mvp));
+      }
     }
     if (Object.hasOwn(matchData, 'manager')) {
       this.setManager(MatchManager.loadFromData(this, matchData.manager));
@@ -1971,7 +2241,11 @@ class IfUnknownMatch {
       match.officials = this.#officials.serialize();
     }
     if (this.#mvp !== null) {
-      match.mvp = this.#mvp;
+      if (this.#mvp.getID() === Player.UNREGISTERED_PLAYER_ID) {
+        match.mvp = this.#mvp.getName();
+      } else {
+        match.mvp = `{${this.#mvp.getID()}}`;
+      }
     }
     if (this.#manager !== null) {
       match.manager = this.#manager.serialize();
@@ -2199,9 +2473,6 @@ class IfUnknownMatch {
    * @throws {Error} If the MVP string is invalid
    */
   setMVP (mvp) {
-    if (mvp.length > 203 || mvp.length < 1) {
-      throw new Error('Invalid MVP: must be between 1 and 203 characters long')
-    }
     this.#mvp = mvp;
     return this
   }
@@ -2279,7 +2550,7 @@ class IfUnknownMatch {
   /**
    * Get the ID of the winning team
    *
-   * @return {string} The ID of the winning team
+   * @returns {string} The ID of the winning team
    */
   getWinnerTeamID () {
     return CompetitionTeam.UNKNOWN_TEAM_ID
@@ -2288,7 +2559,7 @@ class IfUnknownMatch {
   /**
    * Get the ID of the losing team
    *
-   * @return {string} The ID of the losing team
+   * @returns {string} The ID of the losing team
    */
   getLoserTeamID () {
     return CompetitionTeam.UNKNOWN_TEAM_ID
@@ -2297,7 +2568,7 @@ class IfUnknownMatch {
   /**
    * Get the scores of the home team
    *
-   * @return {array} The scores of the home team
+   * @returns {array} The scores of the home team
    */
   getHomeTeamScores () {
     return []
@@ -2306,7 +2577,7 @@ class IfUnknownMatch {
   /**
    * Get the scores of the away team
    *
-   * @return {array} The scores of the away team
+   * @returns {array} The scores of the away team
    */
   getAwayTeamScores () {
     return []
@@ -2315,7 +2586,7 @@ class IfUnknownMatch {
   /**
    * Get the number of sets won by the home team
    *
-   * @return {number} The number of sets won by the home team
+   * @returns {number} The number of sets won by the home team
    */
   getHomeTeamSets () {
     return 0
@@ -2324,7 +2595,7 @@ class IfUnknownMatch {
   /**
    * Get the number of sets won by the away team
    *
-   * @return {number} The number of sets won by the away team
+   * @returns {number} The number of sets won by the away team
    */
   getAwayTeamSets () {
     return 0
@@ -2369,7 +2640,7 @@ class IfUnknownMatch {
   /**
    * An IfUnknown match has no scores so this function has no effect
    *
-   * @return IfUnknownMatch The updated IfUnknownMatch instance
+   * @returns IfUnknownMatch The updated IfUnknownMatch instance
    */
   setScores () {
     return this
@@ -2492,7 +2763,7 @@ class MatchOfficials {
    *
    * @param {MatchInterface} match The match these Officials are in
    * @param {object} officialsData The data defining this match's Officials
-   * @return {MatchOfficials} The match officials instance
+   * @returns {MatchOfficials} The match officials instance
    */
   static loadFromData (match, officialsData) {
     let officials;
@@ -2500,28 +2771,28 @@ class MatchOfficials {
       officials = new MatchOfficials(match, officialsData.team, null, match instanceof IfUnknownMatch);
     } else {
       officials = new MatchOfficials(match, null, officialsData.first, match instanceof IfUnknownMatch);
-      if (officialsData.second !== undefined) {
+      if (Object.hasOwn(officialsData, 'second')) {
         officials.setSecondRef(officialsData.second);
       }
-      if (officialsData.challenge !== undefined) {
+      if (Object.hasOwn(officialsData, 'challenge')) {
         officials.setChallengeRef(officialsData.challenge);
       }
-      if (officialsData.assistantChallenge !== undefined) {
+      if (Object.hasOwn(officialsData, 'assistantChallenge')) {
         officials.setAssistantChallengeRef(officialsData.assistantChallenge);
       }
-      if (officialsData.reserve !== undefined) {
+      if (Object.hasOwn(officialsData, 'reserve')) {
         officials.setReserveRef(officialsData.reserve);
       }
-      if (officialsData.scorer !== undefined) {
+      if (Object.hasOwn(officialsData, 'scorer')) {
         officials.setScorer(officialsData.scorer);
       }
-      if (officialsData.assistantScorer !== undefined) {
+      if (Object.hasOwn(officialsData, 'assistantScorer')) {
         officials.setAssistantScorer(officialsData.assistantScorer);
       }
-      if (officialsData.linespersons !== undefined) {
+      if (Object.hasOwn(officialsData, 'linespersons')) {
         officials.setLinespersons(officialsData.linespersons);
       }
-      if (officialsData.ballCrew !== undefined) {
+      if (Object.hasOwn(officialsData, 'ballCrew')) {
         officials.setBallCrew(officialsData.ballCrew);
       }
     }
@@ -2532,7 +2803,7 @@ class MatchOfficials {
   /**
    * Return the match officials definition in a form suitable for serializing
    *
-   * @return {Object|string} The serialized match officials data
+   * @returns {Object|string} The serialized match officials data
    */
   serialize () {
     const officials = {};
@@ -2573,7 +2844,7 @@ class MatchOfficials {
   /**
    * Get the match this manager is managing.
    *
-   * @return {MatchInterface} The match being managed
+   * @returns {MatchInterface} The match being managed
    */
   getMatch () {
     return this.#match
@@ -2582,7 +2853,7 @@ class MatchOfficials {
   /**
    * Get whether the match official is a team or not.
    *
-   * @return {boolean} Whether the official is a team or not
+   * @returns {boolean} Whether the official is a team or not
    */
   isTeam () {
     return this.#officialsTeam !== null
@@ -2591,7 +2862,7 @@ class MatchOfficials {
   /**
    * Get the ID of the team officiating the match.
    *
-   * @return {string|null} The team ID
+   * @returns {string|null} The team ID
    */
   getTeamID () {
     return this.#officialsTeam
@@ -2600,13 +2871,13 @@ class MatchOfficials {
   /**
    * Set the officiating team.
    *
-   * @param {string|null} officialsTeam The ID of the officiating team
+   * @param {string|null} id The ID of the officiating team
    */
-  setTeamID (officialsTeam, isUnknown = false) {
+  setTeamID (id, isUnknown = false) {
     if (!isUnknown) {
-      this.#match.getGroup().getCompetition().validateTeamID(officialsTeam, this.#match.getID(), 'officials');
+      this.#match.getGroup().getCompetition().validateTeamID(id, this.#match.getID(), 'officials');
     }
-    this.#officialsTeam = officialsTeam;
+    this.#officialsTeam = id;
     this.#first = null;
     this.#second = null;
     this.#challenge = null;
@@ -2621,7 +2892,7 @@ class MatchOfficials {
   /**
    * Get the first referee
    *
-   * @return {string|null} the name of the first referee
+   * @returns {string|null} the name of the first referee
    */
   getFirstRef () {
     return this.#first
@@ -2640,7 +2911,7 @@ class MatchOfficials {
   /**
    * Get whether the match has a second referee.
    *
-   * @return {boolean} Whether the match has a second referee
+   * @returns {boolean} Whether the match has a second referee
    */
   hasSecondRef () {
     return this.#second !== null
@@ -2649,7 +2920,7 @@ class MatchOfficials {
   /**
    * Get the second referee.
    *
-   * @return {string|null} The name of the second referee
+   * @returns {string|null} The name of the second referee
    */
   getSecondRef () {
     return this.#second
@@ -2668,7 +2939,7 @@ class MatchOfficials {
   /**
    * Get whether the match has a challenge referee.
    *
-   * @return {boolean} Whether the match has a challenge referee
+   * @returns {boolean} Whether the match has a challenge referee
    */
   hasChallengeRef () {
     return this.#challenge !== null
@@ -2677,7 +2948,7 @@ class MatchOfficials {
   /**
    * Get the challenge referee's name.
    *
-   * @return {string|null} The name of the challenge referee
+   * @returns {string|null} The name of the challenge referee
    */
   getChallengeRef () {
     return this.#challenge
@@ -2696,7 +2967,7 @@ class MatchOfficials {
   /**
    * Check if the match has an assistant challenge referee.
    *
-   * @return {boolean} Whether the match has an assistant challenge referee
+   * @returns {boolean} Whether the match has an assistant challenge referee
    */
   hasAssistantChallengeRef () {
     return this.#assistantChallenge !== null
@@ -2705,7 +2976,7 @@ class MatchOfficials {
   /**
    * Get the name of the assistant challenge referee.
    *
-   * @return {string|null} The name of the assistant challenge referee
+   * @returns {string|null} The name of the assistant challenge referee
    */
   getAssistantChallengeRef () {
     return this.#assistantChallenge
@@ -2724,7 +2995,7 @@ class MatchOfficials {
   /**
    * Check if the match has a reserve referee.
    *
-   * @return {boolean} Whether the match has a reserve referee
+   * @returns {boolean} Whether the match has a reserve referee
    */
   hasReserveRef () {
     return this.#reserve !== null
@@ -2733,7 +3004,7 @@ class MatchOfficials {
   /**
    * Get the name of the reserve referee.
    *
-   * @return {string|null} The name of the reserve referee
+   * @returns {string|null} The name of the reserve referee
    */
   getReserveRef () {
     return this.#reserve
@@ -2752,7 +3023,7 @@ class MatchOfficials {
   /**
    * Check if the match has a scorer.
    *
-   * @return {boolean} Whether the match has a scorer
+   * @returns {boolean} Whether the match has a scorer
    */
   hasScorer () {
     return this.#scorer !== null
@@ -2761,7 +3032,7 @@ class MatchOfficials {
   /**
    * Get the name of the scorer.
    *
-   * @return {string|null} The name of the scorer
+   * @returns {string|null} The name of the scorer
    */
   getScorer () {
     return this.#scorer
@@ -2780,7 +3051,7 @@ class MatchOfficials {
   /**
    * Check if the match has an assistant scorer.
    *
-   * @return {boolean} Whether the match has an assistant scorer
+   * @returns {boolean} Whether the match has an assistant scorer
    */
   hasAssistantScorer () {
     return this.#assistantScorer !== null
@@ -2789,7 +3060,7 @@ class MatchOfficials {
   /**
    * Get the name of the assistant scorer.
    *
-   * @return {string|null} The name of the assistant scorer
+   * @returns {string|null} The name of the assistant scorer
    */
   getAssistantScorer () {
     return this.#assistantScorer
@@ -2808,7 +3079,7 @@ class MatchOfficials {
   /**
    * Check if the match has any linespersons.
    *
-   * @return {boolean} Whether the match has any linespersons
+   * @returns {boolean} Whether the match has any linespersons
    */
   hasLinespersons () {
     return this.#linespersons.length > 0
@@ -2817,7 +3088,7 @@ class MatchOfficials {
   /**
    * Get the list of linespersons.
    *
-   * @return {string[]} The list of linespersons
+   * @returns {string[]} The list of linespersons
    */
   getLinespersons () {
     return this.#linespersons
@@ -2836,7 +3107,7 @@ class MatchOfficials {
   /**
    * Check if the match has a ball crew.
    *
-   * @return {boolean} Whether the match has a ball crew
+   * @returns {boolean} Whether the match has a ball crew
    */
   hasBallCrew () {
     return this.#ballCrew.length > 0
@@ -2845,7 +3116,7 @@ class MatchOfficials {
   /**
    * Get the list of ball crew members.
    *
-   * @return {string[]} The list of ball crew members
+   * @returns {string[]} The list of ball crew members
    */
   getBallCrew () {
     return this.#ballCrew
@@ -2939,7 +3210,7 @@ class GroupMatch {
    * @throws {Error} If the two teams have scores arrays of different lengths
    */
   constructor (group, id) {
-    if (group.hasMatchWithID(id)) {
+    if (group.hasMatch(id)) {
       throw new Error(`Group {${group.getStage().getID()}:${group.getID()}}: matches with duplicate IDs {${id}} not allowed`)
     }
     this.#group = group;
@@ -2972,22 +3243,22 @@ class GroupMatch {
    * @throws {Error} If the two teams have scores arrays of different lengths
    */
   loadFromData (matchData) {
-    if (matchData.court) {
+    if (Object.hasOwn(matchData, 'court')) {
       this.setCourt(matchData.court);
     }
-    if (matchData.venue) {
+    if (Object.hasOwn(matchData, 'venue')) {
       this.setVenue(matchData.venue);
     }
-    if (matchData.date) {
+    if (Object.hasOwn(matchData, 'date')) {
       this.setDate(matchData.date);
     }
-    if (matchData.warmup) {
+    if (Object.hasOwn(matchData, 'warmup')) {
       this.setWarmup(matchData.warmup);
     }
-    if (matchData.start) {
+    if (Object.hasOwn(matchData, 'start')) {
       this.setStart(matchData.start);
     }
-    if (matchData.duration) {
+    if (Object.hasOwn(matchData, 'duration')) {
       this.setDuration(matchData.duration);
     }
     if (matchData.complete !== undefined) {
@@ -3004,23 +3275,28 @@ class GroupMatch {
     this.#homeTeamScores = matchData.homeTeam.scores;
     this.#awayTeamScores = matchData.awayTeam.scores;
 
-    if (matchData.officials) {
+    if (Object.hasOwn(matchData, 'officials')) {
       const officials = MatchOfficials$1.loadFromData(this, matchData.officials);
       if (officials.isTeam() && (officials.getTeamID() === this.getHomeTeam().getID() || officials.getTeamID() === this.getAwayTeam().getID())) {
         throw new Error(`Refereeing team (in match {${this.#group.getStage().getID()}:${this.#group.getID()}:${this.getID()}}) cannot be the same as one of the playing teams`)
       }
       this.setOfficials(officials);
     }
-    if (matchData.mvp) {
-      this.setMVP(matchData.mvp);
+    if (Object.hasOwn(matchData, 'mvp')) {
+      const mvpMatch = matchData.mvp.match(/^{(.*)}$/);
+      if (mvpMatch !== null) {
+        this.setMVP(this.getGroup().getStage().getCompetition().getPlayer(mvpMatch[1]));
+      } else {
+        this.setMVP(new Player(this.getGroup().getStage().getCompetition(), Player.UNREGISTERED_PLAYER_ID, matchData.mvp));
+      }
     }
-    if (matchData.manager) {
+    if (Object.hasOwn(matchData, 'manager')) {
       this.setManager(MatchManager.loadFromData(this, matchData.manager));
     }
-    if (matchData.notes) {
+    if (Object.hasOwn(matchData, 'notes')) {
       this.setNotes(matchData.notes);
     }
-    if (matchData.friendly !== undefined) {
+    if (Object.hasOwn(matchData, 'friendly')) {
       this.setFriendly(matchData.friendly);
     }
 
@@ -3071,7 +3347,11 @@ class GroupMatch {
       match.officials = this.#officials.serialize();
     }
     if (this.#mvp !== null) {
-      match.mvp = this.#mvp;
+      if (this.#mvp.getID() === Player.UNREGISTERED_PLAYER_ID) {
+        match.mvp = this.#mvp.getName();
+      } else {
+        match.mvp = `{${this.#mvp.getID()}}`;
+      }
     }
     if (this.#manager !== null) {
       match.manager = this.#manager.serialize();
@@ -3166,6 +3446,15 @@ class GroupMatch {
    * @returns {GroupMatch} The GroupMatch object
    */
   setDate (date) {
+    if (!/^[0-9]{4}-(0[0-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/.test(date)) {
+      throw new Error(`Invalid date "${date}": must contain a value of the form "YYYY-MM-DD"`)
+    }
+
+    const d = new Date(date);
+    if (`${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${(d.getDate()).toString().padStart(2, '0')}` !== date) {
+      throw new Error(`Invalid date "${date}": date does not exist`)
+    }
+
     this.#date = date;
     return this
   }
@@ -3195,6 +3484,9 @@ class GroupMatch {
    * @returns {GroupMatch} The GroupMatch object
    */
   setWarmup (warmup) {
+    if (!/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/.test(warmup)) {
+      throw new Error(`Invalid warmup time "${warmup}": must contain a value of the form "HH:mm" using a 24 hour clock`)
+    }
     this.#warmup = warmup;
     return this
   }
@@ -3224,6 +3516,9 @@ class GroupMatch {
    * @returns {GroupMatch} The GroupMatch object
    */
   setStart (start) {
+    if (!/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/.test(start)) {
+      throw new Error(`Invalid start time "${start}": must contain a value of the form "HH:mm" using a 24 hour clock`)
+    }
     this.#start = start;
     return this
   }
@@ -3253,6 +3548,9 @@ class GroupMatch {
    * @returns {GroupMatch} The GroupMatch object
    */
   setDuration (duration) {
+    if (!/^[0-9]+:[0-5][0-9]$/.test(duration)) {
+      throw new Error(`Invalid duration "${duration}": must contain a value of the form "HH:mm"`)
+    }
     this.#duration = duration;
     return this
   }
@@ -3432,7 +3730,7 @@ class GroupMatch {
   /**
    * Set the MVP for this match
    *
-   * @param {string|null} mvp The MVP for this match
+   * @param {Player|null} mvp The MVP for this match
    * @returns {GroupMatch} The GroupMatch object
    */
   setMVP (mvp) {
@@ -3992,28 +4290,28 @@ class LeagueConfigPoints {
    * Load league points configuration data from a provided object.
    *
    * @param {object} leagueConfigData The league points configuration data to load
-   * @return {LeagueConfigPoints} Returns the LeagueConfigPoints instance after loading the data
+   * @returns {LeagueConfigPoints} Returns the LeagueConfigPoints instance after loading the data
    */
   loadFromData (leagueConfigData) {
-    if (leagueConfigData.played !== undefined) {
+    if (Object.hasOwn(leagueConfigData, 'played')) {
       this.setPlayed(leagueConfigData.played);
     }
-    if (leagueConfigData.perSet !== undefined) {
+    if (Object.hasOwn(leagueConfigData, 'perSet')) {
       this.setPerSet(leagueConfigData.perSet);
     }
-    if (leagueConfigData.win !== undefined) {
+    if (Object.hasOwn(leagueConfigData, 'win')) {
       this.setWin(leagueConfigData.win);
     }
-    if (leagueConfigData.winByOne !== undefined) {
+    if (Object.hasOwn(leagueConfigData, 'winByOne')) {
       this.setWinByOne(leagueConfigData.winByOne);
     }
-    if (leagueConfigData.lose !== undefined) {
+    if (Object.hasOwn(leagueConfigData, 'lose')) {
       this.setLose(leagueConfigData.lose);
     }
-    if (leagueConfigData.loseByOne !== undefined) {
+    if (Object.hasOwn(leagueConfigData, 'loseByOne')) {
       this.setLoseByOne(leagueConfigData.loseByOne);
     }
-    if (leagueConfigData.forfeit !== undefined) {
+    if (Object.hasOwn(leagueConfigData, 'forfeit')) {
       this.setForfeit(leagueConfigData.forfeit);
     }
 
@@ -4023,7 +4321,7 @@ class LeagueConfigPoints {
   /**
    * The league points configuration in a form suitable for serializing
    *
-   * @return {object} The serialized league points configuration data
+   * @returns {object} The serialized league points configuration data
    */
   serialize () {
     return {
@@ -4040,7 +4338,7 @@ class LeagueConfigPoints {
   /**
    * Get the league configuration associated with these points.
    *
-   * @return {LeagueConfig} The league configuration associated with these points
+   * @returns {LeagueConfig} The league configuration associated with these points
    */
   getLeagueConfig () {
     return this.#leagueConfig
@@ -4050,7 +4348,7 @@ class LeagueConfigPoints {
    * Set the number of league points for playing the match.
    *
    * @param {number} played The number of league points for playing the match
-   * @return {LeagueConfigPoints} Returns the LeagueConfigPoints instance for method chaining
+   * @returns {LeagueConfigPoints} Returns the LeagueConfigPoints instance for method chaining
    */
   setPlayed (played) {
     this.#played = played;
@@ -4060,7 +4358,7 @@ class LeagueConfigPoints {
   /**
    * Get the number of league points for playing the match.
    *
-   * @return {number} The number of league points for playing the match
+   * @returns {number} The number of league points for playing the match
    */
   getPlayed () {
     return this.#played
@@ -4070,7 +4368,7 @@ class LeagueConfigPoints {
    * Set the number of league points for each set won.
    *
    * @param {number} perSet The number of league points for each set won
-   * @return {LeagueConfigPoints} Returns the LeagueConfigPoints instance for method chaining
+   * @returns {LeagueConfigPoints} Returns the LeagueConfigPoints instance for method chaining
    */
   setPerSet (perSet) {
     this.#perSet = perSet;
@@ -4080,7 +4378,7 @@ class LeagueConfigPoints {
   /**
    * Get the number of league points for each set won.
    *
-   * @return {number} The number of league points for each set won
+   * @returns {number} The number of league points for each set won
    */
   getPerSet () {
     return this.#perSet
@@ -4090,7 +4388,7 @@ class LeagueConfigPoints {
    * Set the number of league points for winning.
    *
    * @param {number} win The number of league points for winning
-   * @return {LeagueConfigPoints} Returns the LeagueConfigPoints instance for method chaining
+   * @returns {LeagueConfigPoints} Returns the LeagueConfigPoints instance for method chaining
    */
   setWin (win) {
     this.#win = win;
@@ -4100,7 +4398,7 @@ class LeagueConfigPoints {
   /**
    * Get the number of league points for winning.
    *
-   * @return {number} The number of league points for winning
+   * @returns {number} The number of league points for winning
    */
   getWin () {
     return this.#win
@@ -4110,7 +4408,7 @@ class LeagueConfigPoints {
    * Set the number of league points for winning by one set.
    *
    * @param {number} winByOne The number of league points for winning by one set
-   * @return {LeagueConfigPoints} Returns the LeagueConfigPoints instance for method chaining
+   * @returns {LeagueConfigPoints} Returns the LeagueConfigPoints instance for method chaining
    */
   setWinByOne (winByOne) {
     this.#winByOne = winByOne;
@@ -4120,7 +4418,7 @@ class LeagueConfigPoints {
   /**
    * Get the number of league points for winning by one set.
    *
-   * @return {number} The number of league points for winning by one set
+   * @returns {number} The number of league points for winning by one set
    */
   getWinByOne () {
     return this.#winByOne
@@ -4130,7 +4428,7 @@ class LeagueConfigPoints {
    * Set the number of league points for losing.
    *
    * @param {number} lose The number of league points for losing
-   * @return {LeagueConfigPoints} Returns the LeagueConfigPoints instance for method chaining
+   * @returns {LeagueConfigPoints} Returns the LeagueConfigPoints instance for method chaining
    */
   setLose (lose) {
     this.#lose = lose;
@@ -4140,7 +4438,7 @@ class LeagueConfigPoints {
   /**
    * Get the number of league points for losing.
    *
-   * @return {number} The number of league points for losing
+   * @returns {number} The number of league points for losing
    */
   getLose () {
     return this.#lose
@@ -4150,7 +4448,7 @@ class LeagueConfigPoints {
    * Set the number of league points for losing by one set.
    *
    * @param {number} loseByOne The number of league points for losing by one set
-   * @return {LeagueConfigPoints} Returns the LeagueConfigPoints instance for method chaining
+   * @returns {LeagueConfigPoints} Returns the LeagueConfigPoints instance for method chaining
    */
   setLoseByOne (loseByOne) {
     this.#loseByOne = loseByOne;
@@ -4160,7 +4458,7 @@ class LeagueConfigPoints {
   /**
    * Get the number of league points for losing by one set.
    *
-   * @return {number} The number of league points for losing by one set
+   * @returns {number} The number of league points for losing by one set
    */
   getLoseByOne () {
     return this.#loseByOne
@@ -4170,7 +4468,7 @@ class LeagueConfigPoints {
    * Set the number of league penalty points for forfeiting a match.
    *
    * @param {number} forfeit The number of league penalty points for forfeiting a match
-   * @return {LeagueConfigPoints} Returns the LeagueConfigPoints instance for method chaining
+   * @returns {LeagueConfigPoints} Returns the LeagueConfigPoints instance for method chaining
    */
   setForfeit (forfeit) {
     this.#forfeit = forfeit;
@@ -4180,7 +4478,7 @@ class LeagueConfigPoints {
   /**
    * Get the number of league penalty points for forfeiting a match.
    *
-   * @return {number} The number of league penalty points for forfeiting a match
+   * @returns {number} The number of league penalty points for forfeiting a match
    */
   getForfeit () {
     return this.#forfeit
@@ -4227,7 +4525,7 @@ class LeagueConfig {
    * Load league configuration data from a provided object.
    *
    * @param {object} leagueData The league configuration data to load
-   * @return {LeagueConfig} Returns the LeagueConfig instance after loading the data
+   * @returns {LeagueConfig} Returns the LeagueConfig instance after loading the data
    */
   loadFromData (leagueData) {
     const leagueConfigPoints = (new LeagueConfigPoints(this)).loadFromData(leagueData.points);
@@ -4238,7 +4536,7 @@ class LeagueConfig {
   /**
    * The league configuration in a form suitable for serializing
    *
-   * @return {object} The serialized league configuration data
+   * @returns {object} The serialized league configuration data
    */
   serialize () {
     const leagueConfig = {
@@ -4251,7 +4549,7 @@ class LeagueConfig {
   /**
    * Get the league associated with this configuration.
    *
-   * @return {League} The league associated with this configuration
+   * @returns {League} The league associated with this configuration
    */
   getLeague () {
     return this.#league
@@ -4261,7 +4559,7 @@ class LeagueConfig {
    * Set the ordering configuration for the league.
    *
    * @param {array} ordering The ordering configuration for the league
-   * @return {LeagueConfig} Returns the LeagueConfig instance for method chaining
+   * @returns {LeagueConfig} Returns the LeagueConfig instance for method chaining
    */
   setOrdering (ordering) {
     this.#ordering = ordering;
@@ -4271,7 +4569,7 @@ class LeagueConfig {
   /**
    * Get the ordering configuration for the league.
    *
-   * @return {array} The ordering configuration for the league
+   * @returns {array} The ordering configuration for the league
    */
   getOrdering () {
     return this.#ordering
@@ -4280,7 +4578,7 @@ class LeagueConfig {
   /**
    * Get the points configuration for the league.
    *
-   * @return {LeagueConfigPoints} The points configuration for the league
+   * @returns {LeagueConfigPoints} The points configuration for the league
    */
   getPoints () {
     return this.#points
@@ -4290,7 +4588,7 @@ class LeagueConfig {
    * Set the points configuration for the league.
    *
    * @param {LeagueConfigPoints} points The points configuration for the league
-   * @return {LeagueConfig} Returns the LeagueConfig instance for method chaining
+   * @returns {LeagueConfig} Returns the LeagueConfig instance for method chaining
    */
   setPoints (points) {
     this.#points = points;
@@ -4384,7 +4682,7 @@ class SetConfig {
    * Load set configuration data from an object.
    *
    * @param {Object} setData The set configuration data
-   * @return {SetConfig} The updated SetConfig object
+   * @returns {SetConfig} The updated SetConfig object
    */
   loadFromData (setData) {
     if (Object.hasOwn(setData, 'maxSets')) {
@@ -4425,7 +4723,7 @@ class SetConfig {
   /**
    * Get the group that this SetConfig belongs to.
    *
-   * @return {Group} The group that this SetConfig belongs to
+   * @returns {Group} The group that this SetConfig belongs to
    */
   getGroup () {
     return this.#group
@@ -4434,7 +4732,7 @@ class SetConfig {
   /**
    * The set configuration data in a form suitable for serializing
    *
-   * @return {Object} The serialized set configuration data
+   * @returns {Object} The serialized set configuration data
    */
   serialize () {
     return {
@@ -4461,7 +4759,7 @@ class SetConfig {
   /**
    * Get the maximum number of sets that could be played.
    *
-   * @return {number} The maximum number of sets
+   * @returns {number} The maximum number of sets
    */
   getMaxSets () {
     return this.#maxSets
@@ -4479,7 +4777,7 @@ class SetConfig {
   /**
    * Get the number of sets that must be won to win the match.
    *
-   * @return {number} The number of sets to win
+   * @returns {number} The number of sets to win
    */
   getSetsToWin () {
     return this.#setsToWin
@@ -4497,7 +4795,7 @@ class SetConfig {
   /**
    * Get the number of points lead that the winning team must have.
    *
-   * @return {number} The number of clear points
+   * @returns {number} The number of clear points
    */
   getClearPoints () {
     return this.#clearPoints
@@ -4515,7 +4813,7 @@ class SetConfig {
   /**
    * Get the minimum number of points that either team must score for a set to count as valid.
    *
-   * @return {number} The minimum number of points
+   * @returns {number} The minimum number of points
    */
   getMinPoints () {
     return this.#minPoints
@@ -4533,7 +4831,7 @@ class SetConfig {
   /**
    * Get the minimum number of points required to win all but the last set.
    *
-   * @return {number} The minimum number of points to win
+   * @returns {number} The minimum number of points to win
    */
   getPointsToWin () {
     return this.#pointsToWin
@@ -4551,7 +4849,7 @@ class SetConfig {
   /**
    * Get the minimum number of points required to win the last set.
    *
-   * @return {number} The minimum number of points to win the last set
+   * @returns {number} The minimum number of points to win the last set
    */
   getLastSetPointsToWin () {
     return this.#lastSetPointsToWin
@@ -4569,7 +4867,7 @@ class SetConfig {
   /**
    * Get the upper limit of points that can be scored in a set.
    *
-   * @return {number} The upper limit of points in a set
+   * @returns {number} The upper limit of points in a set
    */
   getMaxPoints () {
     return this.#maxPoints
@@ -4587,7 +4885,7 @@ class SetConfig {
   /**
    * Get the upper limit of points that can be scored in the last set.
    *
-   * @return {number} The upper limit of points in the last set
+   * @returns {number} The upper limit of points in the last set
    */
   getLastSetMaxPoints () {
     return this.#lastSetMaxPoints
@@ -4889,34 +5187,34 @@ class Group {
    * Load group data from object
    *
    * @param {object} groupData The data defining this Group
-   * @return {Group} The loaded group instance
+   * @returns {Group} The loaded group instance
    */
   loadFromData (groupData) {
-    if (groupData.name !== undefined) {
+    if (Object.hasOwn(groupData, 'name')) {
       this.setName(groupData.name);
     }
 
-    if (groupData.notes !== undefined) {
+    if (Object.hasOwn(groupData, 'notes')) {
       this.setNotes(groupData.notes);
     }
 
-    if (groupData.description !== undefined) {
+    if (Object.hasOwn(groupData, 'description')) {
       this.setDescription(groupData.description);
     }
 
-    if (groupData.sets !== undefined) {
+    if (Object.hasOwn(groupData, 'sets')) {
       const setConfig = new SetConfig(this);
       this.setSetConfig(setConfig);
       setConfig.loadFromData(groupData.sets);
     }
 
-    if (groupData.knockout !== undefined) {
+    if (Object.hasOwn(groupData, 'knockout')) {
       const knockoutConfig = new KnockoutConfig(this);
       this.setKnockoutConfig(knockoutConfig);
       knockoutConfig.loadFromData(groupData.knockout);
     }
 
-    if (groupData.league !== undefined) {
+    if (Object.hasOwn(groupData, 'league')) {
       const leagueConfig = new LeagueConfig(this);
       this.setLeagueConfig(leagueConfig);
       leagueConfig.loadFromData(groupData.league);
@@ -4936,7 +5234,7 @@ class Group {
   /**
    * Return the group data in a form suitable for serializing
    *
-   * @return {object} The serialized group data
+   * @returns {object} The serialized group data
    */
   serialize () {
     const group = {
@@ -4984,7 +5282,7 @@ class Group {
   /**
    * Get the stage this group is in
    *
-   * @return {Stage} The stage this group is in
+   * @returns {Stage} The stage this group is in
    */
   getStage () {
     return this._stage
@@ -5231,7 +5529,7 @@ class Group {
   /**
    * Returns a list of matches from this Group, where the list depends on the input parameters and on the type of the MatchContainer
    *
-   * @param {string|null} teamID When provided, return the matches where this team is playing, otherwise all matches are returned
+   * @param {string|null} id When provided, return the matches where the team with this ID is playing, otherwise all matches are returned
    *                          (and subsequent parameters are ignored).  This must be a resolved team ID and not a reference.
    *                          A team ID of CompetitionTeam::UNKNOWN_TEAM_ID is interpreted as null
    * @param {number} flags Controls what gets returned
@@ -5242,11 +5540,11 @@ class Group {
    *                       </ul>
    * @returns {Array<MatchInterface|BreakInterface>}
    */
-  getMatches (teamID = null, flags = 0) {
-    if (teamID === null ||
+  getMatches (id = null, flags = 0) {
+    if (id === null ||
             flags & Competition$1.VBC_MATCH_ALL_IN_GROUP ||
-            teamID === CompetitionTeam.UNKNOWN_TEAM_ID ||
-            teamID.charAt(0) === '{') {
+            id === CompetitionTeam.UNKNOWN_TEAM_ID ||
+            id.charAt(0) === '{') {
       return this._matches
     }
 
@@ -5256,12 +5554,12 @@ class Group {
       if (match instanceof GroupBreak) {
         continue
       } else if (flags & Competition$1.VBC_MATCH_PLAYING &&
-                (this._competition.getTeamByID(match.getHomeTeam().getID()).getID() === teamID || this._competition.getTeamByID(match.getAwayTeam().getID()).getID() === teamID)) {
+                (this._competition.getTeam(match.getHomeTeam().getID()).getID() === id || this._competition.getTeam(match.getAwayTeam().getID()).getID() === id)) {
         matches.push(match);
       } else if (flags & Competition$1.VBC_MATCH_OFFICIATING &&
                 match.getOfficials() !== null &&
                 match.getOfficials().isTeam() &&
-                this._competition.getTeamByID(match.getOfficials().getTeamID()).getID() === teamID) {
+                this._competition.getTeam(match.getOfficials().getTeamID()).getID() === id) {
         matches.push(match);
       }
     }
@@ -5294,11 +5592,11 @@ class Group {
     } else if (flags & Competition$1.VBC_TEAMS_MAYBE) {
       return this.#getMaybeTeamIDs()
     } else if (flags & Competition$1.VBC_TEAMS_KNOWN) {
-      teamIDs = Object.keys(this.#teamIDs).filter(k => this._competition.getTeamByID(k).getID() !== CompetitionTeam.UNKNOWN_TEAM_ID);
-      teamIDs.sort((a, b) => this._competition.getTeamByID(a).getName().localeCompare(this._competition.getTeamByID(b).getName()));
+      teamIDs = Object.keys(this.#teamIDs).filter(k => this._competition.getTeam(k).getID() !== CompetitionTeam.UNKNOWN_TEAM_ID);
+      teamIDs.sort((a, b) => this._competition.getTeam(a).getName().localeCompare(this._competition.getTeam(b).getName()));
     } else if (flags & Competition$1.VBC_TEAMS_FIXED_ID) {
       teamIDs = Object.keys(this.#teamIDs).filter(k => k.charAt(0) !== '{');
-      teamIDs.sort((a, b) => this._competition.getTeamByID(a).getName().localeCompare(this._competition.getTeamByID(b).getName()));
+      teamIDs.sort((a, b) => this._competition.getTeam(a).getName().localeCompare(this._competition.getTeam(b).getName()));
     }
 
     return teamIDs
@@ -5324,7 +5622,7 @@ class Group {
 
       const stgGrpLookupValues = Object.values(this.#stgGrpLookup);
       for (let i = 0; i < stgGrpLookupValues.length; i++) {
-        const group = this._competition.getStageByID(stgGrpLookupValues[i].stage).getGroupByID(stgGrpLookupValues[i].group);
+        const group = this._competition.getStage(stgGrpLookupValues[i].stage).getGroup(stgGrpLookupValues[i].group);
         if (!group.isComplete()) {
           this.#maybeTeams = Array.from(new Set([...this.#maybeTeams, ...group.getTeamIDs(Competition$1.VBC_TEAMS_KNOWN), ...group.getTeamIDs(Competition$1.VBC_TEAMS_MAYBE)]));
         }
@@ -5375,25 +5673,25 @@ class Group {
   /**
    * Returns the match with the specified ID
    *
-   * @param {string} matchID The ID of the match
+   * @param {string} id The ID of the match
    *
    * @returns {GroupMatch} The requested match
    */
-  getMatchByID (matchID) {
-    if (Object.hasOwn(this.#matchLookup, matchID)) {
-      return this.#matchLookup[matchID]
+  getMatch (id) {
+    if (Object.hasOwn(this.#matchLookup, id)) {
+      return this.#matchLookup[id]
     }
-    throw new Error(`Match with ID ${matchID} not found`)
+    throw new Error(`Match with ID ${id} not found`)
   }
 
   /**
    * Checks if a match with the given ID exists in the group.
    *
-   * @param {string} matchID The ID of the match to check
-   * @return {boolean} True if a match with the given ID exists, false otherwise
+   * @param {string} id The ID of the match to check
+   * @returns {boolean} True if a match with the given ID exists, false otherwise
    */
-  hasMatchWithID (matchID) {
-    return Object.hasOwn(this.#matchLookup, matchID)
+  hasMatch (id) {
+    return Object.hasOwn(this.#matchLookup, id)
   }
 
   /**
@@ -5408,21 +5706,21 @@ class Group {
    *
    * @param {string} type The type part of the team reference ('MATCH-ID' or 'league')
    * @param {string} entity The entity (e.g., 'winner' or 'loser')
-   * @return {CompetitionTeam} The CompetitionTeam instance
+   * @returns {CompetitionTeam} The CompetitionTeam instance
    * @throws {Error} If the entity is invalid
    */
-  getTeamByID (type, entity) {
+  getTeam (type, entity) {
     if (type === 'league') {
       throw new Error('Invalid type "league" in team reference.  Cannot get league position from a non-league group')
     }
 
-    const match = this.getMatchByID(type);
+    const match = this.getMatch(type);
 
     switch (entity) {
       case 'winner':
-        return this._competition.getTeamByID(match.getWinnerTeamID())
+        return this._competition.getTeam(match.getWinnerTeamID())
       case 'loser':
-        return this._competition.getTeamByID(match.getLoserTeamID())
+        return this._competition.getTeam(match.getLoserTeamID())
       default:
         throw new Error(`Invalid entity "${entity}" in team reference`)
     }
@@ -5431,7 +5729,7 @@ class Group {
   /**
    * Checks if the matches in this group have been processed.
    *
-   * @return {boolean} True if the matches in this group have been processed, false otherwise
+   * @returns {boolean} True if the matches in this group have been processed, false otherwise
    */
   isProcessed () {
     return this._matchesProcessed
@@ -5440,7 +5738,7 @@ class Group {
   /**
    * Checks if the group is complete, i.e., all matches in the group are complete.
    *
-   * @return {boolean} True if the group is complete, false otherwise
+   * @returns {boolean} True if the group is complete, false otherwise
    */
   isComplete () {
     if (!this._isCompleteKnown) {
@@ -5468,7 +5766,7 @@ class Group {
   /**
    * Checks if the matches in this group have courts.
    *
-   * @return {boolean} True if the matches in this group have courts, false otherwise
+   * @returns {boolean} True if the matches in this group have courts, false otherwise
    */
   matchesHaveCourts () {
     return this.#matchesHaveCourts
@@ -5477,7 +5775,7 @@ class Group {
   /**
    * Checks if the matches in this group have dates.
    *
-   * @return {boolean} True if the matches in this group have dates, false otherwise
+   * @returns {boolean} True if the matches in this group have dates, false otherwise
    */
   matchesHaveDates () {
     return this.#matchesHaveDates
@@ -5486,7 +5784,7 @@ class Group {
   /**
    * Checks if the matches in this group have durations.
    *
-   * @return {boolean} True if the matches in this group have durations, false otherwise
+   * @returns {boolean} True if the matches in this group have durations, false otherwise
    */
   matchesHaveDurations () {
     return this.#matchesHaveDurations
@@ -5495,7 +5793,7 @@ class Group {
   /**
    * Checks if the matches in this group have MVPs.
    *
-   * @return {boolean} True if the matches in this group have MVPs, false otherwise
+   * @returns {boolean} True if the matches in this group have MVPs, false otherwise
    */
   matchesHaveMVPs () {
     return this.#matchesHaveMVPs
@@ -5504,7 +5802,7 @@ class Group {
   /**
    * Checks if the matches in this group have court managers.
    *
-   * @return {boolean} True if the matches in this group have court managers, false otherwise
+   * @returns {boolean} True if the matches in this group have court managers, false otherwise
    */
   matchesHaveManagers () {
     return this.#matchesHaveManagers
@@ -5513,7 +5811,7 @@ class Group {
   /**
    * Checks if the matches in this group have notes.
    *
-   * @return {boolean} True if the matches in this group have notes, false otherwise
+   * @returns {boolean} True if the matches in this group have notes, false otherwise
    */
   matchesHaveNotes () {
     return this.#matchesHaveNotes
@@ -5522,7 +5820,7 @@ class Group {
   /**
    * Checks if the matches in this group have officials.
    *
-   * @return {boolean} True if the matches in this group have officials, false otherwise
+   * @returns {boolean} True if the matches in this group have officials, false otherwise
    */
   matchesHaveOfficials () {
     return this.#matchesHaveOfficials
@@ -5531,7 +5829,7 @@ class Group {
   /**
    * Checks if the matches in this group have start times.
    *
-   * @return {boolean} True if the matches in this group have start times, false otherwise
+   * @returns {boolean} True if the matches in this group have start times, false otherwise
    */
   matchesHaveStarts () {
     return this.#matchesHaveStarts
@@ -5540,7 +5838,7 @@ class Group {
   /**
    * Checks if the matches in this group have venues.
    *
-   * @return {boolean} True if the matches in this group have venues, false otherwise
+   * @returns {boolean} True if the matches in this group have venues, false otherwise
    */
   matchesHaveVenues () {
     return this.#matchesHaveVenues
@@ -5549,7 +5847,7 @@ class Group {
   /**
    * Checks if the matches in this group have warmup times.
    *
-   * @return {boolean} True if the matches in this group have warmup times, false otherwise
+   * @returns {boolean} True if the matches in this group have warmup times, false otherwise
    */
   matchesHaveWarmups () {
     return this.#matchesHaveWarmups
@@ -5558,13 +5856,13 @@ class Group {
   /**
    * Returns whether all of the teams in this group are known yet or not.
    *
-   * @return {boolean} Whether all of the teams in this group are known yet or not
+   * @returns {boolean} Whether all of the teams in this group are known yet or not
    */
   allTeamsKnown () {
     let allGroupsComplete = true;
     for (const teamReference of this.#teamReferences) {
       const parts = teamReference.trim().replace(/[{}]/g, '').split(':', 4);
-      if (!this._competition.getStageByID(parts[0]).getGroupByID(parts[1]).isComplete()) {
+      if (!this._competition.getStage(parts[0]).getGroup(parts[1]).isComplete()) {
         allGroupsComplete = false;
       }
     }
@@ -5574,64 +5872,64 @@ class Group {
   /**
    * Returns whether the specified team is known to have matches in this group.
    *
-   * @param {string} teamID The ID of the team
-   * @return {boolean} Whether the specified team is known to have matches in this group
+   * @param {string} id The ID of the team
+   * @returns {boolean} Whether the specified team is known to have matches in this group
    */
-  teamHasMatches (teamID) {
-    if (!Object.hasOwn(this.#teamHasMatchesLookup, teamID)) {
-      this.#teamHasMatchesLookup[teamID] = false;
+  teamHasMatches (id) {
+    if (!Object.hasOwn(this.#teamHasMatchesLookup, id)) {
+      this.#teamHasMatchesLookup[id] = false;
       for (const match of this._matches) {
         if (match instanceof GroupBreak) {
           continue
         }
-        if (this._competition.getTeamByID(match.getHomeTeam().getID()).getID() === teamID) {
-          this.#teamHasMatchesLookup[teamID] = true;
+        if (this._competition.getTeam(match.getHomeTeam().getID()).getID() === id) {
+          this.#teamHasMatchesLookup[id] = true;
           break
         }
-        if (this._competition.getTeamByID(match.getAwayTeam().getID()).getID() === teamID) {
-          this.#teamHasMatchesLookup[teamID] = true;
+        if (this._competition.getTeam(match.getAwayTeam().getID()).getID() === id) {
+          this.#teamHasMatchesLookup[id] = true;
           break
         }
       }
     }
-    return this.#teamHasMatchesLookup[teamID]
+    return this.#teamHasMatchesLookup[id]
   }
 
   /**
    * Returns whether the specified team is known to have officiating duties in this group.
    *
-   * @param {string} teamID The ID of the team
-   * @return {boolean} Whether the specified team is known to have officiating duties in this group
+   * @param {string} id The ID of the team
+   * @returns {boolean} Whether the specified team is known to have officiating duties in this group
    */
-  teamHasOfficiating (teamID) {
-    if (!Object.hasOwn(this.#teamHasOfficiatingLookup, teamID)) {
-      this.#teamHasOfficiatingLookup[teamID] = false;
+  teamHasOfficiating (id) {
+    if (!Object.hasOwn(this.#teamHasOfficiatingLookup, id)) {
+      this.#teamHasOfficiatingLookup[id] = false;
       for (const match of this._matches) {
         if (match instanceof GroupBreak) {
           continue
         }
         if (match.getOfficials() !== null && match.getOfficials().isTeam() &&
-                    this._competition.getTeamByID(match.getOfficials().getTeamID()).getID() === teamID) {
-          this.#teamHasOfficiatingLookup[teamID] = true;
+                    this._competition.getTeam(match.getOfficials().getTeamID()).getID() === id) {
+          this.#teamHasOfficiatingLookup[id] = true;
           break
         }
       }
     }
-    return this.#teamHasOfficiatingLookup[teamID]
+    return this.#teamHasOfficiatingLookup[id]
   }
 
   /**
    * Returns whether the specified team may have matches or officiating duties in this group.
    *
-   * @param {string} teamID The ID of the team
-   * @return {boolean} Whether it is possible for a team with the given ID to have matches in this group
+   * @param {string} id The ID of the team
+   * @returns {boolean} Whether it is possible for a team with the given ID to have matches in this group
    */
-  teamMayHaveMatches (teamID) {
+  teamMayHaveMatches (id) {
     if (this.isComplete()) {
       return false
     }
 
-    if (this._competition.getTeamByID(teamID).getID() === CompetitionTeam.UNKNOWN_TEAM_ID) {
+    if (this._competition.getTeam(id).getID() === CompetitionTeam.UNKNOWN_TEAM_ID) {
       return false
     }
 
@@ -5639,8 +5937,8 @@ class Group {
 
     const stgGrpLookupValues = Object.values(this.#stgGrpLookup);
     for (let i = 0; i < stgGrpLookupValues.length; i++) {
-      const group = this._competition.getStageByID(stgGrpLookupValues[i].stage).getGroupByID(stgGrpLookupValues[i].group);
-      if ((!group.isComplete() && group.teamHasMatches(teamID)) || group.teamMayHaveMatches(teamID)) {
+      const group = this._competition.getStage(stgGrpLookupValues[i].stage).getGroup(stgGrpLookupValues[i].group);
+      if ((!group.isComplete() && group.teamHasMatches(id)) || group.teamMayHaveMatches(id)) {
         return true
       }
     }
@@ -5653,7 +5951,7 @@ class Group {
    *
    * @param {string} [teamID=null] The ID of the team
    * @param {number} [flags=VBC_MATCH_PLAYING] Controls what gets returned
-   * @return {Array<string>} List of match dates
+   * @returns {Array<string>} List of match dates
    */
   getMatchDates (teamID = null, flags = Competition$1.VBC_MATCH_PLAYING) {
     const matchDates = {};
@@ -5670,13 +5968,13 @@ class Group {
         }
 
         if (flags & Competition$1.VBC_MATCH_PLAYING &&
-                    (this._competition.getTeamByID(match.getHomeTeam().getID()).getID() === teamID ||
-                     this._competition.getTeamByID(match.getAwayTeam().getID()).getID() === teamID)) {
+                    (this._competition.getTeam(match.getHomeTeam().getID()).getID() === teamID ||
+                     this._competition.getTeam(match.getAwayTeam().getID()).getID() === teamID)) {
           matchDates[match.getDate()] = 1;
         } else if (flags & Competition$1.VBC_MATCH_OFFICIATING &&
                     match.getOfficials() !== null &&
                     match.getOfficials().isTeam() &&
-                    this._competition.getTeamByID(match.getOfficials().getTeamID()).getID() === teamID) {
+                    this._competition.getTeam(match.getOfficials().getTeamID()).getID() === teamID) {
           matchDates[match.getDate()] = 1;
         }
       }
@@ -5691,7 +5989,7 @@ class Group {
    * @param {string} date The requested date in the format YYYY-MM-DD
    * @param {string} [teamID=null] The ID of the team
    * @param {number} [flags=VBC_MATCH_ALL] Controls what gets returned
-   * @return {Array<MatchInterface>} List of matches on the specified date
+   * @returns {Array<MatchInterface>} List of matches on the specified date
    */
   getMatchesOnDate (date, teamID = null, flags = Competition$1.VBC_MATCH_ALL) {
     const matches = [];
@@ -5707,13 +6005,13 @@ class Group {
           if (!(match instanceof GroupMatch)) {
             matches.push(match);
           } else if (flags & Competition$1.VBC_MATCH_PLAYING &&
-                              (this._competition.getTeamByID(match.getHomeTeam().getID()).getID() === teamID ||
-                               this._competition.getTeamByID(match.getAwayTeam().getID()).getID() === teamID)) {
+                              (this._competition.getTeam(match.getHomeTeam().getID()).getID() === teamID ||
+                               this._competition.getTeam(match.getAwayTeam().getID()).getID() === teamID)) {
             matches.push(match);
           } else if (flags & Competition$1.VBC_MATCH_OFFICIATING &&
                                match.getOfficials() !== null &&
                                match.getOfficials().isTeam() &&
-                               this._competition.getTeamByID(match.getOfficials().getTeamID()).getID() === teamID) {
+                               this._competition.getTeam(match.getOfficials().getTeamID()).getID() === teamID) {
             matches.push(match);
           }
         }
@@ -6212,7 +6510,7 @@ class IfUnknown {
    * @param {mixed} id The ID of the match
    * @returns {boolean} True if match exists, false otherwise
    */
-  hasMatchWithID (id) {
+  hasMatch (id) {
     return Object.hasOwn(this.#matchLookup, id)
   }
 
@@ -6237,15 +6535,15 @@ class IfUnknown {
   /**
    * Get the match with the specified ID
    *
-   * @param {string} matchID The ID of the match
+   * @param {string} id The ID of the match
    * @returns {IfUnknownMatch} The requested match
    * @throws {OutOfBoundsException} When the match with the specified ID is not found
    */
-  getMatchByID (matchID) {
-    if (Object.hasOwn(this.#matchLookup, matchID)) {
-      return this.#matchLookup[matchID]
+  getMatch (id) {
+    if (Object.hasOwn(this.#matchLookup, id)) {
+      return this.#matchLookup[id]
     }
-    throw new Error(`Match with ID ${matchID} not found`)
+    throw new Error(`Match with ID ${id} not found`)
   }
 
   /**
@@ -6369,7 +6667,7 @@ class Knockout extends Group$1 {
   /**
    * Get the knockout config for this group
    *
-   * @return {KnockoutConfig|null} the knockout config for this group
+   * @returns {KnockoutConfig|null} the knockout config for this group
    */
   getKnockoutConfig () {
     return this._knockoutConfig
@@ -6443,7 +6741,7 @@ class LeagueTable {
   /**
    * Get the league associated with this table.
    *
-   * @return {League} The league associated with this table
+   * @returns {League} The league associated with this table
    */
   getLeague () {
     return this.#league
@@ -6452,7 +6750,7 @@ class LeagueTable {
   /**
    * Get the text representation of the ordering criteria for the league table.
    *
-   * @return {string} The text representation of the ordering criteria
+   * @returns {string} The text representation of the ordering criteria
    */
   getOrderingText () {
     let orderingText = `Position is decided by ${LeagueTable.#mapOrderingToString(this.#ordering[0])}`;
@@ -6466,7 +6764,7 @@ class LeagueTable {
    * Maps ordering string to human-readable format.
    *
    * @param {string} orderingString The ordering string to map
-   * @return {string} The human-readable representation of the ordering string
+   * @returns {string} The human-readable representation of the ordering string
    */
   static #mapOrderingToString (orderingString) {
     switch (orderingString) {
@@ -6500,7 +6798,7 @@ class LeagueTable {
   /**
    * Get the text representation of the scoring system used in the league.
    *
-   * @return {string} The text representation of the league's scoring system
+   * @returns {string} The text representation of the league's scoring system
    */
   getScoringText () {
     const textBuilder = (points, action) => {
@@ -6544,7 +6842,7 @@ class LeagueTable {
   /**
    * Checks if draws are allowed in the league.
    *
-   * @return {boolean} True if draws are allowed, false otherwise
+   * @returns {boolean} True if draws are allowed, false otherwise
    */
   hasDraws () {
     return this.#hasDraws
@@ -6553,7 +6851,7 @@ class LeagueTable {
   /**
    * Checks if the league uses sets.
    *
-   * @return {boolean} True if the league uses sets, false otherwise
+   * @returns {boolean} True if the league uses sets, false otherwise
    */
   hasSets () {
     return this.#hasSets
@@ -6562,7 +6860,7 @@ class LeagueTable {
   /**
    * Get the group ID associated with this league table.
    *
-   * @return {string} The group ID associated with this league table
+   * @returns {string} The group ID associated with this league table
    */
   getGroupID () {
     return this.#league.getID()
@@ -6708,7 +7006,7 @@ class LeagueTableEntry {
   /**
    * Return the leagueTableEntry in a form suitable for serializing.  Thisis only used by unit tests
    *
-   * @return {object} The serialized league table entry data
+   * @returns {object} The serialized league table entry data
    */
   serialize () {
     const leagueTableEntry = {
@@ -6735,7 +7033,7 @@ class LeagueTableEntry {
   /**
    * Get the group ID associated with this entry.
    *
-   * @return {string} The group ID associated with this entry
+   * @returns {string} The group ID associated with this entry
    */
   getGroupID () {
     return this.#league.getID()
@@ -6744,7 +7042,7 @@ class LeagueTableEntry {
   /**
    * Get the team ID.
    *
-   * @return {string} The team ID
+   * @returns {string} The team ID
    */
   getTeamID () {
     return this.#teamID
@@ -6753,7 +7051,7 @@ class LeagueTableEntry {
   /**
    * Get the name of the team.
    *
-   * @return {string} The name of the team
+   * @returns {string} The name of the team
    */
   getTeam () {
     return this.#team
@@ -6762,7 +7060,7 @@ class LeagueTableEntry {
   /**
    * Get the number of matches played.
    *
-   * @return {number} The number of matches played
+   * @returns {number} The number of matches played
    */
   getPlayed () {
     return this.#played
@@ -6780,7 +7078,7 @@ class LeagueTableEntry {
   /**
    * Get the number of matches won.
    *
-   * @return {number} The number of matches won
+   * @returns {number} The number of matches won
    */
   getWins () {
     return this.#wins
@@ -6798,7 +7096,7 @@ class LeagueTableEntry {
   /**
    * Get the number of matches lost.
    *
-   * @return {number} The number of matches lost
+   * @returns {number} The number of matches lost
    */
   getLosses () {
     return this.#losses
@@ -6816,7 +7114,7 @@ class LeagueTableEntry {
   /**
    * Get the number of matches drawn.
    *
-   * @return {number} The number of matches drawn
+   * @returns {number} The number of matches drawn
    */
   getDraws () {
     return this.#draws
@@ -6834,7 +7132,7 @@ class LeagueTableEntry {
   /**
    * Get the number of sets won.
    *
-   * @return {number} The number of sets won
+   * @returns {number} The number of sets won
    */
   getSF () {
     return this.#sf
@@ -6852,7 +7150,7 @@ class LeagueTableEntry {
   /**
    * Get the number of sets against.
    *
-   * @return {number} The number of sets against
+   * @returns {number} The number of sets against
    */
   getSA () {
     return this.#sa
@@ -6870,7 +7168,7 @@ class LeagueTableEntry {
   /**
    * Get the sets difference.
    *
-   * @return {number} The sets difference
+   * @returns {number} The sets difference
    */
   getSD () {
     return this.#sd
@@ -6888,7 +7186,7 @@ class LeagueTableEntry {
   /**
    * Get the number of points scored.
    *
-   * @return {number} The number of points scored
+   * @returns {number} The number of points scored
    */
   getPF () {
     return this.#pf
@@ -6906,7 +7204,7 @@ class LeagueTableEntry {
   /**
    * Get the number of points conceded.
    *
-   * @return {number} The number of points conceded
+   * @returns {number} The number of points conceded
    */
   getPA () {
     return this.#pa
@@ -6924,7 +7222,7 @@ class LeagueTableEntry {
   /**
    * Get the points difference.
    *
-   * @return {number} The points difference
+   * @returns {number} The points difference
    */
   getPD () {
     return this.#pd
@@ -6942,7 +7240,7 @@ class LeagueTableEntry {
   /**
    * Get the bonus points.
    *
-   * @return {number} The bonus points
+   * @returns {number} The bonus points
    */
   getBP () {
     return this.#bp
@@ -6960,7 +7258,7 @@ class LeagueTableEntry {
   /**
    * Get the penalty points.
    *
-   * @return {number} The penalty points
+   * @returns {number} The penalty points
    */
   getPP () {
     return this.#pp
@@ -6978,7 +7276,7 @@ class LeagueTableEntry {
   /**
    * Get the total points.
    *
-   * @return {number} The total points
+   * @returns {number} The total points
    */
   getPTS () {
     return this.#pts
@@ -6996,7 +7294,7 @@ class LeagueTableEntry {
   /**
    * Get the head-to-head data.
    *
-   * @return {object} The head-to-head data
+   * @returns {object} The head-to-head data
    */
   getH2H () {
     return this.#head
@@ -7052,11 +7350,11 @@ class League extends Group$1 {
       const awayTeamID = match.getAwayTeam().getID();
 
       if (!teamResults[homeTeamID]) {
-        teamResults[homeTeamID] = new LeagueTableEntry(this, homeTeamID, this._competition.getTeamByID(homeTeamID).getName());
+        teamResults[homeTeamID] = new LeagueTableEntry(this, homeTeamID, this._competition.getTeam(homeTeamID).getName());
       }
 
       if (!teamResults[awayTeamID]) {
-        teamResults[awayTeamID] = new LeagueTableEntry(this, awayTeamID, this._competition.getTeamByID(awayTeamID).getName());
+        teamResults[awayTeamID] = new LeagueTableEntry(this, awayTeamID, this._competition.getTeam(awayTeamID).getName());
       }
 
       if (match.isComplete()) {
@@ -7386,7 +7684,7 @@ class League extends Group$1 {
    * @returns {CompetitionTeam} The CompetitionTeam instance
    * @throws {Error} If the entity is invalid
    */
-  getTeamByID (type, entity) {
+  getTeam (type, entity) {
     if (type === 'league') {
       this.processMatches();
       if (!this.isComplete()) {
@@ -7395,16 +7693,16 @@ class League extends Group$1 {
       if (parseInt(entity) > this.#table.entries.length) {
         throw new Error('Invalid League position: position is bigger than the number of teams')
       }
-      return this._competition.getTeamByID(this.#table.entries[parseInt(entity) - 1].getTeamID())
+      return this._competition.getTeam(this.#table.entries[parseInt(entity) - 1].getTeamID())
     }
 
-    const match = this.getMatchByID(type);
+    const match = this.getMatch(type);
 
     switch (entity) {
       case 'winner':
-        return this._competition.getTeamByID(match.getWinnerTeamID())
+        return this._competition.getTeam(match.getWinnerTeamID())
       case 'loser':
-        return this._competition.getTeamByID(match.getLoserTeamID())
+        return this._competition.getTeam(match.getLoserTeamID())
       default:
         throw new Error(`Invalid entity "${entity}" in team reference`)
     }
@@ -7487,24 +7785,24 @@ class Stage {
 
   /**
    * @param {Competition} competition A link back to the Competition this Stage is in
-   * @param {string} stageID The unique ID of this Stage
+   * @param {string} id The unique ID of this Stage
    * @throws {Error} If the stage ID is invalid or already exists in the competition
    */
-  constructor (competition, stageID) {
-    if (stageID.length > 100 || stageID.length < 1) {
+  constructor (competition, id) {
+    if (id.length > 100 || id.length < 1) {
       throw new Error('Invalid stage ID: must be between 1 and 100 characters long')
     }
 
-    if (!/^((?![":{}?=])[\x20-\x7F])+$/.test(stageID)) {
+    if (!/^((?![":{}?=])[\x20-\x7F])+$/.test(id)) {
       throw new Error('Invalid stage ID: must contain only ASCII printable characters excluding " : { } ? =')
     }
 
-    if (competition.hasStageWithID(stageID)) {
-      throw new Error(`Stage with ID "${stageID}" already exists in the competition`)
+    if (competition.hasStage(id)) {
+      throw new Error(`Stage with ID "${id}" already exists in the competition`)
     }
 
     this.#competition = competition;
-    this.#id = stageID;
+    this.#id = id;
     this.#name = null;
     this.#notes = null;
     this.#description = null;
@@ -7551,7 +7849,7 @@ class Stage {
       group.loadFromData(groupData);
     });
 
-    if (stageData.ifUnknown !== undefined) {
+    if (Object.hasOwn(stageData, 'ifUnknown')) {
       this.setIfUnknown(new IfUnknown(this, stageData.ifUnknown.description)).loadFromData(stageData.ifUnknown);
     }
 
@@ -7563,7 +7861,7 @@ class Stage {
   /**
    * Return the stage data in a form suitable for serializing
    *
-   * @return {object}
+   * @returns {object}
    */
   serialize () {
     const stage = {
@@ -7623,7 +7921,7 @@ class Stage {
     if (group.getStage() !== this) {
       throw new Error('Group was initialised with a different Stage')
     }
-    if (this.hasGroupWithID(group.getID())) {
+    if (this.hasGroup(group.getID())) {
       throw new Error(`Groups in a Stage with duplicate IDs not allowed: {${this.#id}:${group.getID()}}`)
     }
     this.#groups.push(group);
@@ -7736,7 +8034,7 @@ class Stage {
   /**
    * Returns a list of matches from this Stage, where the list depends on the input parameters and on the type of the MatchContainer.
    *
-   * @param {string} teamID When provided, return the matches where this team is playing, otherwise all matches are returned
+   * @param {string} id When provided, return the matches where this team is playing, otherwise all matches are returned
    *                        (and flags is ignored).  This must be a resolved team ID and not a reference.
    *                        A team ID of CompetitionTeam.UNKNOWN_TEAM_ID is interpreted as null
    * @param {number} flags Controls what gets returned
@@ -7745,19 +8043,19 @@ class Stage {
    *                     <li><code>Competition.VBC_MATCH_PLAYING</code> - Include matches that a team plays in</li>
    *                     <li><code>Competition.VBC_MATCH_OFFICIATING</code> - Include matches that a team officiates in</li>
    *                   </ul>
-   * @return {array<MatchInterface>}
+   * @returns {array<MatchInterface>}
    */
-  getMatches (teamID = null, flags = 0) {
+  getMatches (id = null, flags = 0) {
     /*
       TODO when should we include breaks?
       TODO how do we handle duplicate breaks?
     */
 
-    if (teamID === null || teamID === CompetitionTeam.UNKNOWN_TEAM_ID || teamID.startsWith('{')) {
+    if (id === null || id === CompetitionTeam.UNKNOWN_TEAM_ID || id.startsWith('{')) {
       return this.#getAllMatchesInStage()
     }
 
-    return this.#getMatchesForTeam(teamID, flags)
+    return this.#getMatchesForTeam(id, flags)
   }
 
   /**
@@ -7812,31 +8110,31 @@ class Stage {
   /**
    * Return the group in this stage with the given ID.
    *
-   * @param {string} groupID The ID of the group to get
+   * @param {string} id The ID of the group to get
    * @throws {Error} If the group with the given ID is not found
    * @returns {Group} The Group object if found, null otherwise
    */
-  getGroupByID (groupID) {
-    if (!Object.hasOwn(this.#groupLookup, groupID)) {
-      throw new Error(`Group with ID ${groupID} not found in stage with ID ${this.#id}`)
+  getGroup (id) {
+    if (!Object.hasOwn(this.#groupLookup, id)) {
+      throw new Error(`Group with ID ${id} not found in stage with ID ${this.#id}`)
     }
-    return this.#groupLookup[groupID]
+    return this.#groupLookup[id]
   }
 
   /**
    * Check if a group with a given ID exists in this stage.
    *
-   * @param {string} groupID The ID to check
+   * @param {string} id The ID to check
    * @returns {boolean} True if the group exists, false otherwise
    */
-  hasGroupWithID (groupID) {
-    return Object.hasOwn(this.#groupLookup, groupID)
+  hasGroup (id) {
+    return Object.hasOwn(this.#groupLookup, id)
   }
 
   /**
    * Check if all matches in the stage are complete.
    *
-   * @return {bool} True if all matches in the stage are complete, false otherwise
+   * @returns {bool} True if all matches in the stage are complete, false otherwise
    */
   isComplete () {
     for (let i = 0; i < this.#groups.length; i++) {
@@ -7851,18 +8149,18 @@ class Stage {
   /**
    * Get matches for a specific team in this stage.
    *
-   * @param {string} teamID The ID of the team
+   * @param {string} id The ID of the team
    * @param {number} flags Flags to filter the matches
-   * @return {array} An array of matches for the specified team
+   * @returns {array} An array of matches for the specified team
    */
-  #getMatchesForTeam (teamID, flags) {
+  #getMatchesForTeam (id, flags) {
     let matches = [];
 
     this.#groups.forEach(group => {
-      if (group.teamHasMatches(teamID)) {
-        matches = matches.concat(group.getMatches(teamID, flags));
-      } else if (flags & Competition$1.VBC_MATCH_OFFICIATING && group.teamHasOfficiating(teamID)) {
-        matches = matches.concat(group.getMatches(teamID, Competition$1.VBC_MATCH_OFFICIATING));
+      if (group.teamHasMatches(id)) {
+        matches = matches.concat(group.getMatches(id, flags));
+      } else if (flags & Competition$1.VBC_MATCH_OFFICIATING && group.teamHasOfficiating(id)) {
+        matches = matches.concat(group.getMatches(id, Competition$1.VBC_MATCH_OFFICIATING));
       }
     });
 
@@ -7882,7 +8180,7 @@ class Stage {
   /**
    * Check if matches in any group within this stage have courts assigned.
    *
-   * @return {bool} True if matches have courts assigned, false otherwise
+   * @returns {bool} True if matches have courts assigned, false otherwise
    */
   matchesHaveCourts () {
     for (let i = 0; i < this.#groups.length; i++) {
@@ -7896,7 +8194,7 @@ class Stage {
   /**
    * Check if matches in any group within this stage have dates assigned.
    *
-   * @return {bool} True if matches have dates assigned, false otherwise
+   * @returns {bool} True if matches have dates assigned, false otherwise
    */
   matchesHaveDates () {
     for (let i = 0; i < this.#groups.length; i++) {
@@ -7910,7 +8208,7 @@ class Stage {
   /**
    * Check if matches in any group within this stage have durations assigned.
    *
-   * @return {bool} True if matches have durations assigned, false otherwise
+   * @returns {bool} True if matches have durations assigned, false otherwise
    */
   matchesHaveDurations () {
     for (let i = 0; i < this.#groups.length; i++) {
@@ -7924,7 +8222,7 @@ class Stage {
   /**
    * Check if matches in any group within this stage have MVPs assigned.
    *
-   * @return {bool} True if matches have MVPs assigned, false otherwise
+   * @returns {bool} True if matches have MVPs assigned, false otherwise
    */
   matchesHaveMVPs () {
     for (let i = 0; i < this.#groups.length; i++) {
@@ -7938,7 +8236,7 @@ class Stage {
   /**
    * Check if matches in any group within this stage have managers assigned.
    *
-   * @return {bool} True if matches have managers assigned, false otherwise
+   * @returns {bool} True if matches have managers assigned, false otherwise
    */
   matchesHaveManagers () {
     for (let i = 0; i < this.#groups.length; i++) {
@@ -7952,7 +8250,7 @@ class Stage {
   /**
    * Check if matches in any group within this stage have notes assigned.
    *
-   * @return {bool} True if matches have notes assigned, false otherwise
+   * @returns {bool} True if matches have notes assigned, false otherwise
    */
   matchesHaveNotes () {
     for (let i = 0; i < this.#groups.length; i++) {
@@ -7966,7 +8264,7 @@ class Stage {
   /**
    * Check if matches in any group within this stage have officials assigned.
    *
-   * @return {bool} True if matches have officials assigned, false otherwise
+   * @returns {bool} True if matches have officials assigned, false otherwise
    */
   matchesHaveOfficials () {
     for (let i = 0; i < this.#groups.length; i++) {
@@ -7980,7 +8278,7 @@ class Stage {
   /**
    * Check if matches in any group within this stage have start times assigned.
    *
-   * @return {bool} True if matches have start times assigned, false otherwise
+   * @returns {bool} True if matches have start times assigned, false otherwise
    */
   matchesHaveStarts () {
     for (let i = 0; i < this.#groups.length; i++) {
@@ -7994,7 +8292,7 @@ class Stage {
   /**
    * Check if matches in any group within this stage have venues assigned.
    *
-   * @return {bool} True if matches have venues assigned, false otherwise
+   * @returns {bool} True if matches have venues assigned, false otherwise
    */
   matchesHaveVenues () {
     for (let i = 0; i < this.#groups.length; i++) {
@@ -8008,7 +8306,7 @@ class Stage {
   /**
    * Check if matches in any group within this stage have warmup information assigned.
    *
-   * @return {bool} True if matches have warmup information assigned, false otherwise
+   * @returns {bool} True if matches have warmup information assigned, false otherwise
    */
   matchesHaveWarmups () {
     for (let i = 0; i < this.#groups.length; i++) {
@@ -8022,12 +8320,12 @@ class Stage {
   /**
    * Check if a team has matches scheduled in any group within this stage.
    *
-   * @param {string} teamID The ID of the team
-   * @return {bool} True if the team has matches scheduled, false otherwise
+   * @param {string} id The ID of the team
+   * @returns {bool} True if the team has matches scheduled, false otherwise
    */
-  teamHasMatches (teamID) {
+  teamHasMatches (id) {
     for (let i = 0; i < this.#groups.length; i++) {
-      if (this.#groups[i].teamHasMatches(teamID)) {
+      if (this.#groups[i].teamHasMatches(id)) {
         return true
       }
     }
@@ -8037,12 +8335,12 @@ class Stage {
   /**
    * Check if a team has officiating duties assigned in any group within this stage.
    *
-   * @param {string} teamID The ID of the team
-   * @return {bool} True if the team has officiating duties assigned, false otherwise
+   * @param {string} id The ID of the team
+   * @returns {bool} True if the team has officiating duties assigned, false otherwise
    */
-  teamHasOfficiating (teamID) {
+  teamHasOfficiating (id) {
     for (let i = 0; i < this.#groups.length; i++) {
-      if (this.#groups[i].teamHasOfficiating(teamID)) {
+      if (this.#groups[i].teamHasOfficiating(id)) {
         return true
       }
     }
@@ -8055,10 +8353,10 @@ class Stage {
    * references that might point to this team (e.g. a reference to a team in a league position in an incomplete league) then call this function.  This
    * is essentially so we know whether we still need to consider displaying a stage to the competitors as they <i>might</i> still be able to reach that stage.
    *
-   * @param {string} teamID The ID of the team to check
-   * @return {bool} True if the team may have matches scheduled, false otherwise
+   * @param {string} id The ID of the team to check
+   * @returns {bool} True if the team may have matches scheduled, false otherwise
    */
-  teamMayHaveMatches (teamID) {
+  teamMayHaveMatches (id) {
     /* TODO Do we need to rewrite this?
 
     assert - we only call this after calling "teamHasMatches()".  In other words, this has ?undefined return? if you definitely have matches?
@@ -8079,7 +8377,7 @@ class Stage {
       this.#teamStgGrpLookup = {};
       this.#groups.forEach(group => {
         group.getMatches().forEach(match => {
-          if (match instanceof GroupMatch && this.#competition.getTeamByID(teamID).getID() !== CompetitionTeam.UNKNOWN_TEAM_ID) {
+          if (match instanceof GroupMatch && this.#competition.getTeam(id).getID() !== CompetitionTeam.UNKNOWN_TEAM_ID) {
             const homeTeamParts = match.getHomeTeam().getID().substr(1).split(':', 3);
             if (homeTeamParts.length > 2) {
               const key = `${homeTeamParts[0]}:${homeTeamParts[1]}`;
@@ -8122,8 +8420,8 @@ class Stage {
     // Look up each reference to see if it leads back to this team
     const teamStgGrpLookupValues = Object.values(this.#teamStgGrpLookup);
     for (let i = 0; i < teamStgGrpLookupValues.length; i++) {
-      const group = this.#competition.getStageByID(teamStgGrpLookupValues[i].stage).getGroupByID(teamStgGrpLookupValues[i].group);
-      if ((!group.isComplete() && group.teamHasMatches(teamID)) || group.teamMayHaveMatches(teamID)) {
+      const group = this.#competition.getStage(teamStgGrpLookupValues[i].stage).getGroup(teamStgGrpLookupValues[i].group);
+      if ((!group.isComplete() && group.teamHasMatches(id)) || group.teamMayHaveMatches(id)) {
         return true
       }
     }
@@ -8133,19 +8431,19 @@ class Stage {
   /**
    * Returns a list of match dates in this Stage.  If a team ID is given then return dates for just that team.
    *
-   * @param {string} teamID This must be a resolved team ID and not a reference
+   * @param {string} id This must be a resolved team ID and not a reference
    * @param {number} flags Controls what gets returned
    *                   <ul>
    *                     <li><code>Competition.VBC_MATCH_ALL</code> - Include all matches</li>
    *                     <li><code>Competition.VBC_MATCH_PLAYING</code> - Include matches that a team plays in</li>
    *                     <li><code>Competition.VBC_MATCH_OFFICIATING</code> - Include matches that a team officiates in</li>
    *                   </ul>
-   * @return array<string>
+   * @returns array<string>
    */
-  getMatchDates (teamID = null, flags = Competition$1.VBC_MATCH_PLAYING) {
+  getMatchDates (id = null, flags = Competition$1.VBC_MATCH_PLAYING) {
     let matchDates = [];
     this.#groups.forEach(group => {
-      const groupMatchDates = group.getMatchDates(teamID, flags);
+      const groupMatchDates = group.getMatchDates(id, flags);
       matchDates = matchDates.concat(groupMatchDates);
     });
     matchDates.sort();
@@ -8157,19 +8455,19 @@ class Stage {
    * The returned list includes breaks when that break has a date value
    *
    * @param {string} date The requested date in the format YYYY-MM-DD
-   * @param {string} teamID This must be a resolved team ID and not a reference
+   * @param {string} id This must be a resolved team ID and not a reference
    * @param {number} flags Controls what gets returned
    *                   <ul>
    *                     <li><code>Competition.VBC_MATCH_ALL</code> - Include all matches</li>
    *                     <li><code>Competition.VBC_MATCH_PLAYING</code> - Include matches that a team plays in</li>
    *                     <li><code>Competition.VBC_MATCH_OFFICIATING</code> - Include matches that a team officiates in</li>
    *                   </ul>
-   * @return array<MatchInterface>
+   * @returns array<MatchInterface>
    */
-  getMatchesOnDate (date, teamID = null, flags = Competition$1.VBC_MATCH_ALL) {
+  getMatchesOnDate (date, id = null, flags = Competition$1.VBC_MATCH_ALL) {
     let matches = [];
     this.#groups.forEach(group => {
-      const groupMatches = group.getMatchesOnDate(date, teamID, flags);
+      const groupMatches = group.getMatchesOnDate(date, id, flags);
       matches = matches.concat(groupMatches);
     });
     matches.sort((a, b) => {
@@ -8257,6 +8555,13 @@ class Competition {
   #teams
 
   /**
+   * A list of players in the competition
+   * @type {array}
+   * @private
+   */
+  #players
+
+  /**
    * The stages of the competition. Stages are phases of a competition that happen in order.  There may be only one stage (e.g. for a flat league) or multiple in sequence
    * (e.g. for a tournament with pools, then crossovers, then finals)
    * @type {array}
@@ -8270,6 +8575,13 @@ class Competition {
    * @private
    */
   #teamLookup
+
+  /**
+   * A Lookup table from player IDs to the player
+   * @type {object}
+   * @private
+   */
+  #playerLookup
 
   /**
    * A Lookup table from stage IDs to the stage
@@ -8322,8 +8634,10 @@ class Competition {
     this.#notes = null;
     this.#clubs = [];
     this.#teams = [];
+    this.#players = [];
     this.#stages = [];
     this.#teamLookup = {};
+    this.#playerLookup = {};
     this.#stageLookup = {};
     this.#clubLookup = {};
 
@@ -8335,7 +8649,7 @@ class Competition {
    *
    * @param {string} competitionJSON The competition JSON data
    *
-   * @return {Promise<Competition>} a loaded Competition, rejects when the JSON data is invalid
+   * @returns {Promise<Competition>} a loaded Competition, rejects when the JSON data is invalid
    */
   static async loadFromCompetitionJSON (competitionJSON) {
     let competitionData;
@@ -8379,6 +8693,12 @@ class Competition {
       competition.addTeam(new CompetitionTeam(competition, teamData.id, teamData.name).loadFromData(teamData));
     });
 
+    if (Array.isArray(competitionData.players)) {
+      competitionData.players.forEach(playerData => {
+        competition.addPlayer(new Player(competition, playerData.id, playerData.name).loadFromData(playerData));
+      });
+    }
+
     competitionData.stages.forEach(stageData => {
       const stage = new Stage(competition, stageData.id);
       competition.addStage(stage);
@@ -8391,7 +8711,7 @@ class Competition {
   /**
    * Return the competition definition in a form suitable for serializing
    *
-   * @return {object} The competition as an object suitable for serializing into JSON
+   * @returns {object} The competition as an object suitable for serializing into JSON
    */
   serialize () {
     const competition = {
@@ -8420,6 +8740,13 @@ class Competition {
       competition.teams.push(team.serialize());
     });
 
+    if (this.#players.length > 0) {
+      competition.players = [];
+      this.#players.forEach(player => {
+        competition.players.push(player.serialize());
+      });
+    }
+
     competition.stages = [];
     this.#stages.forEach(stage => {
       competition.stages.push(stage.serialize());
@@ -8444,7 +8771,7 @@ class Competition {
   /**
    * Get the schema version for this competition, as a semver string
    *
-   * @return {string} the schema version
+   * @returns {string} the schema version
    */
   getVersion () {
     return this.#version
@@ -8455,7 +8782,7 @@ class Competition {
    *
    * @param {string} version the version for the competition data
    *
-   * @return {Competition} the competition
+   * @returns {Competition} the competition
    */
   setVersion (version) {
     this.#version = version;
@@ -8465,7 +8792,7 @@ class Competition {
   /**
    * Get the name for this competition
    *
-   * @return {string} the competition name
+   * @returns {string} the competition name
    */
   getName () {
     return this.#name
@@ -8476,7 +8803,7 @@ class Competition {
    *
    * @param {string} name the new name for the competition
    *
-   * @return {Competition} the competition
+   * @returns {Competition} the competition
    */
   setName (name) {
     if (name.length > 1000 || name.length < 1) {
@@ -8493,7 +8820,7 @@ class Competition {
    *
    * @param {string} key The key of the metadata
    * @param {string} value The value of the metadata
-   * @return {Competition} Returns the current Competition instance for method chaining
+   * @returns {Competition} Returns the current Competition instance for method chaining
    * @throws {Error} If the key or value is invalid
    */
   setMetadataByID (key, value) {
@@ -8523,7 +8850,7 @@ class Competition {
    * This function checks if the competition has metadata with the specified key.
    *
    * @param {string} key The key to check
-   * @return {bool} Returns true if the metadata value exists, false otherwise
+   * @returns {bool} Returns true if the metadata value exists, false otherwise
    */
   hasMetadataByKey (key) {
     for (let i = 0; i < this.#metadata.length; i++) {
@@ -8537,7 +8864,7 @@ class Competition {
   /**
    * Check if the competition has any metadata defined.
    *
-   * @return {bool} Returns true if the metadata exists, false otherwise
+   * @returns {bool} Returns true if the metadata exists, false otherwise
    */
   hasMetadata () {
     return this.#metadata.length > 0
@@ -8549,7 +8876,7 @@ class Competition {
    * This function retrieves the value of the metadata associated with the provided key.
    *
    * @param {string} key The key of the metadata
-   * @return {string|null} Returns the value of the metadata if found, otherwise null
+   * @returns {string|null} Returns the value of the metadata if found, otherwise null
    */
   getMetadataByKey (key) {
     for (let i = 0; i < this.#metadata.length; i++) {
@@ -8565,7 +8892,7 @@ class Competition {
    *
    * This function retrieves the value of the metadata associated with the provided key.
    *
-   * @return {array|null} Returns the metadata array or null if no metadata is defined
+   * @returns {array|null} Returns the metadata array or null if no metadata is defined
    */
   getMetadata () {
     if (this.hasMetadata()) {
@@ -8580,7 +8907,7 @@ class Competition {
    * This function deletes the metadata with the provided key from the competition.
    *
    * @param {string} key The key of the metadata to delete
-   * @return {Competition} Returns the current Competition instance for method chaining
+   * @returns {Competition} Returns the current Competition instance for method chaining
    */
   deleteMetadataByKey (key) {
     this.#metadata = this.#metadata.filter(el => el.key !== key);
@@ -8590,7 +8917,7 @@ class Competition {
   /**
    * Get the notes for this competition
    *
-   * @return {string|null} the notes for this competition
+   * @returns {string|null} the notes for this competition
    */
   getNotes () {
     return this.#notes
@@ -8601,7 +8928,7 @@ class Competition {
    *
    * @param {string|null} notes the notes for this competition
    *
-   * @return {Competition} the competition
+   * @returns {Competition} the competition
    */
   setNotes (notes) {
     if (notes.length < 1) {
@@ -8618,13 +8945,13 @@ class Competition {
    *
    * @throws {Error} If the input parameters are invalid or if a team with the requested ID already exists
    *
-   * @return {Competition} This competition
+   * @returns {Competition} This competition
    */
   addTeam (team) {
     if (team.getCompetition() !== this) {
       throw new Error('Team was initialised with a different Competition')
     }
-    if (this.hasTeamWithID(team.getID())) {
+    if (this.hasTeam(team.getID())) {
       return this
     }
     this.#teams.push(team);
@@ -8635,7 +8962,7 @@ class Competition {
   /**
    * Get the teams in this competition
    *
-   * @return {array} The teams in this competition
+   * @returns {array} The teams in this competition
    */
   getTeams () {
     return this.#teams
@@ -8644,16 +8971,16 @@ class Competition {
   /**
    * Gets the Team for the given team ID
    *
-   * @param {string} teamID The team ID to look up. This may be a pure ID, a reference, or a ternary
+   * @param {string} id The team ID to look up. This may be a pure ID, a reference, or a ternary
    *
-   * @return {CompetitionTeam} The team
+   * @returns {CompetitionTeam} The team
    */
-  getTeamByID (teamID) {
+  getTeam (id) {
     this.#processMatches();
 
-    if (!teamID.startsWith('{')) {
-      if (Object.hasOwn(this.#teamLookup, teamID)) {
-        return this.#teamLookup[teamID]
+    if (!id.startsWith('{')) {
+      if (Object.hasOwn(this.#teamLookup, id)) {
+        return this.#teamLookup[id]
       }
     }
 
@@ -8662,20 +8989,20 @@ class Competition {
      * Note that we only allow one level of ternary, i.e. this does not resolve:
      *  { {ta}=={tb}?{tTrue}:{tFalse} }=={T2}?{TTrue}:{TFalse}
      */
-    const lrMatches = teamID.match(/^([^=]*)==([^?]*)\?(.*)/);
+    const lrMatches = id.match(/^([^=]*)==([^?]*)\?(.*)/);
     if (lrMatches !== null) {
-      const leftTeam = this.getTeamByID(lrMatches[1]);
-      const rightTeam = this.getTeamByID(lrMatches[2]);
+      const leftTeam = this.getTeam(lrMatches[1]);
+      const rightTeam = this.getTeam(lrMatches[2]);
       let trueTeam = null;
 
       let tfMatches;
       let falseTeam;
       if ((tfMatches = lrMatches[3].match(/^({[^}]*}):(.*)/)) !== null) {
-        trueTeam = this.getTeamByID(tfMatches[1]);
-        falseTeam = this.getTeamByID(tfMatches[2]);
+        trueTeam = this.getTeam(tfMatches[1]);
+        falseTeam = this.getTeam(tfMatches[2]);
       } else if ((tfMatches = lrMatches[3].match(/^([^:]*):(.*)/)) !== null) {
-        trueTeam = this.getTeamByID(tfMatches[1]);
-        falseTeam = this.getTeamByID(tfMatches[2]);
+        trueTeam = this.getTeam(tfMatches[1]);
+        falseTeam = this.getTeam(tfMatches[2]);
       }
 
       if (trueTeam !== null) {
@@ -8683,10 +9010,10 @@ class Competition {
       }
     }
 
-    const teamRefParts = teamID.match(/^{([^:]*):([^:]*):([^:]*):([^:]*)}/);
+    const teamRefParts = id.match(/^{([^:]*):([^:]*):([^:]*):([^:]*)}/);
     if (teamRefParts !== null) {
       try {
-        return this.getStageByID(teamRefParts[1]).getGroupByID(teamRefParts[2]).getTeamByID(teamRefParts[3], teamRefParts[4])
+        return this.getStage(teamRefParts[1]).getGroup(teamRefParts[2]).getTeam(teamRefParts[3], teamRefParts[4])
       } catch (_) {
         return this.#unknownTeam
       }
@@ -8698,29 +9025,29 @@ class Competition {
   /**
    * Check if a team with the given ID exists in the competition
    *
-   * @param {string} teamID The ID of the team to check
+   * @param {string} id The ID of the team to check
    *
-   * @return {bool} True if the team exists, false otherwise
+   * @returns {bool} True if the team exists, false otherwise
    */
-  hasTeamWithID (teamID) {
-    return Object.hasOwn(this.#teamLookup, teamID)
+  hasTeam (id) {
+    return Object.hasOwn(this.#teamLookup, id)
   }
 
   /**
    * Delete a team from the competition
    *
-   * @param {string} teamID The ID of the team to delete
+   * @param {string} id The ID of the team to delete
    *
-   * @return {Competition} This competition
+   * @returns {Competition} This competition
    */
-  deleteTeam (teamID) {
-    if (!this.hasTeamWithID(teamID)) {
+  deleteTeam (id) {
+    if (!this.hasTeam(id)) {
       return this
     }
 
     let teamMatches = [];
     this.#stages.forEach(stage => {
-      const stageMatches = stage.getMatches(teamID, Competition.VBC_MATCH_PLAYING | Competition.VBC_MATCH_OFFICIATING);
+      const stageMatches = stage.getMatches(id, Competition.VBC_MATCH_PLAYING | Competition.VBC_MATCH_OFFICIATING);
       teamMatches = teamMatches.concat(stageMatches);
     });
 
@@ -8731,13 +9058,129 @@ class Competition {
 
     // Also remove team from any club's list
     this.#clubs.forEach(club => {
-      club.deleteTeam(teamID);
+      club.deleteTeam(id);
     });
 
     // Then delete the team
-    delete this.#teamLookup[teamID];
-    this.#teams = this.#teams.filter(team => team.getID() !== teamID);
+    delete this.#teamLookup[id];
+    this.#teams = this.#teams.filter(team => team.getID() !== id);
 
+    return this
+  }
+
+  /**
+   * Add a player to this competition
+   *
+   * @param {Player} player The player to add to this competition
+   *
+   * @returns {Competition} This Competition instance
+   *
+   * @throws {Error} If a player with a duplicate ID within the competition is added
+   */
+  addPlayer (player) {
+    if (player.getID() !== Player.UNREGISTERED_PLAYER_ID && this.hasPlayer(player.getID())) {
+      throw new Error('players with duplicate IDs within a competition not allowed')
+    }
+
+    this.#players.push(player);
+    this.#playerLookup[player.getID()] = player;
+    return this
+  }
+
+  /**
+   * Get the players in this competition
+   *
+   * @returns {array<Player>} The players in this competition
+   */
+  getPlayers () {
+    return this.#players
+  }
+
+  /**
+   * Get the players in the team with the given ID
+   *
+   * @param {string} id the ID of the team to get the players for
+   *
+   * @returns {array<Player>} The players in the team with the given ID
+   */
+  getPlayersInTeam (id) {
+    return this.#players.filter(player => player.getLatestTeamEntry()?.getID() === id)
+  }
+
+  /**
+   * Returns the Player with the requested ID, or throws if the ID is not found
+   *
+   * @param {string} id The ID of the player in this competition to return
+   *
+   * @throws {Error} If a Player with the requested ID was not found
+   *
+   * @returns {Player} The requested player for this competition
+   */
+  getPlayer (id) {
+    if (!Object.hasOwn(this.#playerLookup, id)) {
+      throw new Error(`Player with ID "${id}" not found`)
+    }
+    return this.#playerLookup[id]
+  }
+
+  /**
+   * Check if this competition has any players
+   *
+   * @returns {bool} True if the competition has players, otherwise false
+   */
+  hasPlayers () {
+    return this.#players.length > 0
+  }
+
+  /**
+   * Check if a player with the given ID exists in this competition
+   *
+   * @param {string} id The ID of the player to check
+   *
+   * @returns {bool} True if the player exists, otherwise false
+   */
+  hasPlayer (id) {
+    return Object.hasOwn(this.#playerLookup, id)
+  }
+
+  /**
+   * Check if the team with the given ID has any players defined
+   *
+   * @param {string} id the ID of the team to check
+   *
+   * @returns {boolean} True if the team with the given ID has any players defined
+   */
+  hasPlayersInTeam (id) {
+    return this.#players.some(player => player.getLatestTeamEntry()?.getID() === id)
+  }
+
+  /**
+   * Check if the player with the given ID exists in the team with the given ID
+   *
+   * @param {string} playerID the ID of the player to check
+   * @param {string} teamID the ID of the team to check
+   *
+   * @returns {boolean} True if the player with the given ID exists in the team with the given ID
+   */
+  hasPlayerInTeam (playerID, teamID) {
+    return this.hasPlayer(playerID) && this.getPlayer(playerID).getLatestTeamEntry()?.getID() === teamID
+  }
+
+  /**
+   * Delete a player from the competition
+   *
+   * @param {string} id The ID of the player to delete
+   *
+   * @returns {Competition} This Competition instance
+   */
+  deletePlayer (id) {
+    // TODO check if this player is in any matches
+    if (!this.hasPlayer(id)) {
+      return this
+    }
+
+    delete this.#playerLookup[id];
+    this.#players = this.#players.filter(el => el.getID() !== id);
     return this
   }
 
@@ -8748,7 +9191,7 @@ class Competition {
    *
    * @throws {Error} If a stage with the requested ID already exists
    *
-   * @return {Competition} This competition
+   * @returns {Competition} This competition
    */
   addStage (stage) {
     if (stage.getCompetition() !== this) {
@@ -8762,7 +9205,7 @@ class Competition {
   /**
    * Get the stages in this competition
    *
-   * @return array The stages in this competition
+   * @returns array The stages in this competition
    */
   getStages () {
     return this.#stages
@@ -8775,9 +9218,9 @@ class Competition {
    *
    * @throws {Error} When no stage with the provided ID is found
    *
-   * @return {Stage} The requested stage
+   * @returns {Stage} The requested stage
    */
-  getStageByID (id) {
+  getStage (id) {
     if (!Object.hasOwn(this.#stageLookup, id)) {
       throw new Error(`Stage with ID ${id} not found`)
     }
@@ -8789,20 +9232,20 @@ class Competition {
    *
    * @param {string} id The ID of the stage to check
    *
-   * @return {bool} True if the stage exists, false otherwise
+   * @returns {bool} True if the stage exists, false otherwise
    */
-  hasStageWithID (id) {
+  hasStage (id) {
     return Object.hasOwn(this.#stageLookup, id)
   }
 
   /**
    * Delete a stage from the competition
    *
-   * @param {string} stageID The ID of the stage to delete
+   * @param {string} id The ID of the stage to delete
    *
-   * @return {Competition} This competition
+   * @returns {Competition} This competition
    */
-  deleteStage (stageID) {
+  deleteStage (id) {
     let stageFound = false;
     this.#stages.forEach(stage => {
       if (stageFound) {
@@ -8820,14 +9263,14 @@ class Competition {
             teamReferences.forEach(reference => {
               let parts;
               if ((parts = reference.match(/^{([^:]*):.*}/)) !== null) {
-                if (parts[1] === stageID) {
-                  throw new Error(`Cannot delete stage with id "${stageID}" as it is referenced in match {${stage.getID()}:${group.getID()}:${match.getID()}}`)
+                if (parts[1] === id) {
+                  throw new Error(`Cannot delete stage with id "${id}" as it is referenced in match {${stage.getID()}:${group.getID()}:${match.getID()}}`)
                 }
               }
             });
           });
         });
-      } else if (stage.getID() === stageID) {
+      } else if (stage.getID() === id) {
         stageFound = true;
       }
     });
@@ -8836,8 +9279,8 @@ class Competition {
       return this
     }
 
-    delete this.#stageLookup[stageID];
-    this.#stages = this.#stages.filter(el => el.getID() === stageID);
+    delete this.#stageLookup[id];
+    this.#stages = this.#stages.filter(el => el.getID() === id);
 
     return this
   }
@@ -8849,7 +9292,7 @@ class Competition {
    *
    * @throws {Error} If the input parameters are invalid or if a club with the requested ID already exists
    *
-   * @return {Competition} This competition
+   * @returns {Competition} This competition
    */
   addClub (club) {
     if (club.getCompetition() !== this) {
@@ -8863,7 +9306,7 @@ class Competition {
   /**
    * Get the clubs in this competition
    *
-   * @return {array} The clubs in this competition
+   * @returns {array} The clubs in this competition
    */
   getClubs () {
     return this.#clubs
@@ -8872,50 +9315,59 @@ class Competition {
   /**
    * Returns the Club with the requested ID, or throws if the ID is not found
    *
-   * @param {string} clubID The ID of the club to return
+   * @param {string} id The ID of the club to return
    *
    * @throws {Error} When no club with the provided ID is found
    *
-   * @return {Club} The requested club
+   * @returns {Club} The requested club
    */
-  getClubByID (clubID) {
-    if (!Object.hasOwn(this.#clubLookup, clubID)) {
-      throw new Error(`Club with ID "${clubID}" not found`)
+  getClub (id) {
+    if (!Object.hasOwn(this.#clubLookup, id)) {
+      throw new Error(`Club with ID "${id}" not found`)
     }
-    return this.#clubLookup[clubID]
+    return this.#clubLookup[id]
+  }
+
+  /**
+   * Check if this competition has any clubs
+   *
+   * @returns {bool} True if the competition has clubs, otherwise false
+   */
+  hasClubs () {
+    return this.#clubs.length > 0
   }
 
   /**
    * Check if a club with the given ID exists in the competition
    *
-   * @param {string} clubID The ID of the club to check
+   * @param {string} id The ID of the club to check
    *
-   * @return {bool} True if the club exists, false otherwise
+   * @returns {bool} True if the club exists, false otherwise
    */
-  hasClubWithID (clubID) {
-    return Object.hasOwn(this.#clubLookup, clubID)
+  hasClub (id) {
+    return Object.hasOwn(this.#clubLookup, id)
   }
 
   /**
    * Delete a club from the competition
    *
-   * @param {string} clubID The ID of the club to delete
+   * @param {string} id The ID of the club to delete
    *
-   * @return {Competition} This competition
+   * @returns {Competition} This competition
    */
-  deleteClub (clubID) {
-    if (!this.hasClubWithID(clubID)) {
+  deleteClub (id) {
+    if (!this.hasClub(id)) {
       return this
     }
 
-    const club = this.getClubByID(clubID);
+    const club = this.getClub(id);
     const teamsInClub = club.getTeams();
     if (teamsInClub.length > 0) {
       throw new Error(`Club still contains teams with IDs: ${teamsInClub.map(t => `{${t.getID()}}`).join(', ')}`)
     }
 
-    delete this.#clubLookup[clubID];
-    this.#clubs = this.#clubs.filter(club => club.getID() !== clubID);
+    delete this.#clubLookup[id];
+    this.#clubs = this.#clubs.filter(club => club.getID() !== id);
 
     return this
   }
@@ -9002,13 +9454,13 @@ class Competition {
   /**
    * Takes in an exact, resolved team ID and checks that the team exists
    *
-   * @param {string} teamID The team ID to check. This must be a resolved team ID, not a team reference or a ternary
+   * @param {string} id The team ID to check. This must be a resolved team ID, not a team reference or a ternary
    *
    * @throws {Error} An exception if the team does not exist
    */
-  #validateTeamExists (teamID) {
-    if (!this.hasTeamID(teamID)) {
-      throw new Error(`Team with ID "${teamID}" does not exist`)
+  #validateTeamExists (id) {
+    if (!this.hasTeam(id)) {
+      throw new Error(`Team with ID "${id}" does not exist`)
     }
   }
 
@@ -9035,13 +9487,13 @@ class Competition {
       let group;
 
       try {
-        stage = this.getStageByID(parts[1]);
+        stage = this.getStage(parts[1]);
       } catch (_) {
         throw new Error(`Invalid Stage part: Stage with ID "${parts[1]}" does not exist`)
       }
 
       try {
-        group = stage.getGroupByID(parts[2]);
+        group = stage.getGroup(parts[2]);
       } catch (_) {
         throw new Error(`Invalid Group part: Group with ID "${parts[2]}" does not exist in stage with ID "${parts[1]}"`)
       }
@@ -9061,7 +9513,7 @@ class Competition {
         }
       } else {
         try {
-          group.getMatchByID(parts[3]);
+          group.getMatch(parts[3]);
         } catch (_) {
           throw new Error(`Invalid Match part in reference ${teamRef} : Match with ID "${parts[3]}" does not exist in stage:group with IDs "${parts[1]}:${parts[2]}"`)
         }
@@ -9080,7 +9532,7 @@ class Competition {
    *
    * @param {string} teamReference The string containing team references.
    *
-   * @return {Array<string>} An array containing unique team references extracted from the input string.
+   * @returns {Array<string>} An array containing unique team references extracted from the input string.
    */
   #stripTeamReferences (teamReference) {
     let references = [];
@@ -9103,21 +9555,10 @@ class Competition {
   }
 
   /**
-   * Checks whether the given team ID is in the list of teams for this competition
-   *
-   * @param {string} teamID The team ID (or a team reference) to look up
-   *
-   * @return {bool} Whether a team with the given ID exists
-   */
-  hasTeamID (teamID) {
-    return Object.hasOwn(this.#teamLookup, teamID)
-  }
-
-  /**
    * Check whether all stages are complete, i.e. all matches in all stages have results
    * and the competition results can be fully calculated
    *
-   * @return {bool} Whether the competition is complete or not
+   * @returns {bool} Whether the competition is complete or not
    */
   isComplete () {
     for (let i = 0; i < this.#stages.length; i++) {
@@ -9157,5 +9598,6 @@ exports.MatchOfficials = MatchOfficials$1;
 exports.MatchTeam = MatchTeam;
 exports.MatchType = MatchType;
 exports.Player = Player;
+exports.PlayerTeam = PlayerTeam;
 exports.SetConfig = SetConfig;
 exports.Stage = Stage;

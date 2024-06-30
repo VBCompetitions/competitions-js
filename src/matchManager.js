@@ -49,7 +49,7 @@ class MatchManager {
    *
    * @param {MatchInterface} match The match this Manager is managing
    * @param {string|object} managerData The data for the match manager
-   * @return {MatchManager} The match manager instance
+   * @returns {MatchManager} The match manager instance
    */
   static loadFromData (match, managerData) {
     let manager
@@ -64,7 +64,7 @@ class MatchManager {
   /**
    * Return the match manager definition in a form suitable for serializing
    *
-   * @return {Object|string} The serialized match manager data
+   * @returns {Object|string} The serialized match manager data
    */
   serialize () {
     if (this.#managerTeam !== null) {
@@ -76,7 +76,7 @@ class MatchManager {
   /**
    * Get the match this manager is managing.
    *
-   * @return {MatchInterface} The match being managed
+   * @returns {MatchInterface} The match being managed
    */
   getMatch () {
     return this.#match
@@ -85,7 +85,7 @@ class MatchManager {
   /**
    * Check whether the match manager is a team or not.
    *
-   * @return {boolean} True if the manager is a team, false otherwise
+   * @returns {boolean} True if the manager is a team, false otherwise
    */
   isTeam () {
     return this.#managerTeam !== null
@@ -94,7 +94,7 @@ class MatchManager {
   /**
    * Get the ID of the team managing the match.
    *
-   * @return {string|null} The team ID
+   * @returns {string|null} The team ID
    */
   getTeamID () {
     return this.#managerTeam
@@ -103,19 +103,19 @@ class MatchManager {
   /**
    * Set the ID for the team managing the match. Note that this unsets any manager name.
    *
-   * @param {string} teamID The ID for the team managing the match
+   * @param {string} id The ID for the team managing the match
    * @throws {Error} If the team ID is invalid
    */
-  setTeamID (teamID) {
-    this.#match.getGroup().getStage().getCompetition().validateTeamID(teamID, this.#match.getID(), 'manager')
-    this.#managerTeam = teamID
+  setTeamID (id) {
+    this.#match.getGroup().getStage().getCompetition().validateTeamID(id, this.#match.getID(), 'manager')
+    this.#managerTeam = id
     this.#managerName = null
   }
 
   /**
    * Get the name of the manager.
    *
-   * @return {string|null} The name of the manager
+   * @returns {string|null} The name of the manager
    */
   getManagerName () {
     return this.#managerName

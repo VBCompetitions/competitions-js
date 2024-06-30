@@ -9,13 +9,13 @@ describe('matchManager', () => {
   it('testManagerNone', async () => {
     const competitionJSON = await readFile(new URL(path.join('manager', 'manager-team.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    assert.equal(competition.getStageByID('L').getGroupByID('LG').getMatchByID('LG2').getManager(), null)
+    assert.equal(competition.getStage('L').getGroup('LG').getMatch('LG2').getManager(), null)
   })
 
   it('testManagerTeam', async () => {
     const competitionJSON = await readFile(new URL(path.join('manager', 'manager-team.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const matchManager = competition.getStageByID('L').getGroupByID('LG').getMatchByID('LG1').getManager()
+    const matchManager = competition.getStage('L').getGroup('LG').getMatch('LG1').getManager()
 
     assert(matchManager.isTeam())
     assert.equal(matchManager.getTeamID(), 'TM1')
@@ -26,7 +26,7 @@ describe('matchManager', () => {
   it('testManagerPerson', async () => {
     const competitionJSON = await readFile(new URL(path.join('manager', 'manager-person.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const matchManager = competition.getStageByID('L').getGroupByID('LG').getMatchByID('LG1').getManager()
+    const matchManager = competition.getStage('L').getGroup('LG').getMatch('LG1').getManager()
 
     assert(!matchManager.isTeam())
     assert.equal(matchManager.getManagerName(), 'Some Manager')
@@ -37,7 +37,7 @@ describe('matchManager', () => {
   it('testManagerSetters', async () => {
     const competitionJSON = await readFile(new URL(path.join('manager', 'manager-team.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const matchManager = competition.getStageByID('L').getGroupByID('LG').getMatchByID('LG1').getManager()
+    const matchManager = competition.getStage('L').getGroup('LG').getMatch('LG1').getManager()
 
     assert(matchManager.isTeam())
     matchManager.setManagerName('Alan Measles')

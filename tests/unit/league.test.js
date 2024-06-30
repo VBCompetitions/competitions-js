@@ -9,7 +9,7 @@ describe('league', () => {
   it('testLeague1', async () => {
     const competitionJSON = await readFile(new URL(path.join('leagues', 'complete-league.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const league = competition.getStageByID('L').getGroupByID('LG')
+    const league = competition.getStage('L').getGroup('LG')
     assert(league instanceof League)
 
     const expectedTable = new LeagueTable(league)
@@ -84,7 +84,7 @@ describe('league', () => {
     assert(!table.hasDraws())
 
     assert.throws(() => {
-      league.getTeamByID('league', '5')
+      league.getTeam('league', '5')
     }, {
       message: 'Invalid League position: position is bigger than the number of teams'
     })
@@ -93,7 +93,7 @@ describe('league', () => {
   it('testLeagueByPD', async () => {
     const competitionJSON = await readFile(new URL(path.join('leagues', 'complete-league-pd.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const league = competition.getStageByID('L').getGroupByID('LG')
+    const league = competition.getStage('L').getGroup('LG')
     assert(league instanceof League)
 
     const expectedTable = new LeagueTable(league)
@@ -179,7 +179,7 @@ describe('league', () => {
   it('testLeagueBySD', async () => {
     const competitionJSON = await readFile(new URL(path.join('leagues', 'complete-league-sd.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const league = competition.getStageByID('L').getGroupByID('LG')
+    const league = competition.getStage('L').getGroup('LG')
     assert(league instanceof League)
 
     const expectedTable = new LeagueTable(league)
@@ -265,7 +265,7 @@ describe('league', () => {
   it('testLeagueByH2HA', async () => {
     const competitionJSON = await readFile(new URL(path.join('leagues', 'complete-league-h2h.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const league = competition.getStageByID('L').getGroupByID('LG1')
+    const league = competition.getStage('L').getGroup('LG1')
     assert(league instanceof League)
 
     const expectedTable = new LeagueTable(league)
@@ -351,7 +351,7 @@ describe('league', () => {
   it('testLeagueByH2HB', async () => {
     const competitionJSON = await readFile(new URL(path.join('leagues', 'complete-league-h2h.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const league = competition.getStageByID('L2').getGroupByID('LG2')
+    const league = competition.getStage('L2').getGroup('LG2')
     assert(league instanceof League)
 
     const expectedTable = new LeagueTable(league)
@@ -437,7 +437,7 @@ describe('league', () => {
   it('testLeagueByH2HPlayTwice', async () => {
     const competitionJSON = await readFile(new URL(path.join('leagues', 'complete-league-h2h-twice.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const league = competition.getStageByID('L').getGroupByID('LG1')
+    const league = competition.getStage('L').getGroup('LG1')
     assert(league instanceof League)
 
     const expectedTable = new LeagueTable(league)
@@ -523,7 +523,7 @@ describe('league', () => {
   it('testLeagueByPTS', async () => {
     const competitionJSON = await readFile(new URL(path.join('leagues', 'complete-league-comparisons.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const league = competition.getStageByID('PTS').getGroupByID('PTS')
+    const league = competition.getStage('PTS').getGroup('PTS')
     assert(league instanceof League)
 
     const expectedTable = new LeagueTable(league)
@@ -588,7 +588,7 @@ describe('league', () => {
   it('testLeagueByPF', async () => {
     const competitionJSON = await readFile(new URL(path.join('leagues', 'complete-league-comparisons.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const league = competition.getStageByID('PF').getGroupByID('PF')
+    const league = competition.getStage('PF').getGroup('PF')
     assert(league instanceof League)
 
     const expectedTable = new LeagueTable(league)
@@ -653,7 +653,7 @@ describe('league', () => {
   it('testLeagueByPA', async () => {
     const competitionJSON = await readFile(new URL(path.join('leagues', 'complete-league-comparisons.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const league = competition.getStageByID('PA').getGroupByID('PA')
+    const league = competition.getStage('PA').getGroup('PA')
     assert(league instanceof League)
 
     const expectedTable = new LeagueTable(league)
@@ -718,7 +718,7 @@ describe('league', () => {
   it('testLeagueBySF', async () => {
     const competitionJSON = await readFile(new URL(path.join('leagues', 'complete-league-comparisons.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const league = competition.getStageByID('SF').getGroupByID('SF')
+    const league = competition.getStage('SF').getGroup('SF')
     assert(league instanceof League)
 
     const expectedTable = new LeagueTable(league)
@@ -783,7 +783,7 @@ describe('league', () => {
   it('testLeagueBySA', async () => {
     const competitionJSON = await readFile(new URL(path.join('leagues', 'complete-league-comparisons.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const league = competition.getStageByID('SA').getGroupByID('SA')
+    const league = competition.getStage('SA').getGroup('SA')
     assert(league instanceof League)
 
     const expectedTable = new LeagueTable(league)
@@ -848,7 +848,7 @@ describe('league', () => {
   it('testLeagueIncomplete', async () => {
     const competitionJSON = await readFile(new URL(path.join('leagues', 'incomplete-league.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const league = competition.getStageByID('L').getGroupByID('LG')
+    const league = competition.getStage('L').getGroup('LG')
     assert(league instanceof League)
 
     const expectedTable = new LeagueTable(league)
@@ -926,7 +926,7 @@ describe('league', () => {
   it('testLeagueIncompleteDraws', async () => {
     const competitionJSON = await readFile(new URL(path.join('leagues', 'incomplete-league.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const league = competition.getStageByID('LD').getGroupByID('LG')
+    const league = competition.getStage('LD').getGroup('LG')
     assert(league instanceof League)
 
     const expectedTable = new LeagueTable(league)
@@ -1006,7 +1006,7 @@ describe('league', () => {
   it('testLeagueIncompleteSets', async () => {
     const competitionJSON = await readFile(new URL(path.join('leagues', 'incomplete-league.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const league = competition.getStageByID('LS').getGroupByID('LG')
+    const league = competition.getStage('LS').getGroup('LG')
     assert(league instanceof League)
 
     const expectedTable = new LeagueTable(league)
@@ -1086,7 +1086,7 @@ describe('league', () => {
   it('testLeagueWithForfeits', async () => {
     const competitionJSON = await readFile(new URL(path.join('leagues', 'complete-league-forfeit.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const league = competition.getStageByID('L').getGroupByID('LG')
+    const league = competition.getStage('L').getGroup('LG')
     assert(league instanceof League)
 
     const expectedTable = new LeagueTable(league)
@@ -1161,7 +1161,7 @@ describe('league', () => {
   it('testLeagueWithBonusPenalties', async () => {
     const competitionJSON = await readFile(new URL(path.join('leagues', 'complete-league-bonuses-penalties.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const league = competition.getStageByID('L').getGroupByID('LG')
+    const league = competition.getStage('L').getGroup('LG')
     assert(league instanceof League)
 
     const expectedTable = new LeagueTable(league)
@@ -1236,7 +1236,7 @@ describe('league', () => {
   it('testLeagueWithEveryOrderAndPoints', async () => {
     const competitionJSON = await readFile(new URL(path.join('leagues', 'complete-league-everything.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const league = competition.getStageByID('L').getGroupByID('LG')
+    const league = competition.getStage('L').getGroup('LG')
 
     assert(league instanceof League)
     const table = league.getLeagueTable()
@@ -1249,7 +1249,7 @@ describe('league', () => {
   it('testLeagueWithNoScoring', async () => {
     const competitionJSON = await readFile(new URL(path.join('leagues', 'complete-league-no-scoring.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const league = competition.getStageByID('L').getGroupByID('LG')
+    const league = competition.getStage('L').getGroup('LG')
 
     assert(league instanceof League)
     const table = league.getLeagueTable()
@@ -1260,18 +1260,18 @@ describe('league', () => {
   it('testLeagueGroupsWithoutNames', async () => {
     const competitionJSON = await readFile(new URL(path.join('leagues', 'league-no-names.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const league = competition.getStageByID('L')
+    const league = competition.getStage('L')
 
-    assert.equal(league.getGroupByID('LG0').getName(), null)
-    assert.equal(league.getGroupByID('LG1').getName(), 'League')
-    assert.equal(league.getGroupByID('LG2').getName(), null)
+    assert.equal(league.getGroup('LG0').getName(), null)
+    assert.equal(league.getGroup('LG1').getName(), 'League')
+    assert.equal(league.getGroup('LG2').getName(), null)
   })
 
   it('testLeagueWithFriendliesJSON', async () => {
     const competitionJSON = await readFile(new URL(path.join('leagues', 'league-with-friendlies.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
 
-    const league = competition.getStageByID('S').getGroupByID('L')
+    const league = competition.getStage('S').getGroup('L')
     const table = league.getLeagueTable()
     assert.deepEqual(table.entries.length, 3)
     assert.deepEqual(table.entries[0].getTeamID(), 'TA')
@@ -1329,6 +1329,6 @@ describe('league', () => {
   it('testLeagueGetTeamLookupsInvalid', async () => {
     const competitionJSON = await readFile(new URL(path.join('leagues', 'complete-league.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    assert.equal(competition.getTeamByID('{L:LG:LG1:foo}').getID(), CompetitionTeam.UNKNOWN_TEAM_ID)
+    assert.equal(competition.getTeam('{L:LG:LG1:foo}').getID(), CompetitionTeam.UNKNOWN_TEAM_ID)
   })
 })

@@ -40,7 +40,7 @@ class LeagueConfig {
    * Load league configuration data from a provided object.
    *
    * @param {object} leagueData The league configuration data to load
-   * @return {LeagueConfig} Returns the LeagueConfig instance after loading the data
+   * @returns {LeagueConfig} Returns the LeagueConfig instance after loading the data
    */
   loadFromData (leagueData) {
     const leagueConfigPoints = (new LeagueConfigPoints(this)).loadFromData(leagueData.points)
@@ -51,7 +51,7 @@ class LeagueConfig {
   /**
    * The league configuration in a form suitable for serializing
    *
-   * @return {object} The serialized league configuration data
+   * @returns {object} The serialized league configuration data
    */
   serialize () {
     const leagueConfig = {
@@ -64,7 +64,7 @@ class LeagueConfig {
   /**
    * Get the league associated with this configuration.
    *
-   * @return {League} The league associated with this configuration
+   * @returns {League} The league associated with this configuration
    */
   getLeague () {
     return this.#league
@@ -74,7 +74,7 @@ class LeagueConfig {
    * Set the ordering configuration for the league.
    *
    * @param {array} ordering The ordering configuration for the league
-   * @return {LeagueConfig} Returns the LeagueConfig instance for method chaining
+   * @returns {LeagueConfig} Returns the LeagueConfig instance for method chaining
    */
   setOrdering (ordering) {
     this.#ordering = ordering
@@ -84,7 +84,7 @@ class LeagueConfig {
   /**
    * Get the ordering configuration for the league.
    *
-   * @return {array} The ordering configuration for the league
+   * @returns {array} The ordering configuration for the league
    */
   getOrdering () {
     return this.#ordering
@@ -93,7 +93,7 @@ class LeagueConfig {
   /**
    * Get the points configuration for the league.
    *
-   * @return {LeagueConfigPoints} The points configuration for the league
+   * @returns {LeagueConfigPoints} The points configuration for the league
    */
   getPoints () {
     return this.#points
@@ -103,7 +103,7 @@ class LeagueConfig {
    * Set the points configuration for the league.
    *
    * @param {LeagueConfigPoints} points The points configuration for the league
-   * @return {LeagueConfig} Returns the LeagueConfig instance for method chaining
+   * @returns {LeagueConfig} Returns the LeagueConfig instance for method chaining
    */
   setPoints (points) {
     this.#points = points

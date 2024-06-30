@@ -37,6 +37,16 @@ describe('competition', () => {
     })
   })
 
+  it('testCompetitionDuplicateClubID', async () => {
+    const competitionJSON = await readFile(new URL(path.join('competitions', 'competition-duplicate-club-ids.json'), import.meta.url), { encoding: 'utf8' })
+    await assert.rejects(async () => {
+      await Competition.loadFromCompetitionJSON(competitionJSON)
+    },
+    {
+      message: 'Club with ID "NOR" already exists in the competition'
+    })
+  })
+
   it('testCompetitionDuplicateTeamIDs', async () => {
     const competitionJSON = await readFile(new URL(path.join('competitions', 'competition-duplicate-team-ids.json'), import.meta.url), { encoding: 'utf8' })
     await assert.rejects(async () => {
@@ -44,6 +54,15 @@ describe('competition', () => {
     },
     {
       message: 'Team with ID "TM1" already exists in the competition'
+    })
+  })
+
+  it('testCompetitionDuplicatePlayerID', async () => {
+    const competitionJSON = await readFile(new URL(path.join('competitions', 'competition-duplicate-player-ids.json'), import.meta.url), { encoding: 'utf8' })
+    await assert.rejects(async () => {
+      await Competition.loadFromCompetitionJSON(competitionJSON)
+    }, {
+      message: 'Player with ID "P1" already exists in the competition'
     })
   })
 
@@ -70,14 +89,14 @@ describe('competition', () => {
   it('testCompetitionGetTeamByIDTernaries', async () => {
     const competitionJSON = await readFile(new URL(path.join('competitions', 'competition-with-references.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const matchF1 = competition.getStageByID('F').getGroupByID('F').getMatchByID('F1')
-    const matchF2 = competition.getStageByID('F').getGroupByID('F').getMatchByID('F2')
+    const matchF1 = competition.getStage('F').getGroup('F').getMatch('F1')
+    const matchF2 = competition.getStage('F').getGroup('F').getMatch('F2')
 
-    const truthyTeam = competition.getTeamByID(matchF1.getHomeTeam().getID())
-    const falsyTeam = competition.getTeamByID(matchF1.getAwayTeam().getID())
+    const truthyTeam = competition.getTeam(matchF1.getHomeTeam().getID())
+    const falsyTeam = competition.getTeam(matchF1.getAwayTeam().getID())
 
-    const truthyTeamRef = competition.getTeamByID(matchF2.getHomeTeam().getID())
-    const falsyTeamRef = competition.getTeamByID(matchF2.getAwayTeam().getID())
+    const truthyTeamRef = competition.getTeam(matchF2.getHomeTeam().getID())
+    const falsyTeamRef = competition.getTeam(matchF2.getAwayTeam().getID())
 
     assert.equal(truthyTeam.getID(), 'TM1')
     assert.equal(falsyTeam.getID(), 'TM2')
@@ -90,7 +109,7 @@ describe('competition', () => {
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
     assert.equal(competition.getStages().length, 1)
     assert.equal(competition.getStages()[0].getID(), 'L')
-    const stage = competition.getStageByID('L')
+    const stage = competition.getStage('L')
     assert.equal(stage.getName(), 'league')
   })
 
@@ -98,7 +117,7 @@ describe('competition', () => {
     const competitionJSON = await readFile(new URL(path.join('competitions', 'competition.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
     assert.throws(() => {
-      competition.getStageByID('NO-STAGE')
+      competition.getStage('NO-STAGE')
     }, {
       message: 'Stage with ID NO-STAGE not found'
     })
@@ -109,32 +128,32 @@ describe('competition', () => {
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
 
     assert(!competition.isComplete())
-    assert(competition.hasTeamID('TM1'))
-    assert(competition.hasTeamID('TM8'))
+    assert(competition.hasTeam('TM1'))
+    assert(competition.hasTeam('TM8'))
 
-    assert.equal(competition.getTeamByID('{L:RL:league:1}').getID(), CompetitionTeam.UNKNOWN_TEAM_ID)
-    assert.equal(competition.getTeamByID('{L:RL:league:2}').getID(), CompetitionTeam.UNKNOWN_TEAM_ID)
-    assert.equal(competition.getTeamByID('{L:RL:league:3}').getID(), CompetitionTeam.UNKNOWN_TEAM_ID)
-    assert.equal(competition.getTeamByID('{L:RL:league:4}').getID(), CompetitionTeam.UNKNOWN_TEAM_ID)
-    assert.equal(competition.getTeamByID('{L:RL:league:5}').getID(), CompetitionTeam.UNKNOWN_TEAM_ID)
-    assert.equal(competition.getTeamByID('{L:RL:league:6}').getID(), CompetitionTeam.UNKNOWN_TEAM_ID)
-    assert.equal(competition.getTeamByID('{L:RL:league:7}').getID(), CompetitionTeam.UNKNOWN_TEAM_ID)
-    assert.equal(competition.getTeamByID('{L:RL:league:8}').getID(), CompetitionTeam.UNKNOWN_TEAM_ID)
+    assert.equal(competition.getTeam('{L:RL:league:1}').getID(), CompetitionTeam.UNKNOWN_TEAM_ID)
+    assert.equal(competition.getTeam('{L:RL:league:2}').getID(), CompetitionTeam.UNKNOWN_TEAM_ID)
+    assert.equal(competition.getTeam('{L:RL:league:3}').getID(), CompetitionTeam.UNKNOWN_TEAM_ID)
+    assert.equal(competition.getTeam('{L:RL:league:4}').getID(), CompetitionTeam.UNKNOWN_TEAM_ID)
+    assert.equal(competition.getTeam('{L:RL:league:5}').getID(), CompetitionTeam.UNKNOWN_TEAM_ID)
+    assert.equal(competition.getTeam('{L:RL:league:6}').getID(), CompetitionTeam.UNKNOWN_TEAM_ID)
+    assert.equal(competition.getTeam('{L:RL:league:7}').getID(), CompetitionTeam.UNKNOWN_TEAM_ID)
+    assert.equal(competition.getTeam('{L:RL:league:8}').getID(), CompetitionTeam.UNKNOWN_TEAM_ID)
 
-    assert.equal(competition.getTeamByID('{L:RL:RLM1:winner}').getID(), 'TM2')
-    assert.equal(competition.getTeamByID('{L:RL:RLM1:loser}').getID(), 'TM1')
+    assert.equal(competition.getTeam('{L:RL:RLM1:winner}').getID(), 'TM2')
+    assert.equal(competition.getTeam('{L:RL:RLM1:loser}').getID(), 'TM1')
 
-    assert(!competition.hasTeamID('NO-SUCH-TEAM'))
-    assert.equal(competition.getTeamByID('NO-SUCH-TEAM').getID(), CompetitionTeam.UNKNOWN_TEAM_ID)
+    assert(!competition.hasTeam('NO-SUCH-TEAM'))
+    assert.equal(competition.getTeam('NO-SUCH-TEAM').getID(), CompetitionTeam.UNKNOWN_TEAM_ID)
 
-    assert(!competition.hasTeamID('{NO:SUCH:TEAM:REF}'))
-    assert.equal(competition.getTeamByID('{NO:SUCH:TEAM:REF}').getID(), CompetitionTeam.UNKNOWN_TEAM_ID)
+    assert(!competition.hasTeam('{NO:SUCH:TEAM:REF}'))
+    assert.equal(competition.getTeam('{NO:SUCH:TEAM:REF}').getID(), CompetitionTeam.UNKNOWN_TEAM_ID)
   })
 
   it('testCompetitionGetTeamLookupsInvalid', async () => {
     const competitionJSON = await readFile(new URL(path.join('competitions', 'competition-knockout-sets.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    assert.equal(competition.getTeamByID('{KO:CUP:QF1:foo}').getID(), CompetitionTeam.UNKNOWN_TEAM_ID)
+    assert.equal(competition.getTeam('{KO:CUP:QF1:foo}').getID(), CompetitionTeam.UNKNOWN_TEAM_ID)
   })
 
   it('testCompetitionGetTeamLookupsComplete', async () => {
@@ -143,42 +162,42 @@ describe('competition', () => {
     assert.equal(competition.getVersion(), '1.0.0')
 
     assert(competition.isComplete())
-    assert(competition.hasTeamID('TM1'))
-    assert(competition.hasTeamID('TM8'))
+    assert(competition.hasTeam('TM1'))
+    assert(competition.hasTeam('TM8'))
 
-    assert.equal(competition.getTeamByID('{L:RL:league:1}').getID(), 'TM6')
-    assert.equal(competition.getTeamByID('{L:RL:league:2}').getID(), 'TM5')
-    assert.equal(competition.getTeamByID('{L:RL:league:3}').getID(), 'TM2')
-    assert.equal(competition.getTeamByID('{L:RL:league:4}').getID(), 'TM4')
-    assert.equal(competition.getTeamByID('{L:RL:league:5}').getID(), 'TM3')
-    assert.equal(competition.getTeamByID('{L:RL:league:6}').getID(), 'TM7')
-    assert.equal(competition.getTeamByID('{L:RL:league:7}').getID(), 'TM8')
-    assert.equal(competition.getTeamByID('{L:RL:league:8}').getID(), 'TM1')
+    assert.equal(competition.getTeam('{L:RL:league:1}').getID(), 'TM6')
+    assert.equal(competition.getTeam('{L:RL:league:2}').getID(), 'TM5')
+    assert.equal(competition.getTeam('{L:RL:league:3}').getID(), 'TM2')
+    assert.equal(competition.getTeam('{L:RL:league:4}').getID(), 'TM4')
+    assert.equal(competition.getTeam('{L:RL:league:5}').getID(), 'TM3')
+    assert.equal(competition.getTeam('{L:RL:league:6}').getID(), 'TM7')
+    assert.equal(competition.getTeam('{L:RL:league:7}').getID(), 'TM8')
+    assert.equal(competition.getTeam('{L:RL:league:8}').getID(), 'TM1')
 
-    assert.equal(competition.getTeamByID('{L:RL:RLM1:winner}').getID(), 'TM2')
-    assert.equal(competition.getTeamByID('{L:RL:RLM1:loser}').getID(), 'TM1')
+    assert.equal(competition.getTeam('{L:RL:RLM1:winner}').getID(), 'TM2')
+    assert.equal(competition.getTeam('{L:RL:RLM1:loser}').getID(), 'TM1')
 
-    assert(!competition.hasTeamID('NO-SUCH-TEAM'))
-    assert.equal(competition.getTeamByID('NO-SUCH-TEAM').getID(), CompetitionTeam.UNKNOWN_TEAM_ID)
+    assert(!competition.hasTeam('NO-SUCH-TEAM'))
+    assert.equal(competition.getTeam('NO-SUCH-TEAM').getID(), CompetitionTeam.UNKNOWN_TEAM_ID)
 
-    assert(!competition.hasTeamID('{NO:SUCH:TEAM:REF}'))
-    assert.equal(competition.getTeamByID('{NO:SUCH:TEAM:REF}').getID(), CompetitionTeam.UNKNOWN_TEAM_ID)
+    assert(!competition.hasTeam('{NO:SUCH:TEAM:REF}'))
+    assert.equal(competition.getTeam('{NO:SUCH:TEAM:REF}').getID(), CompetitionTeam.UNKNOWN_TEAM_ID)
   })
 
   it('testCompetitionStageWithNoName', async () => {
     const competitionJSON = await readFile(new URL(path.join('competitions', 'competition-stages-no-name.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
 
-    assert.equal(competition.getStageByID('L0').getName(), null)
-    assert.equal(competition.getStageByID('L1').getName(), 'league')
-    assert.equal(competition.getStageByID('L2').getName(), null)
+    assert.equal(competition.getStage('L0').getName(), null)
+    assert.equal(competition.getStage('L1').getName(), 'league')
+    assert.equal(competition.getStage('L2').getName(), null)
   })
 
   it('testCompetitionIncompleteWithTeamReferences', async () => {
     const competitionJSON = await readFile(new URL(path.join('competitions', 'competition-half-done-with-references.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
 
-    assert(!competition.getStageByID('Divisions').getGroupByID('Division 1').getMatchByID('D1M1').isComplete())
+    assert(!competition.getStage('Divisions').getGroup('Division 1').getMatch('D1M1').isComplete())
   })
 
   it('testCompetitionValidHomeTeamRef', async () => {
@@ -578,8 +597,8 @@ describe('competition', () => {
 
     assert.equal(competition.getTeams().length, 4)
     competition.deleteTeam(team4.getID())
-    assert(!competition.hasTeamWithID('T4'))
-    assert.equal(competition.getTeamByID('T4').getID(), CompetitionTeam.UNKNOWN_TEAM_ID)
+    assert(!competition.hasTeam('T4'))
+    assert.equal(competition.getTeam('T4').getID(), CompetitionTeam.UNKNOWN_TEAM_ID)
     assert.equal(competition.getTeams().length, 3)
 
     competition.deleteTeam('undefined-team-id')
@@ -633,10 +652,10 @@ describe('competition', () => {
     club1.deleteTeam('T2')
     assert.equal(competition.getClubs().length, 2)
     competition.deleteClub(club1.getID())
-    assert(!competition.hasClubWithID('C1'))
+    assert(!competition.hasClub('C1'))
     assert.equal(competition.getClubs().length, 1)
     assert.throws(() => {
-      competition.getClubByID('C1')
+      competition.getClub('C1')
     }, {
       message: 'Club with ID "C1" not found'
     })

@@ -84,7 +84,7 @@ class SetConfig {
    * Load set configuration data from an object.
    *
    * @param {Object} setData The set configuration data
-   * @return {SetConfig} The updated SetConfig object
+   * @returns {SetConfig} The updated SetConfig object
    */
   loadFromData (setData) {
     if (Object.hasOwn(setData, 'maxSets')) {
@@ -125,7 +125,7 @@ class SetConfig {
   /**
    * Get the group that this SetConfig belongs to.
    *
-   * @return {Group} The group that this SetConfig belongs to
+   * @returns {Group} The group that this SetConfig belongs to
    */
   getGroup () {
     return this.#group
@@ -134,7 +134,7 @@ class SetConfig {
   /**
    * The set configuration data in a form suitable for serializing
    *
-   * @return {Object} The serialized set configuration data
+   * @returns {Object} The serialized set configuration data
    */
   serialize () {
     return {
@@ -161,7 +161,7 @@ class SetConfig {
   /**
    * Get the maximum number of sets that could be played.
    *
-   * @return {number} The maximum number of sets
+   * @returns {number} The maximum number of sets
    */
   getMaxSets () {
     return this.#maxSets
@@ -179,7 +179,7 @@ class SetConfig {
   /**
    * Get the number of sets that must be won to win the match.
    *
-   * @return {number} The number of sets to win
+   * @returns {number} The number of sets to win
    */
   getSetsToWin () {
     return this.#setsToWin
@@ -197,7 +197,7 @@ class SetConfig {
   /**
    * Get the number of points lead that the winning team must have.
    *
-   * @return {number} The number of clear points
+   * @returns {number} The number of clear points
    */
   getClearPoints () {
     return this.#clearPoints
@@ -215,7 +215,7 @@ class SetConfig {
   /**
    * Get the minimum number of points that either team must score for a set to count as valid.
    *
-   * @return {number} The minimum number of points
+   * @returns {number} The minimum number of points
    */
   getMinPoints () {
     return this.#minPoints
@@ -233,7 +233,7 @@ class SetConfig {
   /**
    * Get the minimum number of points required to win all but the last set.
    *
-   * @return {number} The minimum number of points to win
+   * @returns {number} The minimum number of points to win
    */
   getPointsToWin () {
     return this.#pointsToWin
@@ -251,7 +251,7 @@ class SetConfig {
   /**
    * Get the minimum number of points required to win the last set.
    *
-   * @return {number} The minimum number of points to win the last set
+   * @returns {number} The minimum number of points to win the last set
    */
   getLastSetPointsToWin () {
     return this.#lastSetPointsToWin
@@ -269,7 +269,7 @@ class SetConfig {
   /**
    * Get the upper limit of points that can be scored in a set.
    *
-   * @return {number} The upper limit of points in a set
+   * @returns {number} The upper limit of points in a set
    */
   getMaxPoints () {
     return this.#maxPoints
@@ -287,7 +287,7 @@ class SetConfig {
   /**
    * Get the upper limit of points that can be scored in the last set.
    *
-   * @return {number} The upper limit of points in the last set
+   * @returns {number} The upper limit of points in the last set
    */
   getLastSetMaxPoints () {
     return this.#lastSetMaxPoints

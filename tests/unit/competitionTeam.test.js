@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 
 
-import { Club, Competition, CompetitionTeam, Contact, ContactRole, Player } from '../../src/index.js'
+import { Club, Competition, CompetitionTeam, Contact, ContactRole, Player, PlayerTeam } from '../../src/index.js'
 
 describe('competitionTeam', () => {
   it('testCompetitionTeamDuplicateID', async () => {
@@ -82,13 +82,13 @@ describe('competitionTeam', () => {
 
     assert.equal(team.getContacts().length, 0)
     assert(!team.hasContacts())
-    assert(!team.hasContactWithID('C1'))
+    assert(!team.hasContact('C1'))
 
     team.addContact(contact)
     assert.equal(team.getContacts().length, 1)
     assert(team.hasContacts())
-    assert(team.hasContactWithID('C1'))
-    assert.equal(team.getContactByID('C1').getRoles()[0], ContactRole.SECRETARY)
+    assert(team.hasContact('C1'))
+    assert.equal(team.getContact('C1').getRoles()[0], ContactRole.SECRETARY)
 
     assert.throws(() => {
       team.addContact(contact)
@@ -97,62 +97,77 @@ describe('competitionTeam', () => {
     })
     assert.equal(team.getContacts().length, 1)
     assert(team.hasContacts())
-    assert(team.hasContactWithID('C1'))
+    assert(team.hasContact('C1'))
 
     team.deleteContact('C1')
     assert.throws(() => {
-      team.getContactByID('C1')
+      team.getContact('C1')
     }, {
       message: 'Contact with ID "C1" not found'
     })
     assert.equal(team.getContacts().length, 0)
     assert(!team.hasContacts())
-    assert(!team.hasContactWithID('C1'))
+    assert(!team.hasContact('C1'))
 
     team.deleteContact('C1')
     assert.equal(team.getContacts().length, 0)
     assert(!team.hasContacts())
-    assert(!team.hasContactWithID('C1'))
+    assert(!team.hasContact('C1'))
   })
 
   it('testCompetitionTeamPlayers', async () => {
     const competition = new Competition('test competition')
     const team = new CompetitionTeam(competition, 'T1', 'Team 1')
-    const player = new Player(team, 'P1', 'Player 1')
+    competition.addTeam(team)
+    const player = new Player(competition, 'P1', 'Player 1')
+    competition.addPlayer(player)
+    const playerTeam = new PlayerTeam(player, 'T1')
 
     assert.equal(team.getPlayers().length, 0)
     assert(!team.hasPlayers())
-    assert(!team.hasPlayerWithID('P1'))
+    assert(!team.hasPlayer('P1'))
 
-    team.addPlayer(player)
+    player.appendTeamEntry(playerTeam)
     assert.equal(team.getPlayers().length, 1)
     assert(team.hasPlayers())
-    assert(team.hasPlayerWithID('P1'))
-    assert.equal(team.getPlayerByID('P1').getName(), 'Player 1')
+    assert(team.hasPlayer('P1'))
+    assert.equal(competition.getPlayers().length, 1)
+    assert(competition.hasPlayers())
+    assert(competition.hasPlayer('P1'))
+    assert.equal(competition.getPlayer('P1').getName(), 'Player 1')
 
     assert.throws(() => {
-      team.addPlayer(player)
+      competition.addPlayer(player)
     }, {
-      message: 'team players with duplicate IDs within a team not allowed'
+      message: 'players with duplicate IDs within a competition not allowed'
     })
     assert.equal(team.getPlayers().length, 1)
     assert(team.hasPlayers())
-    assert(team.hasPlayerWithID('P1'))
+    assert(team.hasPlayer('P1'))
+    assert.equal(competition.getPlayers().length, 1)
+    assert(competition.hasPlayers())
+    assert(competition.hasPlayer('P1'))
 
-    team.deletePlayer('P1')
+    competition.deletePlayer('P1')
     assert.throws(() => {
-      team.getPlayerByID('P1')
+      competition.getPlayer('P1')
     }, {
       message: 'Player with ID "P1" not found'
     })
     assert.equal(team.getPlayers().length, 0)
     assert(!team.hasPlayers())
-    assert(!team.hasPlayerWithID('P1'))
+    assert(!team.hasPlayer('P1'))
+    assert.equal(competition.getPlayers().length, 0)
+    assert(!competition.hasPlayers())
+    assert(!competition.hasPlayer('P1'))
 
-    team.deletePlayer('P1')
+    competition.deletePlayer('P1')
     assert.equal(team.getPlayers().length, 0)
     assert(!team.hasPlayers())
-    assert(!team.hasPlayerWithID('P1'))
+    assert(!team.hasPlayer('P1'))
+    assert.equal(competition.getPlayers().length, 0)
+    assert(!competition.hasPlayers())
+    assert(!competition.hasPlayer('P1'))
   })
 
   it('testCompetitionTeamConstructorBadID', async () => {

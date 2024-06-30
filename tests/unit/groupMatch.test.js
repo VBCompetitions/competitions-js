@@ -9,7 +9,7 @@ describe('groupMatch', () => {
   it('testGroupMatchContinuousHomeWin', async () => {
     const competitionJSON = await readFile(new URL(path.join('matches', 'continuous-home-win.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const match = competition.getStageByID('S').getGroupByID('SG').getMatchByID('SG1')
+    const match = competition.getStage('S').getGroup('SG').getMatch('SG1')
 
     assert(match.isComplete(), 'Match should be found as completed')
     assert(!match.isDraw())
@@ -28,7 +28,7 @@ describe('groupMatch', () => {
     assert.equal(match.getDuration(), '0:20')
     assert(match.getComplete())
     assert.equal(match.getOfficials().getFirstRef(), 'Dave')
-    assert.equal(match.getMVP(), 'A Bobs')
+    assert.equal(match.getMVP().getName(), 'A Bobs')
     assert.equal(match.getManager().getManagerName(), 'Dave')
     assert.equal(match.getNotes(), 'Local derby')
   })
@@ -36,7 +36,7 @@ describe('groupMatch', () => {
   it('testGroupMatchContinuousAwayWin', async () => {
     const competitionJSON = await readFile(new URL(path.join('matches', 'continuous-away-win.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const match = competition.getStageByID('S').getGroupByID('SG').getMatchByID('SG1')
+    const match = competition.getStage('S').getGroup('SG').getMatch('SG1')
 
     assert(match.isComplete(), 'Match should be found as completed')
     assert(!match.isDraw())
@@ -47,7 +47,7 @@ describe('groupMatch', () => {
   it('testGroupMatchContinuousDrawThrowsWinner', async () => {
     const competitionJSON = await readFile(new URL(path.join('matches', 'continuous-draw.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const match = competition.getStageByID('S').getGroupByID('SG').getMatchByID('SG1')
+    const match = competition.getStage('S').getGroup('SG').getMatch('SG1')
 
     assert(match.isComplete())
     assert(match.isDraw())
@@ -62,7 +62,7 @@ describe('groupMatch', () => {
   it('testGroupMatchContinuousDrawThrowsLoser', async () => {
     const competitionJSON = await readFile(new URL(path.join('matches', 'continuous-draw.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const match = competition.getStageByID('S').getGroupByID('SG').getMatchByID('SG1')
+    const match = competition.getStage('S').getGroup('SG').getMatch('SG1')
 
     assert(match.isComplete())
     assert(match.isDraw())
@@ -87,7 +87,7 @@ describe('groupMatch', () => {
   it('testGroupMatchContinuousThrowsGettingHomeSets', async () => {
     const competitionJSON = await readFile(new URL(path.join('matches', 'continuous-away-win.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const match = competition.getStageByID('S').getGroupByID('SG').getMatchByID('SG1')
+    const match = competition.getStage('S').getGroup('SG').getMatch('SG1')
 
     assert.throws(() => {
       match.getHomeTeamSets()
@@ -99,7 +99,7 @@ describe('groupMatch', () => {
   it('testGroupMatchContinuousThrowsGettingAwaySets', async () => {
     const competitionJSON = await readFile(new URL(path.join('matches', 'continuous-away-win.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const match = competition.getStageByID('S').getGroupByID('SG').getMatchByID('SG1')
+    const match = competition.getStage('S').getGroup('SG').getMatch('SG1')
 
     assert.throws(() => {
       match.getAwayTeamSets()
@@ -115,13 +115,13 @@ describe('groupMatch', () => {
     }, {
       message: 'Invalid match information for match SG1: team scores have different length'
     })
-    // competition.getStageByID('S').getGroupByID('SG').getMatchByID('SG1')
+    // competition.getStage('S').getGroup('SG').getMatch('SG1')
   })
 
   it('testGroupMatchSetsHomeWin', async () => {
     const competitionJSON = await readFile(new URL(path.join('matches', 'sets-home-win.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const match = competition.getStageByID('S').getGroupByID('SG').getMatchByID('SG1')
+    const match = competition.getStage('S').getGroup('SG').getMatch('SG1')
 
     assert(match.isComplete())
     assert.equal(match.getWinnerTeamID(), 'TM1')
@@ -131,7 +131,7 @@ describe('groupMatch', () => {
   it('testGroupMatchSetsAwayWin', async () => {
     const competitionJSON = await readFile(new URL(path.join('matches', 'sets-away-win.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const match = competition.getStageByID('S').getGroupByID('SG').getMatchByID('SG1')
+    const match = competition.getStage('S').getGroup('SG').getMatch('SG1')
 
     assert(match.isComplete())
     assert.equal(match.getWinnerTeamID(), 'TM2')
@@ -141,7 +141,7 @@ describe('groupMatch', () => {
   it('testGroupMatchSetsGetSets', async () => {
     const competitionJSON = await readFile(new URL(path.join('matches', 'sets-home-win.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const match = competition.getStageByID('S').getGroupByID('SG').getMatchByID('SG1')
+    const match = competition.getStage('S').getGroup('SG').getMatch('SG1')
 
     assert(match.isComplete())
     assert.equal(match.getHomeTeamSets(), 2)
@@ -151,7 +151,7 @@ describe('groupMatch', () => {
   it('testGroupMatchSetsIncompleteBestOfGetWinnerThrows', async () => {
     const competitionJSON = await readFile(new URL(path.join('matches', 'sets-incomplete-maxsets.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const match = competition.getStageByID('S').getGroupByID('SG').getMatchByID('SG1')
+    const match = competition.getStage('S').getGroup('SG').getMatch('SG1')
 
     assert(!match.isComplete())
 
@@ -165,7 +165,7 @@ describe('groupMatch', () => {
   it('testGroupMatchSetsIncompleteBestOfGetLoserThrows', async () => {
     const competitionJSON = await readFile(new URL(path.join('matches', 'sets-incomplete-maxsets.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const match = competition.getStageByID('S').getGroupByID('SG').getMatchByID('SG1')
+    const match = competition.getStage('S').getGroup('SG').getMatch('SG1')
 
     assert(!match.isComplete())
 
@@ -179,7 +179,7 @@ describe('groupMatch', () => {
   it('testGroupMatchSetsIncompleteMinPointsGetWinnerThrows', async () => {
     const competitionJSON = await readFile(new URL(path.join('matches', 'sets-incomplete-maxsets.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const match = competition.getStageByID('S').getGroupByID('SG').getMatchByID('SG1')
+    const match = competition.getStage('S').getGroup('SG').getMatch('SG1')
 
     assert(!match.isComplete())
 
@@ -193,7 +193,7 @@ describe('groupMatch', () => {
   it('testGroupMatchSetsIncompleteMinPointsGetLoserThrows', async () => {
     const competitionJSON = await readFile(new URL(path.join('matches', 'sets-incomplete-maxsets.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const match = competition.getStageByID('S').getGroupByID('SG').getMatchByID('SG1')
+    const match = competition.getStage('S').getGroup('SG').getMatch('SG1')
 
     assert(!match.isComplete())
 
@@ -207,7 +207,7 @@ describe('groupMatch', () => {
   it('testGroupMatchSetsIncompleteFirstSetMatchDeclaredCompleteHasResult', async () => {
     const competitionJSON = await readFile(new URL(path.join('matches', 'sets-incomplete-first-set.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const match = competition.getStageByID('S').getGroupByID('SG').getMatchByID('SG1')
+    const match = competition.getStage('S').getGroup('SG').getMatch('SG1')
 
     assert(match.isComplete())
   })
@@ -215,14 +215,14 @@ describe('groupMatch', () => {
   it('testGroupMatchSetsInsufficientPoints', async () => {
     const competitionJSON = await readFile(new URL(path.join('matches', 'sets-insufficient-points.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const match = competition.getStageByID('S').getGroupByID('SG').getMatchByID('SG1')
+    const match = competition.getStage('S').getGroup('SG').getMatch('SG1')
     assert(!match.isComplete())
   })
 
   it('testGroupMatchSetsDawnGame', async () => {
     const competitionJSON = await readFile(new URL(path.join('matches', 'sets-draw.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const match = competition.getStageByID('S').getGroupByID('SG').getMatchByID('SG1')
+    const match = competition.getStage('S').getGroup('SG').getMatch('SG1')
     assert(match.isDraw())
   })
 
@@ -245,22 +245,23 @@ describe('groupMatch', () => {
   })
 
   // it('testGroupMatchSetsMatchDifferentScoreLengths', async () => {
-  //     copy(
-  //         realpath(join(DIRECTORY_SEPARATOR, array(__DIR__, 'competitions', 'competition-sets-duration.json'))),
-  //         join(DIRECTORY_SEPARATOR, array(__DIR__, 'competitions', 'update', 'competition-sets-duration.json'))
-  //     )
-
-  //     $this.expectExceptionMessage('Invalid set scores: score arrays are different lengths')
-  //     const dummyCompetition = new Competition('dummy for score update')
-  //     const dummyStage = new Stage(dummyCompetition, 'S')
-  //     const dummyGroup = new Crossover(dummyStage, 'G', MatchType.SETS)
-  //     const config = new SetConfig(dummyGroup)
-  //     config.loadFromData(json_decode('{"maxSets": 3, "setsToWin": 1, "clearPoints": 2, "minPoints": 1, "pointsToWin": 25, "lastSetPointsToWin": 15, "maxPoints": 50, "lastSetMaxPoints": 30}'))
-  //     GroupMatch::assertSetScoresValid(
-  //         [25],
-  //         [19, 19],
-  //         config
-  //     )
+  //   const competitionJSON = await readFile(new URL(path.join('competitions', 'competition-sets-duration.json'), import.meta.url), { encoding: 'utf8' })
+  //   const dummyCompetition = new Competition('dummy for score update')
+  //   const dummyStage = new Stage(dummyCompetition, 'S')
+  //   const dummyGroup = new Crossover(dummyStage, 'G', MatchType.SETS)
+  //   const config = new SetConfig(dummyGroup)
+  //   config.loadFromData(JSON.parse('{"maxSets": 3, "setsToWin": 1, "clearPoints": 2, "minPoints": 1, "pointsToWin": 25, "lastSetPointsToWin": 15, "maxPoints": 50, "lastSetMaxPoints": 30}'))
+  //   assert.throws(
+  //     () => {
+  //       GroupMatch.assertSetScoresValid(
+  //           [25],
+  //           [19, 19],
+  //           config
+  //       )
+  //     },{
+  //       message: 'Invalid set scores: score arrays are different lengths'
+  //     }
+  //   )
   // })
 
   it('testGroupMatchSetsMatchTooManyScores', async () => {
@@ -320,7 +321,7 @@ describe('groupMatch', () => {
   it('testGroupMatchGetScoreReadOnly', async () => {
     const competitionJSON = await readFile(new URL(path.join('matches', 'continuous-home-win.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const match = competition.getStageByID('S').getGroupByID('SG').getMatchByID('SG1')
+    const match = competition.getStage('S').getGroup('SG').getMatch('SG1')
     const homeScore = match.getHomeTeam().getScores()
     homeScore[0] = 19
     assert.equal(match.getHomeTeam().getScores()[0], 21)
@@ -330,7 +331,7 @@ describe('groupMatch', () => {
   it('testGroupMatchGetCompleteReadOnly', async () => {
     const competitionJSON = await readFile(new URL(path.join('matches', 'continuous-home-win.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const match = competition.getStageByID('S').getGroupByID('SG').getMatchByID('SG1')
+    const match = competition.getStage('S').getGroup('SG').getMatch('SG1')
     assert(match.getComplete())
     assert(match.isComplete())
     match.setComplete(false)
@@ -359,7 +360,7 @@ describe('groupMatch', () => {
   it('testGroupMatchNoScores', async () => {
     const competitionJSON = await readFile(new URL(path.join('matches', 'continuous-no-result.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const match = competition.getStageByID('S').getGroupByID('SG').getMatchByID('SG1')
+    const match = competition.getStage('S').getGroup('SG').getMatch('SG1')
     assert.equal(match.getHomeTeam().getScores().length, 0)
     assert.throws(() => {
       match.getWinnerTeamID()
@@ -371,7 +372,7 @@ describe('groupMatch', () => {
   it('testGroupMatchSaveScoresContinuous', async () => {
     const competitionJSON = await readFile(new URL(path.join('matches', 'save-scores.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const group = competition.getStageByID('L').getGroupByID('RL')
+    const group = competition.getStage('L').getGroup('RL')
     const match = group.getMatches()[0]
     const homeTeam = match.getHomeTeam()
     const awayTeam = match.getAwayTeam()
@@ -388,7 +389,7 @@ describe('groupMatch', () => {
   it('testGroupMatchSaveScoresContinuousCatchBannedDraws', async () => {
     const competitionJSON = await readFile(new URL(path.join('matches', 'save-scores.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const match = competition.getStageByID('L').getGroupByID('RL').getMatches()[0]
+    const match = competition.getStage('L').getGroup('RL').getMatches()[0]
 
     assert.throws(() => {
       match.setScores([22], [22], true)
@@ -400,7 +401,7 @@ describe('groupMatch', () => {
   it('testGroupMatchSaveScoresContinuousWantsCompleteness', async () => {
     const competitionJSON = await readFile(new URL(path.join('matches', 'save-scores.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const group = competition.getStageByID('L').getGroupByID('RL')
+    const group = competition.getStage('L').getGroup('RL')
     const match = group.getMatches()[0]
 
     assert.throws(() => {
@@ -413,7 +414,7 @@ describe('groupMatch', () => {
   it('testGroupMatchSaveScoresSets', async () => {
     const competitionJSON = await readFile(new URL(path.join('matches', 'save-scores.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const match = competition.getStageByID('L').getGroupByID('RS').getMatches()[0]
+    const match = competition.getStage('L').getGroup('RS').getMatches()[0]
 
     match.setScores([25, 25, 25], [17, 19, 12], false)
     assert(!match.isComplete())
@@ -426,7 +427,7 @@ describe('groupMatch', () => {
   it('testGroupMatchSaveScoresSetsCatchBannedDraws', async () => {
     const competitionJSON = await readFile(new URL(path.join('matches', 'save-scores.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const match = competition.getStageByID('L').getGroupByID('RS').getMatches()[0]
+    const match = competition.getStage('L').getGroup('RS').getMatches()[0]
 
     assert.throws(() => {
       match.setScores([25, 25, 25], [25, 25, 25], false)
@@ -438,7 +439,7 @@ describe('groupMatch', () => {
   it('testGroupMatchMatchSaveScoresSetsWantsCompleteness', async () => {
     const competitionJSON = await readFile(new URL(path.join('matches', 'save-scores.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const group = competition.getStageByID('L').getGroupByID('RS')
+    const group = competition.getStage('L').getGroup('RS')
     const match = group.getMatches()[0]
 
     assert.throws(() => {
@@ -471,7 +472,7 @@ describe('groupMatch', () => {
     group.addMatch(match)
 
     competition = await Competition.loadFromCompetitionJSON(JSON.stringify(competition.serialize()))
-    assert(competition.getStageByID('S').getGroupByID('C').getMatchByID('M1').isFriendly())
+    assert(competition.getStage('S').getGroup('C').getMatch('M1').isFriendly())
   })
 
   it('testGroupMatchContinuousScoresLengthMismatch', () => {
@@ -543,5 +544,63 @@ describe('groupMatch', () => {
 
     config.setLastSetMaxPoints(20)
     match.setScores([10, 10, 25, 25, 19], [25, 25, 10, 10, 20])
+  })
+
+
+  it('testGroupMatchSetters', () => {
+    const competition = new Competition('test competition')
+    const stage = new Stage(competition, 'S')
+    competition.addStage(stage)
+    const group = new Crossover(stage, 'C', MatchType.SETS)
+    stage.addGroup(group)
+    const config = new SetConfig(group)
+    group.setSetConfig(config)
+
+    const team1 = new CompetitionTeam(competition, 'TM1', 'Team 1')
+    competition.addTeam(team1)
+    const team2 = new CompetitionTeam(competition, 'TM2', 'Team 2')
+    competition.addTeam(team2)
+
+    const match = new GroupMatch(group, 'M1')
+
+    assert.throws(
+      () => {
+        match.setDate('Today')
+      }, {
+        message: 'Invalid date "Today": must contain a value of the form "YYYY-MM-DD"'
+      }
+    )
+
+    assert.throws(
+      () => {
+        match.setDate('2024-02-30')
+      }, {
+        message: 'Invalid date "2024-02-30": date does not exist'
+      }
+    )
+
+    assert.throws(
+      () => {
+        match.setWarmup('This morning')
+      }, {
+        message: 'Invalid warmup time "This morning": must contain a value of the form "HH:mm" using a 24 hour clock'
+      }
+    )
+
+    assert.throws(
+      () => {
+        match.setStart('This afternoon')
+      }, {
+        message: 'Invalid start time "This afternoon": must contain a value of the form "HH:mm" using a 24 hour clock'
+      }
+    )
+
+    assert.throws(
+      () => {
+        match.setDuration('20 minutes')
+      }, {
+        message: 'Invalid duration "20 minutes": must contain a value of the form "HH:mm"'
+      }
+    )
   })
 })

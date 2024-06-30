@@ -11,7 +11,7 @@ describe('contact', () => {
     const competitionJSON = await readFile(new URL(path.join('contacts', 'contacts.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
 
-    const team = competition.getTeamByID('TM1')
+    const team = competition.getTeam('TM1')
     assert(team instanceof CompetitionTeam)
     assert.equal(team.getContacts().length, 0)
   })
@@ -20,14 +20,14 @@ describe('contact', () => {
     const competitionJSON = await readFile(new URL(path.join('contacts', 'contacts.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
 
-    const team = competition.getTeamByID('TM2')
+    const team = competition.getTeam('TM2')
     assert(team instanceof CompetitionTeam)
 
     assert.equal(team.getContacts().length, 1)
-    assert.equal(team.getContactByID('C1').getID(), 'C1')
-    assert.equal(team.getContactByID('C1').getName(), 'Alice Alison')
-    assert.deepEqual(team.getContactByID('C1').getEmails(), ['alice@example.com'])
-    assert.deepEqual(team.getContactByID('C1').getRoles(), [ContactRole.SECRETARY])
+    assert.equal(team.getContact('C1').getID(), 'C1')
+    assert.equal(team.getContact('C1').getName(), 'Alice Alison')
+    assert.deepEqual(team.getContact('C1').getEmails(), ['alice@example.com'])
+    assert.deepEqual(team.getContact('C1').getRoles(), [ContactRole.SECRETARY])
   })
 
   it('testContactsDuplicateID', async () => {
@@ -42,11 +42,11 @@ describe('contact', () => {
   it('testContactsEach', async () => {
     const competitionJSON = await readFile(new URL(path.join('contacts', 'contacts.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const team = competition.getTeamByID('TM3')
+    const team = competition.getTeam('TM3')
 
     assert.equal(team.getContacts().length, 7)
 
-    const contactC1 = team.getContactByID('C1')
+    const contactC1 = team.getContact('C1')
     assert.equal(contactC1.getID(), 'C1')
     assert.equal(contactC1.getName(), 'Alice Alison')
     assert.deepEqual(contactC1.getEmails(), ['alice@example.com'])
@@ -61,12 +61,12 @@ describe('contact', () => {
     assert(!contactC1.hasRole(ContactRole.COACH))
     assert(!contactC1.hasRole(ContactRole.MEDIC))
 
-    assert.deepEqual(team.getContactByID('C2').getRoles(), [ContactRole.TREASURER])
-    assert.deepEqual(team.getContactByID('C3').getRoles(), [ContactRole.MANAGER])
-    assert.deepEqual(team.getContactByID('C4').getRoles(), [ContactRole.CAPTAIN])
-    assert.deepEqual(team.getContactByID('C5').getRoles(), [ContactRole.COACH])
-    assert.deepEqual(team.getContactByID('C6').getRoles(), [ContactRole.ASSISTANT_COACH])
-    assert.deepEqual(team.getContactByID('C7').getRoles(), [ContactRole.MEDIC])
+    assert.deepEqual(team.getContact('C2').getRoles(), [ContactRole.TREASURER])
+    assert.deepEqual(team.getContact('C3').getRoles(), [ContactRole.MANAGER])
+    assert.deepEqual(team.getContact('C4').getRoles(), [ContactRole.CAPTAIN])
+    assert.deepEqual(team.getContact('C5').getRoles(), [ContactRole.COACH])
+    assert.deepEqual(team.getContact('C6').getRoles(), [ContactRole.ASSISTANT_COACH])
+    assert.deepEqual(team.getContact('C7').getRoles(), [ContactRole.MEDIC])
   })
 
   it('testContactsGetByIDOutOfBounds', async () => {
@@ -74,7 +74,7 @@ describe('contact', () => {
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
 
     assert.throws(() => {
-      competition.getTeamByID('TM1').getContactByID('NO-SUCH-TEAM')
+      competition.getTeam('TM1').getContact('NO-SUCH-TEAM')
     }, {
       message: 'Contact with ID "NO-SUCH-TEAM" not found'
     })

@@ -4,14 +4,14 @@ import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 
 
-import { Competition, CompetitionTeam, IfUnknown, IfUnknownBreak, IfUnknownMatch, MatchType, MatchOfficials, Stage } from '../../src/index.js'
+import { Competition, CompetitionTeam, IfUnknown, IfUnknownBreak, IfUnknownMatch, MatchType, MatchOfficials, Player, Stage } from '../../src/index.js'
 
 describe('ifUnkonwn', () => {
   it('testIfUnknownLoad', async () => {
     const competitionJSON = await readFile(new URL(path.join('ifunknown', 'incomplete-group-multi-stage.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
 
-    const ifUnknown = competition.getStageByID('F').getIfUnknown()
+    const ifUnknown = competition.getStage('F').getIfUnknown()
 
     assert.equal(ifUnknown.getMatchType(), MatchType.CONTINUOUS)
     assert.equal(ifUnknown.getID(), 'unknown')
@@ -48,8 +48,8 @@ describe('ifUnkonwn', () => {
     assert.equal(secondMatch.getNotes(), null)
     assert.equal(secondMatch.getOfficials().getTeamID(), 'SF1 loser')
 
-    assert.equal(ifUnknown.getMatchByID('FIN').getManager().getManagerName(), 'A Bobs')
-    assert.equal(ifUnknown.getMatchByID('FIN').getMVP(), 'J Doe')
+    assert.equal(ifUnknown.getMatch('FIN').getManager().getManagerName(), 'A Bobs')
+    assert.equal(ifUnknown.getMatch('FIN').getMVP().getName(), 'J Doe')
 
     const groupBreak = ifUnknown.getMatches()[2]
     if (groupBreak instanceof IfUnknownBreak) {
@@ -67,7 +67,7 @@ describe('ifUnkonwn', () => {
     const competitionJSON = await readFile(new URL(path.join('ifunknown', 'incomplete-group-multi-stage-sparse.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
 
-    const ifUnknown = competition.getStageByID('F').getIfUnknown()
+    const ifUnknown = competition.getStage('F').getIfUnknown()
 
     assert.equal(ifUnknown.getMatchType(), MatchType.CONTINUOUS)
     assert.equal(ifUnknown.getID(), 'unknown')
@@ -122,7 +122,7 @@ describe('ifUnkonwn', () => {
     const competitionJSON = await readFile(new URL(path.join('matches', 'save-scores.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
 
-    const ifUnknown = competition.getStageByID('L').getIfUnknown()
+    const ifUnknown = competition.getStage('L').getIfUnknown()
     const match = ifUnknown.getMatches()[0]
 
     match.setScores([23], [25])
@@ -143,7 +143,7 @@ describe('ifUnkonwn', () => {
     const competitionJSON = await readFile(new URL(path.join('ifunknown', 'incomplete-group-multi-stage-sparse.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
     assert.throws(() => {
-      competition.getStageByID('F').getIfUnknown().getMatchByID('NO_SUCH_MATCH')
+      competition.getStage('F').getIfUnknown().getMatch('NO_SUCH_MATCH')
     }, {
       message: 'Match with ID NO_SUCH_MATCH not found'
     })
@@ -213,7 +213,8 @@ describe('ifUnkonwn', () => {
   })
 
   it('testIfUnknownMatchSetters', async () => {
-    const stage = new Stage(new Competition('test'), 'S')
+    const competition = new Competition('test')
+    const stage = new Stage(competition, 'S')
     const ifUnknown = new IfUnknown(stage, ['test unknown'])
     const ifUnknownMatch = new IfUnknownMatch(ifUnknown, 'M1')
 
@@ -299,29 +300,13 @@ describe('ifUnkonwn', () => {
       message: 'Invalid duration "1:61": must contain a value of the form "HH:mm"'
     })
 
-    assert.throws(() => {
-      ifUnknownMatch.setMVP('')
-    }, {
-      message: 'Invalid MVP: must be between 1 and 203 characters long'
-    })
-
-    assert.throws(() => {
-      let mvp = '1234'
-      for (let i = 0; i < 200; i++) {
-        mvp += '0123456789'
-      }
-      ifUnknownMatch.setMVP(mvp)
-    }, {
-      message: 'Invalid MVP: must be between 1 and 203 characters long'
-    })
-
     ifUnknownMatch.setCourt('court 1')
     ifUnknownMatch.setVenue('City Stadium')
     ifUnknownMatch.setDate('2024-02-29')
     ifUnknownMatch.setWarmup('10:00')
     ifUnknownMatch.setStart('10:20')
     ifUnknownMatch.setDuration('0:40')
-    ifUnknownMatch.setMVP('Alan Measles')
+    ifUnknownMatch.setMVP(new Player(competition, Player.UNREGISTERED_PLAYER_ID, 'Alan Measles'))
     ifUnknownMatch.setFriendly(false)
 
     assert(!ifUnknownMatch.isFriendly())
