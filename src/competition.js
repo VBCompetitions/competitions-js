@@ -201,7 +201,10 @@ class Competition {
 
     if (Array.isArray(competitionData.metadata)) {
       competitionData.metadata.forEach(kv => {
-        competition.setMetadataByID(kv.key, kv.value)
+        if (competition.hasMetadataByKey(kv.key)) {
+          throw new Error(`Metadata with key "${kv.key}" already exists in the competition`)
+        }
+        competition.setMetadataByKey(kv.key, kv.value)
       })
     }
 
@@ -349,7 +352,7 @@ class Competition {
    * @returns {Competition} Returns the current Competition instance for method chaining
    * @throws {Error} If the key or value is invalid
    */
-  setMetadataByID (key, value) {
+  setMetadataByKey (key, value) {
     if (key.length > 100 || key.length < 1) {
       throw new Error('Invalid metadata key: must be between 1 and 100 characters long')
     }
