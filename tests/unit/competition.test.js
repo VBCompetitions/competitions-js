@@ -37,6 +37,16 @@ describe('competition', () => {
     })
   })
 
+  it('testMetadataDuplicateKey', async () => {
+    const competitionJSON = await readFile(new URL(path.join('competitions', 'competition-duplicate-metadata-key.json'), import.meta.url), { encoding: 'utf8' })
+    await assert.rejects(async () => {
+      await Competition.loadFromCompetitionJSON(competitionJSON)
+    },
+    {
+      message: 'Metadata with key "someKey" already exists in the competition'
+    })
+  })
+
   it('testCompetitionDuplicateClubID', async () => {
     const competitionJSON = await readFile(new URL(path.join('competitions', 'competition-duplicate-club-ids.json'), import.meta.url), { encoding: 'utf8' })
     await assert.rejects(async () => {
@@ -772,7 +782,7 @@ describe('competition', () => {
     assert(!competition.hasMetadataByKey('bar'))
     assert.equal(competition.getMetadataByKey('bar'), null)
 
-    competition.setMetadataByID('foo', 'bar')
+    competition.setMetadataByKey('foo', 'bar')
     assert(competition.hasMetadata())
     assert.equal(competition.getMetadata().length, 1)
     assert(competition.hasMetadataByKey('foo'))
@@ -780,7 +790,7 @@ describe('competition', () => {
     assert(!competition.hasMetadataByKey('bar'))
     assert.equal(competition.getMetadataByKey('bar'), null)
 
-    competition.setMetadataByID('bar', 'baz')
+    competition.setMetadataByKey('bar', 'baz')
     assert(competition.hasMetadata())
     assert.equal(competition.getMetadata().length, 2)
     assert(competition.hasMetadataByKey('foo'))
@@ -788,7 +798,7 @@ describe('competition', () => {
     assert(competition.hasMetadataByKey('bar'))
     assert.equal(competition.getMetadataByKey('bar'), 'baz')
 
-    competition.setMetadataByID('foo', 'bar')
+    competition.setMetadataByKey('foo', 'bar')
     assert(competition.hasMetadata())
     assert.equal(competition.getMetadata().length, 2)
     assert(competition.hasMetadataByKey('foo'))
@@ -821,7 +831,7 @@ describe('competition', () => {
     assert.equal(competition.getMetadataByKey('bar'), null)
 
     assert.throws(() => {
-      competition.setMetadataByID('', 'bar')
+      competition.setMetadataByKey('', 'bar')
     }, {
       message: 'Invalid metadata key: must be between 1 and 100 characters long'
     })
@@ -831,13 +841,13 @@ describe('competition', () => {
       longKey += '0123456789'
     }
     assert.throws(() => {
-      competition.setMetadataByID(longKey, 'bar')
+      competition.setMetadataByKey(longKey, 'bar')
     }, {
       message: 'Invalid metadata key: must be between 1 and 100 characters long'
     })
 
     assert.throws(() => {
-      competition.setMetadataByID('foo', '')
+      competition.setMetadataByKey('foo', '')
     }, {
       message: 'Invalid metadata value: must be between 1 and 1000 characters long'
     })
@@ -847,7 +857,7 @@ describe('competition', () => {
       longValue += '0123456789'
     }
     assert.throws(() => {
-      competition.setMetadataByID('foo', longValue)
+      competition.setMetadataByKey('foo', longValue)
     }, {
       message: 'Invalid metadata value: must be between 1 and 1000 characters long'
     })
