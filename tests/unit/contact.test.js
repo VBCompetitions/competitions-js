@@ -123,6 +123,101 @@ describe('contact', () => {
     assert.equal(contact.getRoles().length, 1)
   })
 
+  it('testContactSettersAndAdders', () => {
+    const competition = new Competition('test competition')
+    const team = new CompetitionTeam(competition, 'T1', 'Team 1')
+    const contact = new Contact(team, 'C1', [ContactRole.SECRETARY])
+
+    assert.equal(contact.getRoles().length, 1)
+    contact.setRoles([ContactRole.CAPTAIN, ContactRole.COACH, ContactRole.TREASURER, ContactRole.SECRETARY])
+    assert.equal(contact.getRoles().length, 4)
+
+    assert.throws(() => {
+      contact.setRoles([])
+    }, {
+      message: 'Error setting the roles to an empty list as the Contact must have at least one role'
+    })
+
+    assert.throws(() => {
+      contact.setRoles(['foo'])
+    }, {
+      message: 'Error setting the roles due to invalid role: foo'
+    })
+
+    assert.equal(contact.getEmails().length, 0)
+    // Include a duplicate
+    contact.setEmails(['alice1@example.com', 'alice2@example.com', 'alice2@example.com'])
+    assert.equal(contact.getEmails().length, 2)
+    contact.addEmail('alice3@example.com')
+    assert.equal(contact.getEmails().length, 3)
+    assert.throws(() => {
+      contact.addEmail('fo')
+    }, {
+      message: 'Invalid contact email address: must be at least 3 characters long'
+    })
+
+    contact.setEmails(null)
+    assert.equal(contact.getEmails().length, 0)
+
+    assert.throws(() => {
+      contact.setEmails(['fo', 'alice1@example.com'])
+    }, {
+      message: 'Invalid contact email address: must be at least 3 characters long'
+    })
+
+    assert.throws(() => {
+      contact.setEmails(['alice1@example.com', 'fo'])
+    }, {
+      message: 'Invalid contact email address: must be at least 3 characters long'
+    })
+
+    assert.equal(contact.getPhones().length, 0)
+    // Include a duplicate
+    contact.setPhones(['01234 567890', '01234 567891', '01234 567891'])
+    assert.equal(contact.getPhones().length, 2)
+    contact.addPhone('01234 567892')
+    assert.equal(contact.getPhones().length, 3)
+
+    assert.throws(() => {
+      contact.addPhone('')
+    }, {
+      message: 'Invalid contact phone number: must be between 1 and 50 characters long'
+    })
+
+    assert.throws(() => {
+      contact.addPhone('012345678901234567890123456789012345678901234567890123456789')
+    }, {
+      message: 'Invalid contact phone number: must be between 1 and 50 characters long'
+    })
+
+    contact.setPhones(null)
+    assert.equal(contact.getPhones().length, 0)
+
+    assert.throws(() => {
+      contact.setPhones(['', '01234 567890'])
+    }, {
+      message: 'Invalid contact phone number: must be between 1 and 50 characters long'
+    })
+
+    assert.throws(() => {
+      contact.setPhones(['01234 567890', ''])
+    }, {
+      message: 'Invalid contact phone number: must be between 1 and 50 characters long'
+    })
+
+    assert.throws(() => {
+      contact.setPhones(['012345678901234567890123456789012345678901234567890123456789', '01234 567890'])
+    }, {
+      message: 'Invalid contact phone number: must be between 1 and 50 characters long'
+    })
+
+    assert.throws(() => {
+      contact.setPhones(['01234 567890', '012345678901234567890123456789012345678901234567890123456789'])
+    }, {
+      message: 'Invalid contact phone number: must be between 1 and 50 characters long'
+    })
+  })
+
   it('testContactConstructorBadID', async () => {
     const competition = new Competition('test competition')
     const team = new CompetitionTeam(competition, 'T1', 'Team 1')

@@ -226,6 +226,40 @@ class Contact {
   }
 
   /**
+   * Set the list of roles, overriding the previous list
+   *
+   * @param {array<string>} roles The list of roles for the contact
+   *
+   * @returns {Contact} Returns this contact for method chaining
+   * @throws {Error} When the list of roles contains an invalid value
+   */
+  setRoles (roles) {
+    if (!Array.isArray(roles) || roles.length === 0) {
+      throw new Error('Error setting the roles to an empty list as the Contact must have at least one role')
+    }
+
+    const newRoles = []
+    for (const role of roles) {
+      switch (role) {
+        case ContactRole.SECRETARY:
+        case ContactRole.TREASURER:
+        case ContactRole.MANAGER:
+        case ContactRole.CAPTAIN:
+        case ContactRole.COACH:
+        case ContactRole.ASSISTANT_COACH:
+        case ContactRole.MEDIC:
+          newRoles.push(role)
+          break
+        default:
+          throw new Error(`Error setting the roles due to invalid role: ${role}`)
+      }
+    }
+
+    this.#roles = newRoles
+    return this
+  }
+
+  /**
    * Get the email addresses for this contact
    * @returns {Array<string>} The email addresses for this contact
    */
@@ -237,11 +271,42 @@ class Contact {
    * Add an email address to this contact
    * @param {string} email The email address to add
    * @returns {Contact} Returns this contact for method chaining
+   * @throws {Error} When the email address is invalid
    */
   addEmail (email) {
+    if (email.length < 3) {
+      throw new Error('Invalid contact email address: must be at least 3 characters long')
+    }
     if (!this.#emails.includes(email)) {
       this.#emails.push(email)
     }
+    return this
+  }
+
+  /**
+   * Set the list of email addresses, overriding the previous list.  To delete all email addresses, pass in null
+   *
+   * @param {array|null} emails The list of email addresses for the contact
+   *
+   * @returns {Contact} Returns this contact for method chaining
+   * @throws {Error} When one of the email addresses is invalid
+   */
+  setEmails (emails) {
+    if (emails === null) {
+      this.#emails = []
+      return this
+    }
+
+    const newEmails = []
+    for (const email of emails) {
+      if (email.length < 3) {
+        throw new Error('Invalid contact email address: must be at least 3 characters long')
+      }
+      if (!newEmails.includes(email)) {
+        newEmails.push(email)
+      }
+    }
+    this.#emails = newEmails
     return this
   }
 
@@ -257,11 +322,42 @@ class Contact {
    * Add a phone number to this contact
    * @param {string} phone The phone number to add
    * @returns {Contact} Returns this contact for method chaining
+   * @throws {Error} When the phone number is invalid
    */
   addPhone (phone) {
+    if (phone.length > 50 || phone.length < 1) {
+      throw new Error('Invalid contact phone number: must be between 1 and 50 characters long')
+    }
     if (!this.#phones.includes(phone)) {
       this.#phones.push(phone)
     }
+    return this
+  }
+
+  /**
+   * Set the list of phone numbers, overriding the previous list.  To delete all phone numbers, pass in null
+   *
+   * @param {array|null} phones The list of phone numbers for the contact
+   *
+   * @return {Contact} Returns this contact for method chaining
+   * @throws {Error} When one of the phone numbers is invalid
+   */
+  setPhones (phones) {
+    if (phones === null) {
+      this.#phones = []
+      return this
+    }
+
+    const newPhones = []
+    for (const phone of phones) {
+      if (phone.length > 50 || phone.length < 1) {
+        throw new Error('Invalid contact phone number: must be between 1 and 50 characters long')
+      }
+      if (!newPhones.includes(phone)) {
+        newPhones.push(phone)
+      }
+    }
+    this.#phones = newPhones
     return this
   }
 }
