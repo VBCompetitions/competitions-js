@@ -157,4 +157,13 @@ describe('competition', () => {
         const savedCompetition = await Competition.loadFromCompetitionJSON(serializedData)
         assert.equal(savedCompetition.getMetadataByKey('season'), '2023-2024')
     })
+
+    it('testCompetitionSaveCompetitionWithContacts', async () => {
+        const competitionJSON = await readFile(new URL(path.join('contacts', 'contacts.json'), import.meta.url), { encoding: 'utf8' })
+        const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
+        competition.setName('Saved Competition')
+        const serializedData = JSON.stringify(competition.serialize())
+        const savedCompetition = await Competition.loadFromCompetitionJSON(serializedData)
+        assert.equal(savedCompetition.getTeam('TM3').getContact('C6').getEmails()[0], 'frankie@example.com')
+    })
 })
