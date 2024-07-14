@@ -49,10 +49,14 @@ describe('stage', () => {
     assert.equal(stage.getName(), 'League')
     stage.setName('New League')
     assert.equal(stage.getName(), 'New League')
+    stage.setName(null)
+    assert.equal(stage.getName(), null)
 
     assert.equal(stage.getNotes(), 'These are notes on the stage')
     stage.setNotes('Now there are notes')
     assert.equal(stage.getNotes(), 'Now there are notes')
+    stage.setNotes(null)
+    assert.equal(stage.getNotes(), null)
 
     assert(Array.isArray(stage.getDescription()))
     assert.equal(stage.getDescription().length, 2)
@@ -62,6 +66,9 @@ describe('stage', () => {
     assert(Array.isArray(stage.getDescription()))
     assert.equal(stage.getDescription().length, 1)
     assert.equal(stage.getDescription()[0], 'A new description')
+    stage.setDescription(null)
+    assert(!Array.isArray(stage.getDescription()))
+    assert.equal(stage.getDescription(), null)
   })
 
   it('testStageMatchesWithNoOptionalFields', async () => {
