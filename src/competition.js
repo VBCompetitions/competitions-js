@@ -809,7 +809,7 @@ class Competition {
     }
 
     delete this.#stageLookup[id]
-    this.#stages = this.#stages.filter(el => el.getID() === id)
+    this.#stages = this.#stages.filter(el => el.getID() !== id)
 
     return this
   }
