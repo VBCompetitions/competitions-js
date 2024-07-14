@@ -8046,7 +8046,7 @@ class Stage {
   /**
    * Set the stage name.
    *
-   * @param {string} name The new name for the stage
+   * @param {string|null} name The new name for the stage
    */
   setName (name) {
     this.#name = name;

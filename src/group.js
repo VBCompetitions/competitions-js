@@ -425,7 +425,7 @@ class Group {
   /**
    * Set the group Name
    *
-   * @param {string} name The new name for the group
+   * @param {string|null} name The new name for the group
    * @returns {Group} The Group instance
    */
   setName (name) {

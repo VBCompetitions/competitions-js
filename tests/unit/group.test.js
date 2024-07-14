@@ -415,14 +415,20 @@ describe('group', () => {
     assert.equal(group.getName(), 'League 1')
     group.setName('League One')
     assert.equal(group.getName(), 'League One')
+    group.setName(null)
+    assert.equal(group.getName(), null)
 
     assert.equal(group.getNotes(), 'These are notes on the group')
     group.setNotes('These are notes on the best group')
     assert.equal(group.getNotes(), 'These are notes on the best group')
+    group.setNotes(null)
+    assert.equal(group.getNotes(), null)
 
     assert.equal(group.getDescription()[0], 'This is a description about the group')
     group.setDescription(['This is line one of the description', 'This is some more words'])
     assert.equal(group.getDescription()[0], 'This is line one of the description')
+    group.setDescription(null)
+    assert.equal(group.getDescription(), null)
 
     assert(!group.getDrawsAllowed())
     group.setDrawsAllowed(true)
