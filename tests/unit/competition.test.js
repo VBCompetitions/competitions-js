@@ -749,6 +749,15 @@ describe('competition', () => {
     })
 
     competition.deleteStage(stage2.getID())
+    assert.equal(competition.getStage('S1').getID(), 'S1')
+    assert.equal('S1', competition.getStages()[0].getID())
+    assert.throws(() => {
+      competition.getStage('S2')
+    }, {
+      message: 'Stage with ID S2 not found'
+    })
+
+    competition.deleteStage(stage2.getID())
     competition.deleteStage(stage1.getID())
   })
 
