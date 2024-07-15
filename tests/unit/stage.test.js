@@ -3,7 +3,7 @@ import { describe, it } from 'node:test'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 
-import { Competition, Crossover, GroupBreak, GroupMatch, MatchType, Stage } from '../../src/index.js'
+import { Competition, CompetitionTeam, Crossover, GroupBreak, GroupMatch, League, MatchOfficials, MatchTeam, MatchType, Stage } from '../../src/index.js'
 
 describe('stage', () => {
   it('testStageGetters', async () => {
@@ -69,6 +69,49 @@ describe('stage', () => {
     stage.setDescription(null)
     assert(!Array.isArray(stage.getDescription()))
     assert.equal(stage.getDescription(), null)
+  })
+
+  it('testStageDeleteGroup', () => {
+    const competition = new Competition('test competition')
+    const team1 = new CompetitionTeam(competition, 'T1', 'Team 1')
+    const team2 = new CompetitionTeam(competition, 'T2', 'Team 2')
+    const team3 = new CompetitionTeam(competition, 'T3', 'Team 3')
+    competition.addTeam(team1).addTeam(team2).addTeam(team3)
+    const stage1 = new Stage(competition, 'S1')
+    competition.addStage(stage1)
+    const stage2 = new Stage(competition, 'S2')
+    competition.addStage(stage2)
+
+    const league1 = new League(stage2, 'G1', MatchType.CONTINUOUS, false)
+    stage2.addGroup(league1)
+    const match1 = new GroupMatch(league1, 'M1')
+    match1.setHomeTeam(new MatchTeam(match1, team1.getID())).setAwayTeam(new MatchTeam(match1, team2.getID())).setOfficials(new MatchOfficials(match1, team3.getID()))
+    league1.addMatch(match1)
+
+    const league2 = new League(stage2, 'G2', MatchType.CONTINUOUS, false)
+    stage2.addGroup(league2)
+    const match2 = new GroupMatch(league2, 'M1')
+    match2.setHomeTeam(new MatchTeam(match2, '{S2:G1:M1:winner}=={S2:G1:M1:winner}?{S2:G1:M1:winner}:{S2:G1:M1:winner}')).setAwayTeam(new MatchTeam(match2, team3.getID())).setOfficials(new MatchOfficials(match2, '{S2:G1:M1:loser}'))
+    league2.addMatch(match2)
+
+    assert.throws(() => {
+      stage2.deleteGroup(league1.getID())
+    }, {
+      message: 'Cannot delete group with id "G1" as it is referenced in match {S2:G2:M1}'
+    })
+
+    stage2.deleteGroup(league2.getID())
+    assert.equal(stage2.getGroup('G1').getID(), 'G1')
+    assert.equal(stage2.getGroups()[0].getID(), 'G1')
+    assert.throws(() => {
+      stage2.getGroup('G2')
+    }, {
+      message: 'Group with ID G2 not found in stage with ID S2'
+    })
+
+    stage2.deleteGroup(league2.getID())
+    stage2.deleteGroup(league1.getID())
+    assert.equal(stage2.getGroups().length, 0)
   })
 
   it('testStageMatchesWithNoOptionalFields', async () => {

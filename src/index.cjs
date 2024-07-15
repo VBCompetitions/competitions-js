@@ -8228,6 +8228,62 @@ class Stage {
   }
 
   /**
+     * Delete a group from the stage
+     *
+     * @param string $id The ID of the group to delete
+     *
+     * @return Stage This stage
+     */
+  deleteGroup (id) {
+    let stageFound = false;
+    let groupFound = false;
+    this.#competition.getStages().forEach(stage => {
+      // Loop through all the stages until we find this stage
+      stageFound = stageFound || (stage.getID() === this.#id);
+      if (!stageFound) {
+        return
+      }
+
+      stage.getGroups().forEach(group => {
+        // Loop through all of the groups until we find this group, but skip this group
+        if (!groupFound) {
+          groupFound = groupFound || (group.getID() === id);
+          return
+        }
+
+        group.getMatches().forEach(match => {
+          let teamReferences = [];
+          teamReferences = teamReferences.concat(this.#stripTeamReferences(match.getHomeTeam().getID()));
+          teamReferences = teamReferences.concat(this.#stripTeamReferences(match.getAwayTeam().getID()));
+
+          const officials = match.getOfficials();
+          if (officials !== null && officials.isTeam()) {
+            teamReferences = teamReferences.concat(this.#stripTeamReferences(match.getOfficials().getTeamID()));
+          }
+
+          teamReferences.forEach(reference => {
+            let parts;
+            if ((parts = reference.match(/^{([^:]*):([^:]*):.*}/)) !== null) {
+              if (parts[1] === this.#id && parts[2] === id) {
+                throw new Error(`Cannot delete group with id "${id}" as it is referenced in match {${stage.getID()}:${group.getID()}:${match.getID()}}`)
+              }
+            }
+          });
+        });
+      });
+    });
+
+    if (!groupFound) {
+      return this
+    }
+
+    delete this.#groupLookup[id];
+    this.#groups = this.#groups.filter(el => el.getID() !== id);
+
+    return this
+  }
+
+  /**
    * Check if all matches in the stage are complete.
    *
    * @returns {bool} True if all matches in the stage are complete, false otherwise
@@ -8574,6 +8630,34 @@ class Stage {
       return `${aStart}`.localeCompare(`${bStart}`)
     });
     return matches
+  }
+
+  /**
+   * This function recursively extracts team references from the team ID, including
+   * stripping out team references in a ternary statement
+   *
+   * @param {string} teamReference The string containing team references.
+   *
+   * @returns {Array<string>} An array containing unique team references extracted from the input string.
+   */
+  #stripTeamReferences (teamReference) {
+    let references = [];
+    let lrMatches;
+    if (!teamReference.startsWith('{')) {
+      return []
+    } else if ((lrMatches = teamReference.match(/^([^=]*)==([^?]*)\?(.*)/)) !== null) {
+      references = references.concat(this.#stripTeamReferences(lrMatches[1]));
+      references = references.concat(this.#stripTeamReferences(lrMatches[2]));
+      let tfMatches;
+      if ((tfMatches = lrMatches[3].match(/^({[^}]*}):(.*)/)) !== null) {
+        references = references.concat(this.#stripTeamReferences(tfMatches[1]));
+        references = references.concat(this.#stripTeamReferences(tfMatches[2]));
+      }
+    } else {
+      references.push(teamReference);
+    }
+
+    return [...new Set(references)]
   }
 }
 
