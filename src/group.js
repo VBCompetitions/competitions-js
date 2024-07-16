@@ -627,6 +627,8 @@ class Group {
 
     this._isCompleteKnown = false
 
+    this._stage.checkMatches()
+
     return this
   }
 
