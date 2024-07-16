@@ -139,7 +139,31 @@ describe('stage', () => {
     await assert.rejects(async () => {
       await Competition.loadFromCompetitionJSON(competitionJSON)
     }, {
-      message: 'Groups in the same stage cannot contain the same team. Groups {L:L1} and {L:L2} both contain the following team IDs: "TM2", "TM4"'
+      message: 'Groups in the same stage cannot contain the same team. Groups {L:L1} and {L:L2} both contain the following team IDs: "TM2"'
+    })
+
+    const competition = new Competition('Test competition')
+    const team1 = new CompetitionTeam(competition, 'T1', 'Team 1')
+    const team2 = new CompetitionTeam(competition, 'T2', 'Team 2')
+    const team3 = new CompetitionTeam(competition, 'T3', 'Team 3')
+    competition.addTeam(team1).addTeam(team2).addTeam(team3)
+    const stage = new Stage(competition, 'L')
+    competition.addStage(stage)
+    const league1 = new League(stage, 'L1', MatchType.CONTINUOUS, false)
+    const match1 = new GroupMatch(league1, 'M1')
+    match1.setHomeTeam(new MatchTeam(match1, 'T1')).setAwayTeam(new MatchTeam(match1, 'T2'))
+    league1.addMatch(match1)
+    stage.addGroup(league1)
+
+    const league2 = new League(stage, 'L2', MatchType.CONTINUOUS, false)
+    const match2 = new GroupMatch(league2, 'M1')
+    match2.setHomeTeam(new MatchTeam(match2, 'T1')).setAwayTeam(new MatchTeam(match2, 'T2'))
+    league2.addMatch(match2)
+
+    assert.throws(() => {
+      stage.addGroup(league2)
+    }, {
+      message: 'Groups in the same stage cannot contain the same team. Groups {L:L1} and {L:L2} both contain the following team IDs: "T1", "T2"'
     })
   })
 

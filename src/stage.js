@@ -151,8 +151,6 @@ class Stage {
       this.setIfUnknown(new IfUnknown(this, stageData.ifUnknown.description)).loadFromData(stageData.ifUnknown)
     }
 
-    this.#checkMatches()
-
     return this
   }
 
@@ -223,6 +221,12 @@ class Stage {
       throw new Error(`Groups in a Stage with duplicate IDs not allowed: {${this.#id}:${group.getID()}}`)
     }
     this.#groups.push(group)
+    try {
+      this.checkMatches()
+    } catch (error) {
+      this.#groups.pop(group)
+      throw error
+    }
     this.#groupLookup[group.getID()] = group
     return this
   }
@@ -314,7 +318,7 @@ class Stage {
    *
    * @throws {Error} If duplicate teams are found in groups of the same stage
    */
-  #checkMatches () {
+  checkMatches () {
     for (let i = 0; i < this.#groups.length - 1; i++) {
       const thisGroupsTeamIDs = this.#groups[i].getTeamIDs(Competition.VBC_TEAMS_PLAYING)
       for (let j = i + 1; j < this.#groups.length; j++) {
