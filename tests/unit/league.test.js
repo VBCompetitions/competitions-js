@@ -1330,5 +1330,6 @@ describe('league', () => {
     const competitionJSON = await readFile(new URL(path.join('leagues', 'complete-league.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
     assert.equal(competition.getTeam('{L:LG:LG1:foo}').getID(), CompetitionTeam.UNKNOWN_TEAM_ID)
+    assert.equal(competition.getTeam('{L:LG:LG1:loser}').getID(), 'TM2')
   })
 })

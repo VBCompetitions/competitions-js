@@ -1,3 +1,5 @@
+import ClubContact from './clubContact.js'
+
 class Club {
   /**
    * A unique ID for the club, e.g. 'CLUB1'.  This must be unique within the competition.  It must only contain letters (upper or lowercase), and numbers
@@ -12,6 +14,13 @@ class Club {
    * @private
    */
   #name
+
+  /**
+   * The contacts for the club
+   * @type {array}
+   * @private
+   */
+  #contacts
 
   /**
    * Free form string to add notes about a club.  This can be used for arbitrary content that various implementations can use
@@ -34,6 +43,13 @@ class Club {
    */
   /** @var object  */
   #teamLookup
+
+  /**
+   * A Lookup table from contact IDs to the contact
+   * @type {object}
+   * @private
+   */
+  #contactLookup
 
   static UNKNOWN_CLUB_ID = 'UNKNOWN'
   static UNKNOWN_CLUB_NAME = 'UNKNOWN'
@@ -62,8 +78,10 @@ class Club {
     this.#competition = competition
     this.#id = id
     this.setName(clubName)
+    this.#contacts = []
     this.#notes = null
     this.#teamLookup = {}
+    this.#contactLookup = {}
   }
 
   /**
@@ -74,6 +92,12 @@ class Club {
    * @returns {Club} the updated club object
    */
   loadFromData (clubData) {
+    if (Object.hasOwn(clubData, 'contacts')) {
+      clubData.contacts.forEach(contactData => {
+        this.addContact((new ClubContact(this, contactData.id, contactData.roles)).loadFromData(contactData))
+      })
+    }
+
     if (Object.hasOwn(clubData, 'notes')) {
       this.setNotes(clubData.notes)
     }
@@ -138,6 +162,89 @@ class Club {
    */
   getName () {
     return this.#name
+  }
+
+  /**
+   * Add a contact to this club
+   *
+   * @param {ClubContact} contact The contact to add to this club
+   *
+   * @returns {CompetitionTeam} This CompetitionTeam instance
+   *
+   * @throws {Error} If a contact with a duplicate ID within the club is added
+   */
+  addContact (contact) {
+    if (!(contact instanceof ClubContact)) {
+      throw new Error(`clubs can only have club contacts, ${contact.constructor.name} given`)
+    }
+    if (this.hasContact(contact.getID())) {
+      throw new Error('club contacts with duplicate IDs within a club not allowed')
+    }
+    this.#contacts.push(contact)
+    this.#contactLookup[contact.getID()] = contact
+    return this
+  }
+
+  /**
+   * Returns an array of ClubContacts for this club
+   *
+   * @returns {array<ClubContact>|null} The contacts for this club
+   */
+  getContacts () {
+    return this.#contacts
+  }
+
+  /**
+   * Returns the ClubContact with the requested ID, or throws if the ID is not found
+   *
+   * @param {string} id The ID of the contact in this club to return
+   *
+   * @throws {Error} If a Contact with the requested ID was not found
+   *
+   * @returns {ClubContact} The requested contact for this club
+   */
+  getContact (id) {
+    if (!Object.hasOwn(this.#contactLookup, id)) {
+      throw new Error(`Contact with ID "${id}" not found`)
+    }
+    return this.#contactLookup[id]
+  }
+
+  /**
+   * Check if a contact with the given ID exists in this club
+   *
+   * @param {string} id The ID of the contact to check
+   *
+   * @returns {bool} True if the contact exists, otherwise false
+   */
+  hasContact (id) {
+    return Object.hasOwn(this.#contactLookup, id)
+  }
+
+  /**
+   * Check if this club has any contacts
+   *
+   * @returns bool True if the club has contacts, otherwise false
+   */
+  hasContacts () {
+    return this.#contacts.length > 0
+  }
+
+  /**
+   * Delete a contact from the club
+   *
+   * @param {string} id The ID of the contact to delete
+   *
+   * @returns {CompetitionTeam} This CompetitionTeam instance
+   */
+  deleteContact (id) {
+    if (!this.hasContact(id)) {
+      return this
+    }
+
+    delete this.#contactLookup[id]
+    this.#contacts = this.#contacts.filter(el => el.getID() !== id)
+    return this
   }
 
   /**

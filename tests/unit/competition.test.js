@@ -3,7 +3,7 @@ import { describe, it } from 'node:test'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 
-import { Club, Competition, CompetitionTeam, GroupMatch, League, LeagueConfig, LeagueConfigPoints, MatchOfficials, MatchTeam, MatchType, Stage } from '../../src/index.js'
+import { Club, ClubContact, ClubContactRole, Competition, CompetitionContact, CompetitionContactRole, CompetitionTeam, GroupMatch, League, LeagueConfig, LeagueConfigPoints, MatchOfficials, MatchTeam, MatchType, Stage } from '../../src/index.js'
 
 describe('competition', () => {
   it('testCompetitionInvalidData', async () => {
@@ -870,5 +870,36 @@ describe('competition', () => {
     }, {
       message: 'Invalid metadata value: must be between 1 and 1000 characters long'
     })
+  })
+
+  it('testCompetitionContacts', () => {
+    const competition1 = new Competition('test')
+    const contact1 = new CompetitionContact(competition1, 'C1', [CompetitionContactRole.SECRETARY])
+    competition1.addContact(contact1)
+
+    const competition2 = new Competition('test2')
+    const contact2 = new CompetitionContact(competition2, 'C1', [CompetitionContactRole.DIRECTOR])
+
+    assert.throws(() => {
+      competition1.addContact(contact2)
+    },
+    {
+      message: 'competition contacts with duplicate IDs within a competition not allowed'
+    })
+
+    assert.throws(() => {
+      const club = new Club(competition1, 'CL1', 'Some club')
+      const clubContact = new ClubContact(club, 'C1', [ClubContactRole.SECRETARY])
+      competition1.addContact(clubContact)
+    },
+    {
+      message: 'competitions can only have competition contacts, ClubContact given'
+    })
+
+    assert.equal(competition1.getContacts().length, 1)
+    competition1.deleteContact('C1')
+    assert(!competition1.hasContacts())
+    competition1.deleteContact('C1')
+    assert(!competition1.hasContacts())
   })
 })

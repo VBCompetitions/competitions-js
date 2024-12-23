@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 
 
-import { Club, Competition, CompetitionTeam, Contact, ContactRole, Player, PlayerTeam } from '../../src/index.js'
+import { Club, ClubContact, ClubContactRole, Competition, CompetitionTeam, TeamContact, TeamContactRole, Player, PlayerTeam } from '../../src/index.js'
 
 describe('competitionTeam', () => {
   it('testCompetitionTeamDuplicateID', async () => {
@@ -78,7 +78,7 @@ describe('competitionTeam', () => {
   it('testCompetitionTeamContacts', async () => {
     const competition = new Competition('test competition')
     const team = new CompetitionTeam(competition, 'T1', 'Team 1')
-    const contact = new Contact(team, 'C1', [ContactRole.SECRETARY])
+    const contact = new TeamContact(team, 'C1', [TeamContactRole.SECRETARY])
 
     assert.equal(team.getContacts().length, 0)
     assert(!team.hasContacts())
@@ -88,7 +88,7 @@ describe('competitionTeam', () => {
     assert.equal(team.getContacts().length, 1)
     assert(team.hasContacts())
     assert(team.hasContact('C1'))
-    assert.equal(team.getContact('C1').getRoles()[0], ContactRole.SECRETARY)
+    assert.equal(team.getContact('C1').getRoles()[0], TeamContactRole.SECRETARY)
 
     assert.throws(() => {
       team.addContact(contact)
@@ -113,6 +113,14 @@ describe('competitionTeam', () => {
     assert.equal(team.getContacts().length, 0)
     assert(!team.hasContacts())
     assert(!team.hasContact('C1'))
+
+    assert.throws(() => {
+      const club = new Club(competition, 'CL1', 'Some club')
+      team.addContact(new ClubContact(club, 'C1', [ClubContactRole.SECRETARY]))
+    },
+    {
+      message: 'teams can only have team contacts, ClubContact given'
+    })
   })
 
   it('testCompetitionTeamPlayers', async () => {

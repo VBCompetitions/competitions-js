@@ -1,5 +1,3 @@
-import ContactRole from './contactRole.js'
-
 /**
  * A single contact for a team
  */
@@ -7,52 +5,60 @@ class Contact {
   /**
    * A unique ID for this contact, e.g. 'TM1Contact1'. This must be unique within the team
    * @type {string}
-   * @private
+   * @protected
    */
-  #id
+  _id
 
   /**
    * The name of this contact
    * @type {string|null}
-   * @private
+   * @protected
    */
-  #name = null
+  _name = null
+
+  /**
+   * Free form string to add notes about the player. This can be used for arbitrary content that various implementations can use
+   * @type {string|null}
+   * @protected
+   */
+  _notes = null
 
   /**
    * The roles of this contact within the team
    * @type {array}
-   * @private
+   * @protected
    */
-  #roles
+  _roles
 
   /**
    * The email addresses for this contact
    * @type {array}
-   * @private
+   * @protected
    */
-  #emails
+  _emails
 
   /**
    * A telephone number for this contact. If a contact has multiple phone numbers then add them as another contact
    * @type {array}
-   * @private
+   * @protected
    */
-  #phones
+  _phones
 
   /**
-   * The team this contact belongs to
-   * @type {CompetitionTeam}
-   * @private
+   * A list of valid roles for this contact
+   * @type {array}
+   * @protected
    */
-  #team
+  _validRoles
 
   /**
    * Defines a Team Contact
    * @param {CompetitionTeam} team The team this contact belongs to
    * @param {string} id The unique ID for this contact
    * @param {Array<string>} roles The roles of this contact within the team
+   * @param {Array<string>} validRoles The valid roles this contact can have
    */
-  constructor (team, id, roles) {
+  constructor (id, roles, validRoles) {
     if (id.length > 100 || id.length < 1) {
       throw new Error('Invalid contact ID: must be between 1 and 100 characters long')
     }
@@ -61,51 +67,29 @@ class Contact {
       throw new Error('Invalid contact ID: must contain only ASCII printable characters excluding " : { } ? =')
     }
 
-    if (team.hasContact(id)) {
-      throw new Error(`Contact with ID "${id}" already exists in the team`)
-    }
-
-    this.#team = team
-    this.#id = id
-    this.#roles = []
+    this._validRoles = validRoles
+    this._id = id
+    this._roles = []
     roles.forEach(role => {
-      switch (role) {
-        case ContactRole.TREASURER:
-          this.addRole(ContactRole.TREASURER)
-          break
-        case ContactRole.SECRETARY:
-          this.addRole(ContactRole.SECRETARY)
-          break
-        case ContactRole.MANAGER:
-          this.addRole(ContactRole.MANAGER)
-          break
-        case ContactRole.CAPTAIN:
-          this.addRole(ContactRole.CAPTAIN)
-          break
-        case ContactRole.COACH:
-          this.addRole(ContactRole.COACH)
-          break
-        case ContactRole.ASSISTANT_COACH:
-          this.addRole(ContactRole.ASSISTANT_COACH)
-          break
-        case ContactRole.MEDIC:
-          this.addRole(ContactRole.MEDIC)
-          break
-      }
+      this.addRole(role)
     })
-    this.#name = null
-    this.#emails = []
-    this.#phones = []
+    this._name = null
+    this._emails = []
+    this._phones = []
   }
 
   /**
    * Loads contact data from an object
    * @param {Object} contactData The data defining this Contact
-   * @returns {Contact} The updated Contact instance
+   * @returns {TeamContact} The updated Contact instance
    */
   loadFromData (contactData) {
     if (Object.hasOwn(contactData, 'name')) {
       this.setName(contactData.name)
+    }
+
+    if (Object.hasOwn(contactData, 'notes')) {
+      this.setNotes(contactData.notes)
     }
 
     if (Object.hasOwn(contactData, 'emails')) {
@@ -129,28 +113,32 @@ class Contact {
    */
   serialize () {
     const contact = {
-      id: this.#id
+      id: this._id
     }
 
-    if (this.#name !== null) {
-      contact.name = this.#name
+    if (this._name !== null) {
+      contact.name = this._name
+    }
+
+    if (this._notes !== null) {
+      contact.notes = this._notes
     }
 
     contact.roles = []
-    this.#roles.forEach(role => {
+    this._roles.forEach(role => {
       contact.roles.push(role)
     })
 
-    if (this.#emails.length > 0) {
+    if (this._emails.length > 0) {
       contact.emails = []
-      this.#emails.forEach(email => {
+      this._emails.forEach(email => {
         contact.emails.push(email)
       })
     }
 
-    if (this.#phones.length > 0) {
+    if (this._phones.length > 0) {
       contact.phones = []
-      this.#phones.forEach(phone => {
+      this._phones.forEach(phone => {
         contact.phones.push(phone)
       })
     }
@@ -159,33 +147,11 @@ class Contact {
   }
 
   /**
-   * Get the team this contact belongs to
-   * @returns {CompetitionTeam} The team this contact belongs to
-   */
-  getTeam () {
-    return this.#team
-  }
-
-  /**
    * Get the ID for this contact
    * @returns {string} The ID for this contact
    */
   getID () {
-    return this.#id
-  }
-
-  /**
-   * Set the name for this contact
-   * @param {string} name The name for this contact
-   * @returns {Contact} This contact
-   * @throws {Error} If the name is invalid
-   */
-  setName (name) {
-    if (name.length > 1000 || name.length < 1) {
-      throw new Error('Invalid contact name: must be between 1 and 1000 characters long')
-    }
-    this.#name = name
-    return this
+    return this._id
   }
 
   /**
@@ -193,15 +159,49 @@ class Contact {
    * @returns {string|null} The name for this contact
    */
   getName () {
-    return this.#name
+    return this._name
+  }
+
+  /**
+   * Set the name for this contact
+   * @param {string} name The name for this contact
+   * @returns {TeamContact} This contact
+   * @throws {Error} If the name is invalid
+   */
+  setName (name) {
+    if (name.length > 1000 || name.length < 1) {
+      throw new Error('Invalid contact name: must be between 1 and 1000 characters long')
+    }
+    this._name = name
+    return this
+  }
+
+  /**
+   * Get the notes for this contact.
+   *
+   * @returns {string|null} The notes for this contact
+   */
+  getNotes () {
+    return this._notes
+  }
+
+  /**
+   * Set the notes for this contact.
+   *
+   * @param {string|null} notes The notes for this contact
+   * @returns {Player} this Player
+   */
+  setNotes (notes) {
+    this._notes = notes
+    return this
   }
 
   /**
    * Get the roles for this contact
-   * @returns {Array<ContactRole>} The roles for this contact
+   * @returns {Array} The roles for this contact
    */
   getRoles () {
-    return this.#roles
+    return this._roles
   }
 
   /**
@@ -210,8 +210,12 @@ class Contact {
    * @returns {Contact} Returns this contact for method chaining
    */
   addRole (role) {
-    if (!this.hasRole(role)) {
-      this.#roles.push(role)
+    if (this._validRoles.includes(role)) {
+      if (!this.hasRole(role)) {
+        this._roles.push(role)
+      }
+    } else {
+      throw new Error(`Error adding the role due to invalid role: ${role}`)
     }
     return this
   }
@@ -222,7 +226,7 @@ class Contact {
    * @returns {boolean} Whether the contact has the specified role
    */
   hasRole (role) {
-    return this.#roles.includes(role)
+    return this._roles.includes(role)
   }
 
   /**
@@ -230,7 +234,7 @@ class Contact {
    *
    * @param {array<string>} roles The list of roles for the contact
    *
-   * @returns {Contact} Returns this contact for method chaining
+   * @returns {TeamContact} Returns this contact for method chaining
    * @throws {Error} When the list of roles contains an invalid value
    */
   setRoles (roles) {
@@ -240,22 +244,14 @@ class Contact {
 
     const newRoles = []
     for (const role of roles) {
-      switch (role) {
-        case ContactRole.SECRETARY:
-        case ContactRole.TREASURER:
-        case ContactRole.MANAGER:
-        case ContactRole.CAPTAIN:
-        case ContactRole.COACH:
-        case ContactRole.ASSISTANT_COACH:
-        case ContactRole.MEDIC:
-          newRoles.push(role)
-          break
-        default:
-          throw new Error(`Error setting the roles due to invalid role: ${role}`)
+      if (this._validRoles.includes(role)) {
+        newRoles.push(role)
+      } else {
+        throw new Error(`Error setting the roles due to invalid role: ${role}`)
       }
     }
 
-    this.#roles = newRoles
+    this._roles = newRoles
     return this
   }
 
@@ -264,21 +260,21 @@ class Contact {
    * @returns {Array<string>} The email addresses for this contact
    */
   getEmails () {
-    return this.#emails
+    return this._emails
   }
 
   /**
    * Add an email address to this contact
    * @param {string} email The email address to add
-   * @returns {Contact} Returns this contact for method chaining
+   * @returns {TeamContact} Returns this contact for method chaining
    * @throws {Error} When the email address is invalid
    */
   addEmail (email) {
     if (email.length < 3) {
       throw new Error('Invalid contact email address: must be at least 3 characters long')
     }
-    if (!this.#emails.includes(email)) {
-      this.#emails.push(email)
+    if (!this._emails.includes(email)) {
+      this._emails.push(email)
     }
     return this
   }
@@ -288,12 +284,12 @@ class Contact {
    *
    * @param {array|null} emails The list of email addresses for the contact
    *
-   * @returns {Contact} Returns this contact for method chaining
+   * @returns {TeamContact} Returns this contact for method chaining
    * @throws {Error} When one of the email addresses is invalid
    */
   setEmails (emails) {
     if (emails === null) {
-      this.#emails = []
+      this._emails = []
       return this
     }
 
@@ -306,7 +302,7 @@ class Contact {
         newEmails.push(email)
       }
     }
-    this.#emails = newEmails
+    this._emails = newEmails
     return this
   }
 
@@ -315,21 +311,21 @@ class Contact {
    * @returns {Array<string>} The phone numbers for this contact
    */
   getPhones () {
-    return this.#phones
+    return this._phones
   }
 
   /**
    * Add a phone number to this contact
    * @param {string} phone The phone number to add
-   * @returns {Contact} Returns this contact for method chaining
+   * @returns {TeamContact} Returns this contact for method chaining
    * @throws {Error} When the phone number is invalid
    */
   addPhone (phone) {
     if (phone.length > 50 || phone.length < 1) {
       throw new Error('Invalid contact phone number: must be between 1 and 50 characters long')
     }
-    if (!this.#phones.includes(phone)) {
-      this.#phones.push(phone)
+    if (!this._phones.includes(phone)) {
+      this._phones.push(phone)
     }
     return this
   }
@@ -339,12 +335,12 @@ class Contact {
    *
    * @param {array|null} phones The list of phone numbers for the contact
    *
-   * @return {Contact} Returns this contact for method chaining
+   * @return {TeamContact} Returns this contact for method chaining
    * @throws {Error} When one of the phone numbers is invalid
    */
   setPhones (phones) {
     if (phones === null) {
-      this.#phones = []
+      this._phones = []
       return this
     }
 
@@ -357,7 +353,7 @@ class Contact {
         newPhones.push(phone)
       }
     }
-    this.#phones = newPhones
+    this._phones = newPhones
     return this
   }
 }
