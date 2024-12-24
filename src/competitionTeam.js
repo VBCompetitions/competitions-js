@@ -1,5 +1,4 @@
-import Contact from './contact.js'
-import ContactRole from './contactRole.js'
+import TeamContact from './teamContact.js'
 
 class CompetitionTeam {
   static UNKNOWN_TEAM_ID = 'UNKNOWN'
@@ -93,33 +92,7 @@ class CompetitionTeam {
   loadFromData (teamData) {
     if (Object.hasOwn(teamData, 'contacts')) {
       teamData.contacts.forEach(contactData => {
-        const roles = []
-        contactData.roles.forEach(contactRole => {
-          switch (contactRole) {
-            case ContactRole.SECRETARY:
-              roles.push(ContactRole.SECRETARY)
-              break
-            case ContactRole.TREASURER:
-              roles.push(ContactRole.TREASURER)
-              break
-            case ContactRole.MANAGER:
-              roles.push(ContactRole.MANAGER)
-              break
-            case ContactRole.CAPTAIN:
-              roles.push(ContactRole.CAPTAIN)
-              break
-            case ContactRole.COACH:
-              roles.push(ContactRole.COACH)
-              break
-            case ContactRole.ASSISTANT_COACH:
-              roles.push(ContactRole.ASSISTANT_COACH)
-              break
-            case ContactRole.MEDIC:
-              roles.push(ContactRole.MEDIC)
-              break
-          }
-        })
-        this.addContact((new Contact(this, contactData.id, roles)).loadFromData(contactData))
+        this.addContact((new TeamContact(this, contactData.id, contactData.roles)).loadFromData(contactData))
       })
     }
 
@@ -284,13 +257,16 @@ class CompetitionTeam {
   /**
    * Add a contact to this team
    *
-   * @param {Contact} contact The contact to add to this team
+   * @param {TeamContact} contact The contact to add to this team
    *
    * @returns {CompetitionTeam} This CompetitionTeam instance
    *
    * @throws {Error} If a contact with a duplicate ID within the team is added
    */
   addContact (contact) {
+    if (!(contact instanceof TeamContact)) {
+      throw new Error(`teams can only have team contacts, ${contact.constructor.name} given`)
+    }
     if (this.hasContact(contact.getID())) {
       throw new Error('team contacts with duplicate IDs within a team not allowed')
     }
@@ -300,22 +276,22 @@ class CompetitionTeam {
   }
 
   /**
-   * Returns an array of Contacts for this team
+   * Returns an array of TeamContacts for this team
    *
-   * @returns {array<Contact>|null} The contacts for this team
+   * @returns {array<TeamContact>|null} The contacts for this team
    */
   getContacts () {
     return this.#contacts
   }
 
   /**
-   * Returns the Contact with the requested ID, or throws if the ID is not found
+   * Returns the TeamContact with the requested ID, or throws if the ID is not found
    *
    * @param {string} id The ID of the contact in this team to return
    *
-   * @throws {Error} If a Contact with the requested ID was not found
+   * @throws {Error} If a TeamContact with the requested ID was not found
    *
-   * @returns {Contact} The requested contact for this team
+   * @returns {TeamContact} The requested contact for this team
    */
   getContact (id) {
     if (!Object.hasOwn(this.#contactLookup, id)) {

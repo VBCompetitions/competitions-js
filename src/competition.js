@@ -3,6 +3,7 @@ import addFormats from 'ajv-formats'
 
 import { competitionSchema } from './schema.js'
 import CompetitionTeam from './competitionTeam.js'
+import CompetitionContact from './competitionContact.js'
 import Club from './club.js'
 import Player from './player.js'
 import Stage from './stage.js'
@@ -58,6 +59,13 @@ class Competition {
    * @private
    */
   #name
+
+  /**
+   * The contacts for the competition
+   * @type {array}
+   * @private
+   */
+  #contacts
 
   /**
    * Free form string to add notes about the competition.  This can be used for arbitrary content that various implementations can use
@@ -124,6 +132,13 @@ class Competition {
   #clubLookup
 
   /**
+   * A Lookup table from contact IDs to the contact
+   * @type {object}
+   * @private
+   */
+  #contactLookup
+
+  /**
    * The "unknown" team, typically for matching against
    * @type {CompetitionTeam}
    * @private
@@ -159,6 +174,7 @@ class Competition {
     this.#metadata = []
     this.#notes = null
     this.#clubs = []
+    this.#contacts = []
     this.#teams = []
     this.#players = []
     this.#stages = []
@@ -166,6 +182,7 @@ class Competition {
     this.#playerLookup = {}
     this.#stageLookup = {}
     this.#clubLookup = {}
+    this.#contactLookup = {}
 
     this.#unknownTeam = new CompetitionTeam(this, CompetitionTeam.UNKNOWN_TEAM_ID, CompetitionTeam.UNKNOWN_TEAM_NAME)
   }
@@ -205,6 +222,12 @@ class Competition {
           throw new Error(`Metadata with key "${kv.key}" already exists in the competition`)
         }
         competition.setMetadataByKey(kv.key, kv.value)
+      })
+    }
+
+    if (Array.isArray(competitionData.contacts)) {
+      competitionData.contacts.forEach(contactData => {
+        competition.addContact((new CompetitionContact(competition, contactData.id, contactData.roles)).loadFromData(contactData))
       })
     }
 
@@ -440,6 +463,89 @@ class Competition {
    */
   deleteMetadataByKey (key) {
     this.#metadata = this.#metadata.filter(el => el.key !== key)
+    return this
+  }
+
+  /**
+   * Add a contact to this competition
+   *
+   * @param {CompetitionContact} contact The contact to add to this competition
+   *
+   * @returns {CompetitionTeam} This CompetitionTeam instance
+   *
+   * @throws {Error} If a contact with a duplicate ID within the competition is added
+   */
+  addContact (contact) {
+    if (!(contact instanceof CompetitionContact)) {
+      throw new Error(`competitions can only have competition contacts, ${contact.constructor.name} given`)
+    }
+    if (this.hasContact(contact.getID())) {
+      throw new Error('competition contacts with duplicate IDs within a competition not allowed')
+    }
+    this.#contacts.push(contact)
+    this.#contactLookup[contact.getID()] = contact
+    return this
+  }
+
+  /**
+   * Returns an array of Contacts for this competition
+   *
+   * @returns {array<CompetitionContact>|null} The contacts for this competition
+   */
+  getContacts () {
+    return this.#contacts
+  }
+
+  /**
+   * Returns the CompetitionContact with the requested ID, or throws if the ID is not found
+   *
+   * @param {string} id The ID of the contact in this competition to return
+   *
+   * @throws {Error} If a CompetitionContact with the requested ID was not found
+   *
+   * @returns {CompetitionContact} The requested contact for this competition
+   */
+  getContact (id) {
+    if (!Object.hasOwn(this.#contactLookup, id)) {
+      throw new Error(`Contact with ID "${id}" not found`)
+    }
+    return this.#contactLookup[id]
+  }
+
+  /**
+   * Check if a contact with the given ID exists in this competition
+   *
+   * @param {string} id The ID of the contact to check
+   *
+   * @returns {bool} True if the contact exists, otherwise false
+   */
+  hasContact (id) {
+    return Object.hasOwn(this.#contactLookup, id)
+  }
+
+  /**
+   * Check if this competition has any contacts
+   *
+   * @returns bool True if the competition has contacts, otherwise false
+   */
+  hasContacts () {
+    return this.#contacts.length > 0
+  }
+
+  /**
+   * Delete a contact from the competition
+   *
+   * @param {string} id The ID of the contact to delete
+   *
+   * @returns {CompetitionTeam} This CompetitionTeam instance
+   */
+  deleteContact (id) {
+    if (!this.hasContact(id)) {
+      return this
+    }
+
+    delete this.#contactLookup[id]
+    this.#contacts = this.#contacts.filter(el => el.getID() !== id)
     return this
   }
 

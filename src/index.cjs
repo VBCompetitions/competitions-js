@@ -3,6 +3,431 @@
 var Ajv = require('ajv');
 var addFormats = require('ajv-formats');
 
+/**
+ * A single contact for a team
+ */
+class Contact {
+  /**
+   * A unique ID for this contact, e.g. 'TM1Contact1'. This must be unique within the team
+   * @type {string}
+   * @protected
+   */
+  _id
+
+  /**
+   * The name of this contact
+   * @type {string|null}
+   * @protected
+   */
+  _name = null
+
+  /**
+   * Free form string to add notes about the player. This can be used for arbitrary content that various implementations can use
+   * @type {string|null}
+   * @protected
+   */
+  _notes = null
+
+  /**
+   * The roles of this contact within the team
+   * @type {array}
+   * @protected
+   */
+  _roles
+
+  /**
+   * The email addresses for this contact
+   * @type {array}
+   * @protected
+   */
+  _emails
+
+  /**
+   * A telephone number for this contact. If a contact has multiple phone numbers then add them as another contact
+   * @type {array}
+   * @protected
+   */
+  _phones
+
+  /**
+   * A list of valid roles for this contact
+   * @type {array}
+   * @protected
+   */
+  _validRoles
+
+  /**
+   * Defines a Team Contact
+   * @param {CompetitionTeam} team The team this contact belongs to
+   * @param {string} id The unique ID for this contact
+   * @param {Array<string>} roles The roles of this contact within the team
+   * @param {Array<string>} validRoles The valid roles this contact can have
+   */
+  constructor (id, roles, validRoles) {
+    if (id.length > 100 || id.length < 1) {
+      throw new Error('Invalid contact ID: must be between 1 and 100 characters long')
+    }
+
+    if (!/^((?![":{}?=])[\x20-\x7F])+$/.test(id)) {
+      throw new Error('Invalid contact ID: must contain only ASCII printable characters excluding " : { } ? =')
+    }
+
+    this._validRoles = validRoles;
+    this._id = id;
+    this._roles = [];
+    roles.forEach(role => {
+      this.addRole(role);
+    });
+    this._name = null;
+    this._emails = [];
+    this._phones = [];
+  }
+
+  /**
+   * Loads contact data from an object
+   * @param {Object} contactData The data defining this Contact
+   * @returns {TeamContact} The updated Contact instance
+   */
+  loadFromData (contactData) {
+    if (Object.hasOwn(contactData, 'name')) {
+      this.setName(contactData.name);
+    }
+
+    if (Object.hasOwn(contactData, 'notes')) {
+      this.setNotes(contactData.notes);
+    }
+
+    if (Object.hasOwn(contactData, 'emails')) {
+      contactData.emails.forEach(email => {
+        this.addEmail(email);
+      });
+    }
+    if (Object.hasOwn(contactData, 'phones')) {
+      contactData.phones.forEach(phone => {
+        this.addPhone(phone);
+      });
+    }
+
+    return this
+  }
+
+  /**
+   * Return the contact definition in a form suitable for serializing
+   *
+   * @returns {Object}
+   */
+  serialize () {
+    const contact = {
+      id: this._id
+    };
+
+    if (this._name !== null) {
+      contact.name = this._name;
+    }
+
+    if (this._notes !== null) {
+      contact.notes = this._notes;
+    }
+
+    contact.roles = [];
+    this._roles.forEach(role => {
+      contact.roles.push(role);
+    });
+
+    if (this._emails.length > 0) {
+      contact.emails = [];
+      this._emails.forEach(email => {
+        contact.emails.push(email);
+      });
+    }
+
+    if (this._phones.length > 0) {
+      contact.phones = [];
+      this._phones.forEach(phone => {
+        contact.phones.push(phone);
+      });
+    }
+
+    return contact
+  }
+
+  /**
+   * Get the ID for this contact
+   * @returns {string} The ID for this contact
+   */
+  getID () {
+    return this._id
+  }
+
+  /**
+   * Get the name for this contact
+   * @returns {string|null} The name for this contact
+   */
+  getName () {
+    return this._name
+  }
+
+  /**
+   * Set the name for this contact
+   * @param {string} name The name for this contact
+   * @returns {TeamContact} This contact
+   * @throws {Error} If the name is invalid
+   */
+  setName (name) {
+    if (name.length > 1000 || name.length < 1) {
+      throw new Error('Invalid contact name: must be between 1 and 1000 characters long')
+    }
+    this._name = name;
+    return this
+  }
+
+  /**
+   * Get the notes for this contact.
+   *
+   * @returns {string|null} The notes for this contact
+   */
+  getNotes () {
+    return this._notes
+  }
+
+  /**
+   * Set the notes for this contact.
+   *
+   * @param {string|null} notes The notes for this contact
+   * @returns {Player} this Player
+   */
+  setNotes (notes) {
+    this._notes = notes;
+    return this
+  }
+
+  /**
+   * Get the roles for this contact
+   * @returns {Array} The roles for this contact
+   */
+  getRoles () {
+    return this._roles
+  }
+
+  /**
+   * Add a role to this contact
+   * @param {string} role The role to add to this contact
+   * @returns {Contact} Returns this contact for method chaining
+   */
+  addRole (role) {
+    if (this._validRoles.includes(role)) {
+      if (!this.hasRole(role)) {
+        this._roles.push(role);
+      }
+    } else {
+      throw new Error(`Error adding the role due to invalid role: ${role}`)
+    }
+    return this
+  }
+
+  /**
+   * Check if this contact has the specified role
+   * @param {string} role The role to check for
+   * @returns {boolean} Whether the contact has the specified role
+   */
+  hasRole (role) {
+    return this._roles.includes(role)
+  }
+
+  /**
+   * Set the list of roles, overriding the previous list
+   *
+   * @param {array<string>} roles The list of roles for the contact
+   *
+   * @returns {TeamContact} Returns this contact for method chaining
+   * @throws {Error} When the list of roles contains an invalid value
+   */
+  setRoles (roles) {
+    if (!Array.isArray(roles) || roles.length === 0) {
+      throw new Error('Error setting the roles to an empty list as the Contact must have at least one role')
+    }
+
+    const newRoles = [];
+    for (const role of roles) {
+      if (this._validRoles.includes(role)) {
+        newRoles.push(role);
+      } else {
+        throw new Error(`Error setting the roles due to invalid role: ${role}`)
+      }
+    }
+
+    this._roles = newRoles;
+    return this
+  }
+
+  /**
+   * Get the email addresses for this contact
+   * @returns {Array<string>} The email addresses for this contact
+   */
+  getEmails () {
+    return this._emails
+  }
+
+  /**
+   * Add an email address to this contact
+   * @param {string} email The email address to add
+   * @returns {TeamContact} Returns this contact for method chaining
+   * @throws {Error} When the email address is invalid
+   */
+  addEmail (email) {
+    if (email.length < 3) {
+      throw new Error('Invalid contact email address: must be at least 3 characters long')
+    }
+    if (!this._emails.includes(email)) {
+      this._emails.push(email);
+    }
+    return this
+  }
+
+  /**
+   * Set the list of email addresses, overriding the previous list.  To delete all email addresses, pass in null
+   *
+   * @param {array|null} emails The list of email addresses for the contact
+   *
+   * @returns {TeamContact} Returns this contact for method chaining
+   * @throws {Error} When one of the email addresses is invalid
+   */
+  setEmails (emails) {
+    if (emails === null) {
+      this._emails = [];
+      return this
+    }
+
+    const newEmails = [];
+    for (const email of emails) {
+      if (email.length < 3) {
+        throw new Error('Invalid contact email address: must be at least 3 characters long')
+      }
+      if (!newEmails.includes(email)) {
+        newEmails.push(email);
+      }
+    }
+    this._emails = newEmails;
+    return this
+  }
+
+  /**
+   * Get the phone numbers for this contact
+   * @returns {Array<string>} The phone numbers for this contact
+   */
+  getPhones () {
+    return this._phones
+  }
+
+  /**
+   * Add a phone number to this contact
+   * @param {string} phone The phone number to add
+   * @returns {TeamContact} Returns this contact for method chaining
+   * @throws {Error} When the phone number is invalid
+   */
+  addPhone (phone) {
+    if (phone.length > 50 || phone.length < 1) {
+      throw new Error('Invalid contact phone number: must be between 1 and 50 characters long')
+    }
+    if (!this._phones.includes(phone)) {
+      this._phones.push(phone);
+    }
+    return this
+  }
+
+  /**
+   * Set the list of phone numbers, overriding the previous list.  To delete all phone numbers, pass in null
+   *
+   * @param {array|null} phones The list of phone numbers for the contact
+   *
+   * @return {TeamContact} Returns this contact for method chaining
+   * @throws {Error} When one of the phone numbers is invalid
+   */
+  setPhones (phones) {
+    if (phones === null) {
+      this._phones = [];
+      return this
+    }
+
+    const newPhones = [];
+    for (const phone of phones) {
+      if (phone.length > 50 || phone.length < 1) {
+        throw new Error('Invalid contact phone number: must be between 1 and 50 characters long')
+      }
+      if (!newPhones.includes(phone)) {
+        newPhones.push(phone);
+      }
+    }
+    this._phones = newPhones;
+    return this
+  }
+}
+
+class ClubContactRole {
+  static CHAIR = 'chair'
+  static VICE = 'vice'
+  static TREASURER = 'treasurer'
+  static SECRETARY = 'secretary'
+  static WELFARE = 'welfare'
+  static COMMUNICATIONS = 'communications'
+  static MARKETING = 'marketing'
+  static VOLUNTEER = 'volunteer'
+  static LOGISTICS = 'logistics'
+  static COACHING = 'coaching'
+
+  static _validRoles = [
+    ClubContactRole.CHAIR,
+    ClubContactRole.VICE,
+    ClubContactRole.TREASURER,
+    ClubContactRole.SECRETARY,
+    ClubContactRole.WELFARE,
+    ClubContactRole.COMMUNICATIONS,
+    ClubContactRole.MARKETING,
+    ClubContactRole.VOLUNTEER,
+    ClubContactRole.LOGISTICS,
+    ClubContactRole.COACHING
+  ]
+}
+
+/**
+ * A single contact for a club
+ */
+class ClubContact extends Contact {
+  /**
+   * The club this contact belongs to
+   * @type {Club}
+   * @private
+   */
+  #club
+
+  /**
+   * Defines a Club Contact
+   * @param {Club} club The club this contact belongs to
+   * @param {string} id The unique ID for this contact
+   * @param {Array<string>} roles The roles of this contact within the club
+   */
+  constructor (club, id, roles) {
+    if (!(club instanceof Club)) {
+      throw new Error(`club contacts can only be attached to clubs, ${club.constructor.name} given`)
+    }
+
+    if (club.hasContact(id)) {
+      throw new Error(`Contact with ID "${id}" already exists in the club`)
+    }
+
+    super(id, roles, ClubContactRole._validRoles);
+    this.#club = club;
+  }
+
+  /**
+   * Get the club this contact belongs to
+   * @returns {Club} The club this contact belongs to
+   */
+  getClub () {
+    return this.#club
+  }
+}
+
 class Club {
   /**
    * A unique ID for the club, e.g. 'CLUB1'.  This must be unique within the competition.  It must only contain letters (upper or lowercase), and numbers
@@ -17,6 +442,13 @@ class Club {
    * @private
    */
   #name
+
+  /**
+   * The contacts for the club
+   * @type {array}
+   * @private
+   */
+  #contacts
 
   /**
    * Free form string to add notes about a club.  This can be used for arbitrary content that various implementations can use
@@ -39,6 +471,13 @@ class Club {
    */
   /** @var object  */
   #teamLookup
+
+  /**
+   * A Lookup table from contact IDs to the contact
+   * @type {object}
+   * @private
+   */
+  #contactLookup
 
   static UNKNOWN_CLUB_ID = 'UNKNOWN'
   static UNKNOWN_CLUB_NAME = 'UNKNOWN'
@@ -67,8 +506,10 @@ class Club {
     this.#competition = competition;
     this.#id = id;
     this.setName(clubName);
+    this.#contacts = [];
     this.#notes = null;
     this.#teamLookup = {};
+    this.#contactLookup = {};
   }
 
   /**
@@ -79,6 +520,12 @@ class Club {
    * @returns {Club} the updated club object
    */
   loadFromData (clubData) {
+    if (Object.hasOwn(clubData, 'contacts')) {
+      clubData.contacts.forEach(contactData => {
+        this.addContact((new ClubContact(this, contactData.id, contactData.roles)).loadFromData(contactData));
+      });
+    }
+
     if (Object.hasOwn(clubData, 'notes')) {
       this.setNotes(clubData.notes);
     }
@@ -143,6 +590,89 @@ class Club {
    */
   getName () {
     return this.#name
+  }
+
+  /**
+   * Add a contact to this club
+   *
+   * @param {ClubContact} contact The contact to add to this club
+   *
+   * @returns {CompetitionTeam} This CompetitionTeam instance
+   *
+   * @throws {Error} If a contact with a duplicate ID within the club is added
+   */
+  addContact (contact) {
+    if (!(contact instanceof ClubContact)) {
+      throw new Error(`clubs can only have club contacts, ${contact.constructor.name} given`)
+    }
+    if (this.hasContact(contact.getID())) {
+      throw new Error('club contacts with duplicate IDs within a club not allowed')
+    }
+    this.#contacts.push(contact);
+    this.#contactLookup[contact.getID()] = contact;
+    return this
+  }
+
+  /**
+   * Returns an array of ClubContacts for this club
+   *
+   * @returns {array<ClubContact>|null} The contacts for this club
+   */
+  getContacts () {
+    return this.#contacts
+  }
+
+  /**
+   * Returns the ClubContact with the requested ID, or throws if the ID is not found
+   *
+   * @param {string} id The ID of the contact in this club to return
+   *
+   * @throws {Error} If a Contact with the requested ID was not found
+   *
+   * @returns {ClubContact} The requested contact for this club
+   */
+  getContact (id) {
+    if (!Object.hasOwn(this.#contactLookup, id)) {
+      throw new Error(`Contact with ID "${id}" not found`)
+    }
+    return this.#contactLookup[id]
+  }
+
+  /**
+   * Check if a contact with the given ID exists in this club
+   *
+   * @param {string} id The ID of the contact to check
+   *
+   * @returns {bool} True if the contact exists, otherwise false
+   */
+  hasContact (id) {
+    return Object.hasOwn(this.#contactLookup, id)
+  }
+
+  /**
+   * Check if this club has any contacts
+   *
+   * @returns bool True if the club has contacts, otherwise false
+   */
+  hasContacts () {
+    return this.#contacts.length > 0
+  }
+
+  /**
+   * Delete a contact from the club
+   *
+   * @param {string} id The ID of the contact to delete
+   *
+   * @returns {CompetitionTeam} This CompetitionTeam instance
+   */
+  deleteContact (id) {
+    if (!this.hasContact(id)) {
+      return this
+    }
+
+    delete this.#contactLookup[id];
+    this.#contacts = this.#contacts.filter(el => el.getID() !== id);
+    return this
   }
 
   /**
@@ -224,9 +754,9 @@ class Club {
   }
 }
 
-var e={d:(t,i)=>{for(var n in i)e.o(i,n)&&!e.o(t,n)&&Object.defineProperty(t,n,{enumerable:!0,get:i[n]});},o:(e,t)=>Object.prototype.hasOwnProperty.call(e,t)},t={};e.d(t,{f:()=>i});const i=JSON.parse('{"$schema":"http://json-schema.org/draft-07/schema#","$id":"https://github.com/monkeysppp/VBCompetitions-schema/tree/1.0.0","title":"Definition of a Volleyball Competition","description":"This document contains the teams, the competition structure, the matches and the results of a volleyball competition","type":"object","properties":{"version":{"description":"The version of schema that the document conforms to.  Defaults to 1.0.0","type":"string","default":"1.0.0","enum":["1.0.0"]},"metadata":{"description":"A list of key-value pairs representing metadata about the competition, where each key must be unique. This can be used for functionality such as associating a competition with a season, and searching for competitions with matching metadata","type":"array","minItems":1,"maxItems":1000,"items":{"description":"A key-value pair","type":"object","additionalProperties":false,"properties":{"key":{"description":"The key for a metadata entry.  The key must be unique within the Competition","type":"string","minLength":1,"maxLength":100},"value":{"description":"The value for a metadata entry.  Note that this must be a string, so values such as \\"true\\", \\"false\\" or \\"null\\" must be represented as a string","type":"string","minLength":1,"maxLength":1000}},"required":["key","value"]}},"name":{"description":"A name for the competition","type":"string","minLength":1,"maxLength":10000},"notes":{"description":"Free form string to add notes about the competition.  This can be used for arbitrary content that various implementations can use","type":"string","minLength":1},"clubs":{"description":"A list of clubs that the teams are in","type":"array","items":{"description":"A club definition","type":"object","additionalProperties":false,"properties":{"id":{"description":"An ID for the club, e.g. \'CLUB1\'.  This must be unique within the competition.  It must contain only ASCII printable characters excluding \\" : { } ? =","type":"string","minLength":1,"maxLength":100,"pattern":"^((?![\\":{}?=])[\\\\x20-\\\\x7F])+$"},"name":{"description":"The name for the club","type":"string","minLength":1,"maxLength":1000},"notes":{"description":"Free form string to add notes about a club.  This can be used for arbitrary content that various implementations can use","type":"string","minLength":1}},"required":["id","name"]}},"teams":{"description":"The list of all teams in this competition","type":"array","items":{"description":"A team definition","type":"object","additionalProperties":false,"properties":{"id":{"description":"An ID for the team, e.g. \'TM1\'.  This is used in the rest of the instance document to specify the team so must be unique within the competition.  It must contain only ASCII printable characters excluding \\" : { } ? =","type":"string","minLength":1,"maxLength":100,"pattern":"^((?![\\":{}?=])[\\\\x20-\\\\x7F])+$"},"name":{"description":"The name for the team","type":"string","minLength":1,"maxLength":1000},"contacts":{"description":"A list of contact details for a team","type":"array","items":{"description":"A single contact for a team","type":"object","additionalProperties":false,"properties":{"id":{"description":"A unique ID for this contact, e.g. \'TM1Contact1\'.  This must be unique within the team.  It must contain only ASCII printable characters excluding \\" : { } ? =","type":"string","minLength":1,"maxLength":100,"pattern":"^((?![\\":{}?=])[\\\\x20-\\\\x7F])+$"},"name":{"description":"The name of this contact","type":"string","minLength":1,"maxLength":1000},"roles":{"description":"The roles of this contact within the team","type":"array","minItems":1,"uniqueItems":true,"items":{"description":"A role of this contact","type":"string","default":"secretary","enum":["secretary","treasurer","manager","captain","coach","assistantCoach","medic"]}},"emails":{"description":"The email addresses for this contact","type":"array","minItems":1,"uniqueItems":true,"items":{"description":"An email address for this contact","type":"string","format":"email","minLength":3}},"phones":{"description":"The telephone numbers for this contact","type":"array","minItems":1,"uniqueItems":true,"items":{"description":"A telephone number for this contact","type":"string","minLength":1,"maxLength":50}}},"required":["id","roles"]}},"club":{"description":"The ID of the club this team is in","type":"string","minLength":1,"maxLength":100},"notes":{"description":"Free form string to add notes about a team.  This can be used for arbitrary content that various implementations can use","type":"string","minLength":1}},"required":["id","name"]}},"players":{"description":"A list of players","type":"array","items":{"description":"A single player","type":"object","additionalProperties":false,"properties":{"id":{"description":"A unique ID for this player. This may be the player\'s registration number.  This must be unique within the competition.  It must contain only ASCII printable characters excluding \\" : { } ? =","type":"string","minLength":1,"maxLength":100,"pattern":"^((?![\\":{}?=])[\\\\x20-\\\\x7F])+$"},"name":{"description":"The name of this contact","type":"string","minLength":1,"maxLength":1000},"number":{"description":"The player\'s shirt number","type":"integer","minimum":1},"teams":{"description":"An ordered list of teams the player is/has been registered for in this competition, in the order that they have been registered (and therefore transferred in the case of more than one entry).  A player can only be registered with one team at any time within this competition, meaning that if there are multiple teams listed, either all but the last entry MUST have an \\"until\\" value, or there must be no \\"from\\" or \\"until\\" values in any entry","type":"array","items":{"description":"A Player\'s team registration entry, linking them to the specified team, potentially for the time period covered by \\"from\\" to \\"until\\"","type":"object","additionalProperties":false,"properties":{"id":{"description":"The team ID that the player is/was registered with","type":"string","minLength":1,"maxLength":100,"pattern":"^((?![\\":{}?=])[\\\\x20-\\\\x7F])+$"},"from":{"description":"The date from which the player is/was registered with this team.  When this is not present, there should not be any \\"from\\" or \\"until\\" values in any entry in this player\'s \\"teams\\" array","type":"string","format":"date"},"until":{"description":"The date up to which the player was registered with this team.  When a \\"from\\" date is specified and this is not, it should be taken that a player is still registered with this team","type":"string","format":"date"},"notes":{"description":"Free form string to add notes about this player\'s team entry.  This can be used for arbitrary content that various implementations can use","type":"string","minLength":1}},"required":["id"]}},"notes":{"description":"Free form string to add notes about the player.  This can be used for arbitrary content that various implementations can use","type":"string","minLength":1}},"required":["id","name"]}},"stages":{"description":"The stages of the competition.  Stages are phases of a competition that happen in order.  There may be only one stage (e.g. for a flat league) or multiple in sequence (e.g. for a tournament with pools, then crossovers, then finals)","type":"array","items":{"description":"A single competition stage","type":"object","additionalProperties":false,"properties":{"id":{"description":"A unique ID for this stage, e.g. \'LG\'.  It must contain only ASCII printable characters excluding \\" : { } ? =","type":"string","minLength":1,"maxLength":100,"pattern":"^((?![\\":{}?=])[\\\\x20-\\\\x7F])+$"},"name":{"description":"Descriptive title for the stage, e.g. \'Pools\'","type":"string","minLength":1,"maxLength":1000},"notes":{"description":"Free form string to add notes about this stage.  This can be used for arbitrary content that various implementations can use","type":"string","minLength":1},"description":{"description":"An array of string values as a verbose description of the nature of the stage, e.g. \'The first stage of the competition will consist of separate pools, where....\'","type":"array","items":{"description":"A part of the description of this stage","type":"string","minLength":1}},"groups":{"description":"The groups within a stage of the competition.  There may be only one group (e.g. for a flat league) or multiple in parallel (e.g. pool 1, pool 2)","type":"array","items":{"description":"A group within this stage of the competition","type":"object","additionalProperties":false,"properties":{"id":{"description":"A unique ID for this group, e.g. \'P1\'.  It must contain only ASCII printable characters excluding \\" : { } ? =","type":"string","minLength":1,"maxLength":100,"pattern":"^((?![\\":{}?=])[\\\\x20-\\\\x7F])+$"},"name":{"description":"Descriptive title for the group, e.g. \'Pool 1\'","type":"string","minLength":1,"maxLength":1000},"notes":{"description":"Free form string to add notes about this group.  This can be used for arbitrary content that various implementations can use","type":"string","minLength":1},"description":{"description":"An array of string values as a verbose description of the nature of the group, e.g. \'For the pool stage, teams will play each other once, with the top 2 teams going through to....\'","type":"array","items":{"description":"A part of the description of this stage","type":"string","minLength":1}},"type":{"description":"The type of competition applying to this group, which may dictate how the results are processed.  If this has the value \'league\' then the property \'league\' must be defined","type":"string","enum":["league","crossover","knockout"]},"knockout":{"description":"Configuration for the knockout group","type":"object","additionalProperties":false,"properties":{"standing":{"description":"Configuration for the knockout group","type":"array","items":{"description":"An ordered mapping from a position to a team ID","type":"object","additionalProperties":false,"properties":{"position":{"description":"The text description of the position, e.g. \\"1st\\", \\"2nd\\".  Having this field allows multiple teams to have the same \\"position\\", for example if there are no play-off games then two entries can have the value \\"3rd\\"","type":"string","minLength":1},"id":{"description":"The identifier for the team.  This must be a team reference (see the documentation), for example for the team in \\"1st\\", this would refer to the winner of the final in this stage->group","type":"string","minLength":1}},"required":["position","id"]},"minItems":1}},"required":["standing"]},"league":{"description":"Configuration for the league","type":"object","additionalProperties":false,"properties":{"ordering":{"description":"An array of parameters that define how the league positions are worked out, where the array position determines the precedence of that parameter, e.g. [ \\"PTS\\", \\"SD\\" ] means that league position is determined by league points, with ties decided by set difference.  Valid parameters are \'PTS\'=league points, \'WINS\'=wins, \'LOSSES\'=losses, \'H2H\'=head to head, PF\'=points for, \'PA\'=points against, \'PD\'=points difference, \'SF\'=sets for, \'SA\'=sets against, \'SD\'=set difference, \'BP\'=bonus points, \'PP\'=penalty points.  When comparing teams, a higher value for a parameter results in a higher league position except when comparing \'LOSSES\', \'PA\', \'SA\', and \'PP\' (where a lower value results in a higher league position).  Note that \'H2H\' only considers wins and losses between two teams; this means that, depending on whether draws are allowed or whether teams play each other multiple times, the head to head comparison may not be able to distinguish between two teams","type":"array","items":{"description":"A parameter that defines the league position","type":"string","enum":["PTS","WINS","LOSSES","H2H","PF","PA","PD","SF","SA","SD","BP","PP"]},"minItems":1},"points":{"description":"Properties defining how to calculate the league points based on match results","type":"object","additionalProperties":false,"properties":{"played":{"description":"Number of league points for playing the match.  Note that a forfeit counts as a \\"played\\" match, so if this has a non-zero value and the desire is for a forfeit to yield zero points then the \\"forfeit\\" value should be set to the same as this value","type":"integer","default":0},"perSet":{"description":"Number of league points for each set won","type":"integer","default":0},"win":{"description":"Number of league points for winning (by 2 sets or more if playing sets)","type":"integer","default":3},"winByOne":{"description":"Number of league points for winning by 1 set","type":"integer","default":0},"lose":{"description":"Number of league points for losing (by 2 sets or more if playing sets)","type":"integer","default":0},"loseByOne":{"description":"Number of league points for losing by 1 set","type":"integer","default":0},"forfeit":{"description":"Number of league penalty points for forfeiting a match.  This should be a positive number and will be subtracted from a team\'s league points for each forfeited match","type":"integer","default":0}}}},"required":["ordering","points"]},"matchType":{"description":"Are the matches played in sets or continuous points.  If this has the value \'sets\' then the property \'sets\' must be defined","type":"string","enum":["sets","continuous"]},"sets":{"description":"Configuration defining the nature of a set","type":"object","additionalProperties":false,"properties":{"maxSets":{"description":"The maximum number of sets that could be played, often known as \'best of\', e.g. if this has the value \'5\' then the match is played as \'best of 5 sets\'","type":"integer","default":5,"minimum":1},"setsToWin":{"description":"The number of sets that must be won to win the match.  This is usually one more than half the \'maxSets\', but may be needed if draws are allowed, e.g. if a competition dictates that exactly 2 sets must be played (by setting \'maxSets\' to \'2\') and that draws are allowed, then \'setsToWin\' should still be set to \'2\' to indicate that 2 sets are needed to win the match","type":"integer","default":3,"minimum":1},"clearPoints":{"description":"The number of points lead that the winning team must have, e.g. if this has the value \'2\' then teams must \'win by 2 clear points\'.  Note that if \'maxPoints\' has a value then that takes precedence, i.e. if \'maxPoints\' is set to \'35\' then a team can win \'35-34\' irrespective of the value of \'clearPoints\'","type":"integer","default":2,"minimum":1},"minPoints":{"description":"The minimum number of points that either team must score for a set to count as valid.  Usually only used for time-limited matches","type":"integer","default":1,"minimum":1},"pointsToWin":{"description":"The minimum number of points required to win all but the last set","type":"integer","default":25,"minimum":1},"lastSetPointsToWin":{"description":"The minimum number of points required to win the last set","type":"integer","default":15,"minimum":1},"maxPoints":{"description":"The upper limit of points that can be scored in a set","type":"integer","default":1000,"minimum":1},"lastSetMaxPoints":{"description":"The upper limit of points that can be scored in the last set","type":"integer","default":1000,"minimum":1}}},"drawsAllowed":{"description":"Sets whether drawn matches are allowed","default":false,"type":"boolean"},"matches":{"$ref":"#/$defs/matches"}},"allOf":[{"if":{"properties":{"type":{"const":"league"}},"required":["type"]},"then":{"required":["league"]}},{"if":{"properties":{"type":{"const":"crossover"}},"required":["type"]},"then":{"anyOf":[{"properties":{"drawsAllowed":{"enum":[false]}}},{"not":{"required":["drawsAllowed"]}}]}},{"if":{"properties":{"type":{"const":"knockout"}},"required":["type"]},"then":{"anyOf":[{"properties":{"drawsAllowed":{"enum":[false]}}},{"not":{"required":["drawsAllowed"]}}]}},{"if":{"properties":{"matchType":{"const":"continuous"}},"required":["matchType"]},"then":{"properties":{"matches":{"type":"array","items":{"type":"object","properties":{"homeTeam":{"type":"object","properties":{"scores":{"type":"array","maxItems":1}}},"awayTeam":{"type":"object","properties":{"scores":{"type":"array","maxItems":1}}}}}}},"allOf":[{"not":{"required":["sets"]}}]}},{"if":{"properties":{"matchType":{"const":"continuous"}},"required":["matchType"]},"then":{"allOf":[{"not":{"required":["sets"]}}]}},{"if":{"properties":{"matchType":{"const":"continuous"},"matches":{"type":"array","items":{"type":"object","properties":{"type":{"const":"match"}}}}},"required":["matchType"]},"then":{"properties":{"matches":{"type":"array","items":{"type":"object","required":["complete"]}}}}}],"required":["id","type","matchType","matches"]}},"ifUnknown":{"description":"It can be useful to still present something to the user about the later stages of a competition, even if the teams playing in that stage is not yet known.  This defines what should be presented in any application handling this competition\'s data in such cases","type":"object","additionalProperties":false,"properties":{"description":{"description":"An array of string values to be presented in the case that the teams in this stage are not yet known, typically as an explanation of what this stage will contain (e.g. \'The crossover games will be between the top two teams in each pool\')","type":"array","items":{"description":"A part of the description of this stage","type":"string","minLength":1}},"matches":{"$ref":"#/$defs/matches"}},"required":["description"]}},"required":["id","groups"]}}},"required":["name","teams","stages"],"$defs":{"team":{"description":"A team playing in the match","type":"object","additionalProperties":false,"properties":{"id":{"description":"The identifier for the team.  This can either be a team ID or a team reference (see the documentation)","type":"string","minLength":1,"maxLength":1000},"scores":{"description":"The array of set scores.  If the matchType is \'continuous\' then only the first value in the array is used","type":"array","items":{"description":"The set score","type":"integer","minimum":0}},"mvp":{"description":"This team\'s most valuable player award.  This can either be a name or a reference to a player ID.  A reference takes the form {PLAYER_ID}","type":"string","minLength":1},"forfeit":{"description":"Did this team forfeit the match","type":"boolean","default":false},"bonusPoints":{"description":"Does this team get any bonus points in the league.  This is separate from any league points calculated from the match result, and is added to their league points","type":"integer","default":0,"minimum":0},"penaltyPoints":{"description":"Does this team receive any penalty points in the league.  This is separate from any league points calculated from the match result, and is subtracted from their league points","type":"integer","default":0,"minimum":0},"notes":{"description":"Free form string to add notes about the team relating to this match.  This can be used for arbitrary content that various implementations can use","type":"string","minLength":1},"players":{"description":"The list of players from this team that played in this match.  This can be either a player\'s name or a reference to a player ID","type":"array","items":{"description":"Either the name of the player or a reference to a player ID.  A reference takes the form {PLAYER_ID}.  Not all entries need to be references, meaning that the document can allow a mix of registered players with a player ID, and unregistered players indicated just by name","type":"string","minLength":1}}},"required":["id","scores"]},"matches":{"description":"An array of matches (or breaks in play) in this group.  Note that a team ID and each unique team references can ony appear in one group, i.e. a team cannot play in multiple groups in a stage; if they did then those two groups would technically be the same group","type":"array","items":{"oneOf":[{"description":"A match between two teams","type":"object","additionalProperties":false,"properties":{"id":{"description":"An identifier for this match, i.e. a match number.  It must contain only ASCII printable characters excluding \\" : { } ? =","type":"string","minLength":1,"maxLength":100,"pattern":"^((?![\\":{}?=])[\\\\x20-\\\\x7F])+$"},"court":{"description":"The court that a match takes place on","type":"string","minLength":1,"maxLength":1000},"venue":{"description":"The venue that a match takes place at","type":"string","minLength":1,"maxLength":10000},"type":{"description":"The type of match, i.e. \'match\'","type":"string","enum":["match"]},"date":{"description":"The date of the match in the format YYYY-MM-DD","type":"string","format":"date"},"warmup":{"description":"The start time for the warmup in the format HH:mm using a 24 hour clock","type":"string","pattern":"^([0-1][0-9]|2[0-3]):[0-5][0-9]$"},"start":{"description":"The start time for the match in the format HH:mm using a 24 hour clock","type":"string","pattern":"^([0-1][0-9]|2[0-3]):[0-5][0-9]$"},"duration":{"description":"The maximum duration of the match in the format HH:mm","type":"string","pattern":"^[0-9]+:[0-5][0-9]$"},"complete":{"description":"Whether the match is complete.  This must be set when a match has a \\"duration\\" or when the matchType is \\"continuous\\".  What about a \\"continuous\\" match with no \\"duration\\" and a target score?  This can be represented by a \\"sets\\" match with \\"maxSets\\" = 1","type":"boolean"},"homeTeam":{"$ref":"#/$defs/team","description":"The \'home\' team for the match"},"awayTeam":{"$ref":"#/$defs/team","description":"The \'away\' team for the match"},"officials":{"oneOf":[{"description":"The officials for this match","type":"object","additionalProperties":false,"properties":{"team":{"description":"The team assigned to referee the match.  This can either be a team ID or a team reference","type":"string","minLength":1,"maxLength":1000}},"required":["team"]},{"description":"The officials for this match","type":"object","additionalProperties":false,"properties":{"first":{"description":"The first referee","type":"string","minLength":1},"second":{"description":"The second referee","type":"string","minLength":1},"challenge":{"description":"The challenge referee, responsible for resolving challenges from the teams","type":"string","minLength":1},"assistantChallenge":{"description":"The assistant challenge referee, who assists the challenge referee","type":"string","minLength":1},"reserve":{"description":"The reserve referee","type":"string","minLength":1},"scorer":{"description":"The scorer","type":"string","minLength":1},"assistantScorer":{"description":"The assistant scorer","type":"string","minLength":1},"linespersons":{"description":"The list of linespersons","type":"array","maxItems":4,"items":{"description":"A linesperson","type":"string","minLength":1}},"ballCrew":{"description":"The list of people in charge of managing the game balls","type":"array","maxItems":100,"items":{"description":"A ball person","type":"string","minLength":1}}},"required":["first"]}]},"mvp":{"description":"A most valuable player award for the match. This can either be a name or a reference to a player ID.  A reference takes the form {PLAYER_ID}","type":"string","minLength":1,"maxLength":203},"manager":{"oneOf":[{"description":"The court manager in charge of this match","type":"string","minLength":1,"maxLength":1000},{"description":"The court managers for this match","type":"object","additionalProperties":false,"properties":{"team":{"description":"The team assigned to manage the match.  This can either be a team ID or a team reference","type":"string","minLength":1,"maxLength":1000}},"required":["team"]}]},"friendly":{"description":"Whether the match is a friendly.  These matches do not contribute toward a league position.  If a team only participates in friendly matches then they are not included in the league table at all","type":"boolean","default":false},"notes":{"description":"Free form string to add notes about a match","type":"string","minLength":1}},"dependencies":{"duration":["complete"]},"required":["id","type","homeTeam","awayTeam"]},{"description":"A break in play, possibly while other matches are going on in other competitions running in parallel","type":"object","additionalProperties":false,"properties":{"type":{"description":"The type of match, i.e. \'break\'","type":"string","enum":["break"]},"start":{"description":"The start time for the break in the format HH:mm using a 24 hour clock","type":"string","pattern":"^([0-1][0-9]|2[0-3]):[0-5][0-9]$"},"date":{"description":"The date of the break in the format YYYY-MM-DD","type":"string","format":"date"},"duration":{"description":"The duration of the break","type":"string","pattern":"^[0-9]+:[0-5][0-9]$"},"name":{"description":"The name for the break, e.g. \'Lunch break\'","default":"Break","type":"string","minLength":1,"maxLength":1000}},"required":["type"]}]}}}}');var n=t.f;
+var e={d:(t,i)=>{for(var n in i)e.o(i,n)&&!e.o(t,n)&&Object.defineProperty(t,n,{enumerable:!0,get:i[n]});},o:(e,t)=>Object.prototype.hasOwnProperty.call(e,t)},t={};e.d(t,{f:()=>i});const i=JSON.parse('{"$schema":"http://json-schema.org/draft-07/schema#","$id":"https://github.com/monkeysppp/VBCompetitions-schema/tree/1.0.0","title":"Definition of a Volleyball Competition","description":"This document contains the teams, the competition structure, the matches and the results of a volleyball competition","type":"object","properties":{"version":{"description":"The version of schema that the document conforms to.  Defaults to 1.0.0","type":"string","default":"1.0.0","enum":["1.0.0"]},"metadata":{"description":"A list of key-value pairs representing metadata about the competition, where each key must be unique. This can be used for functionality such as associating a competition with a season, and searching for competitions with matching metadata","type":"array","minItems":1,"maxItems":1000,"items":{"description":"A key-value pair","type":"object","additionalProperties":false,"properties":{"key":{"description":"The key for a metadata entry.  The key must be unique within the Competition","type":"string","minLength":1,"maxLength":100},"value":{"description":"The value for a metadata entry.  Note that this must be a string, so values such as \\"true\\", \\"false\\" or \\"null\\" must be represented as a string","type":"string","minLength":1,"maxLength":1000}},"required":["key","value"]}},"name":{"description":"A name for the competition","type":"string","minLength":1,"maxLength":10000},"contacts":{"description":"A list of contact details for the competition","type":"array","items":{"description":"A single contact for the competition","type":"object","additionalProperties":false,"properties":{"id":{"description":"A unique ID for this contact, e.g. \'Contact1\'.  This must be unique within the competition.  It must contain only ASCII printable characters excluding \\" : { } ? =","type":"string","minLength":1,"maxLength":100,"pattern":"^((?![\\":{}?=])[\\\\x20-\\\\x7F])+$"},"name":{"description":"The name of this contact","type":"string","minLength":1,"maxLength":1000},"notes":{"description":"Free form string to add notes about a contact.  This can be used for arbitrary content that various implementations can use","type":"string","minLength":1},"roles":{"description":"The roles of this contact within the competition","type":"array","minItems":1,"uniqueItems":true,"items":{"description":"A role of this contact","type":"string","enum":["director","fixtures","logistics","communications","officials","results","marketing","safety","volunteer","welfare","hospitality","ceremonies","secretary","treasurer","medic"]}},"emails":{"description":"The email addresses for this contact","type":"array","minItems":1,"uniqueItems":true,"items":{"description":"An email address for this contact","type":"string","format":"email","minLength":3}},"phones":{"description":"The telephone numbers for this contact","type":"array","minItems":1,"uniqueItems":true,"items":{"description":"A telephone number for this contact","type":"string","minLength":1,"maxLength":50}}},"required":["id","roles"]}},"notes":{"description":"Free form string to add notes about the competition.  This can be used for arbitrary content that various implementations can use","type":"string","minLength":1},"clubs":{"description":"A list of clubs that the teams are in","type":"array","items":{"description":"A club definition","type":"object","additionalProperties":false,"properties":{"id":{"description":"An ID for the club, e.g. \'CLUB1\'.  This must be unique within the competition.  It must contain only ASCII printable characters excluding \\" : { } ? =","type":"string","minLength":1,"maxLength":100,"pattern":"^((?![\\":{}?=])[\\\\x20-\\\\x7F])+$"},"name":{"description":"The name for the club","type":"string","minLength":1,"maxLength":1000},"contacts":{"description":"A list of contact details for the club","type":"array","items":{"description":"A single contact for the club","type":"object","additionalProperties":false,"properties":{"id":{"description":"A unique ID for this contact, e.g. \'CL1Contact1\'.  This must be unique within the club.  It must contain only ASCII printable characters excluding \\" : { } ? =","type":"string","minLength":1,"maxLength":100,"pattern":"^((?![\\":{}?=])[\\\\x20-\\\\x7F])+$"},"name":{"description":"The name of this contact","type":"string","minLength":1,"maxLength":1000},"notes":{"description":"Free form string to add notes about a contact.  This can be used for arbitrary content that various implementations can use","type":"string","minLength":1},"roles":{"description":"The roles of this contact within the club","type":"array","minItems":1,"uniqueItems":true,"items":{"description":"A role of this contact","type":"string","enum":["chair","vice","treasurer","secretary","welfare","communications","marketing","volunteer","logistics","coaching"]}},"emails":{"description":"The email addresses for this contact","type":"array","minItems":1,"uniqueItems":true,"items":{"description":"An email address for this contact","type":"string","format":"email","minLength":3}},"phones":{"description":"The telephone numbers for this contact","type":"array","minItems":1,"uniqueItems":true,"items":{"description":"A telephone number for this contact","type":"string","minLength":1,"maxLength":50}}},"required":["id","roles"]}},"notes":{"description":"Free form string to add notes about a club.  This can be used for arbitrary content that various implementations can use","type":"string","minLength":1}},"required":["id","name"]}},"teams":{"description":"The list of all teams in this competition","type":"array","items":{"description":"A team definition","type":"object","additionalProperties":false,"properties":{"id":{"description":"An ID for the team, e.g. \'TM1\'.  This is used in the rest of the instance document to specify the team so must be unique within the competition.  It must contain only ASCII printable characters excluding \\" : { } ? =","type":"string","minLength":1,"maxLength":100,"pattern":"^((?![\\":{}?=])[\\\\x20-\\\\x7F])+$"},"name":{"description":"The name for the team","type":"string","minLength":1,"maxLength":1000},"contacts":{"description":"A list of contact details for a team","type":"array","items":{"description":"A single contact for a team","type":"object","additionalProperties":false,"properties":{"id":{"description":"A unique ID for this contact, e.g. \'TM1Contact1\'.  This must be unique within the team.  It must contain only ASCII printable characters excluding \\" : { } ? =","type":"string","minLength":1,"maxLength":100,"pattern":"^((?![\\":{}?=])[\\\\x20-\\\\x7F])+$"},"name":{"description":"The name of this contact","type":"string","minLength":1,"maxLength":1000},"notes":{"description":"Free form string to add notes about a contact.  This can be used for arbitrary content that various implementations can use","type":"string","minLength":1},"roles":{"description":"The roles of this contact within the team","type":"array","minItems":1,"uniqueItems":true,"items":{"description":"A role of this contact","type":"string","enum":["secretary","treasurer","manager","captain","coach","assistantCoach","medic"]}},"emails":{"description":"The email addresses for this contact","type":"array","minItems":1,"uniqueItems":true,"items":{"description":"An email address for this contact","type":"string","format":"email","minLength":3}},"phones":{"description":"The telephone numbers for this contact","type":"array","minItems":1,"uniqueItems":true,"items":{"description":"A telephone number for this contact","type":"string","minLength":1,"maxLength":50}}},"required":["id","roles"]}},"club":{"description":"The ID of the club this team is in","type":"string","minLength":1,"maxLength":100},"notes":{"description":"Free form string to add notes about a team.  This can be used for arbitrary content that various implementations can use","type":"string","minLength":1}},"required":["id","name"]}},"players":{"description":"A list of players","type":"array","items":{"description":"A single player","type":"object","additionalProperties":false,"properties":{"id":{"description":"A unique ID for this player. This may be the player\'s registration number.  This must be unique within the competition.  It must contain only ASCII printable characters excluding \\" : { } ? =","type":"string","minLength":1,"maxLength":100,"pattern":"^((?![\\":{}?=])[\\\\x20-\\\\x7F])+$"},"name":{"description":"The name of this contact","type":"string","minLength":1,"maxLength":1000},"number":{"description":"The player\'s shirt number","type":"integer","minimum":1},"teams":{"description":"An ordered list of teams the player is/has been registered for in this competition, in the order that they have been registered (and therefore transferred in the case of more than one entry).  A player can only be registered with one team at any time within this competition, meaning that if there are multiple teams listed, either all but the last entry MUST have an \\"until\\" value, or there must be no \\"from\\" or \\"until\\" values in any entry","type":"array","items":{"description":"A Player\'s team registration entry, linking them to the specified team, potentially for the time period covered by \\"from\\" to \\"until\\"","type":"object","additionalProperties":false,"properties":{"id":{"description":"The team ID that the player is/was registered with","type":"string","minLength":1,"maxLength":100,"pattern":"^((?![\\":{}?=])[\\\\x20-\\\\x7F])+$"},"from":{"description":"The date from which the player is/was registered with this team.  When this is not present, there should not be any \\"from\\" or \\"until\\" values in any entry in this player\'s \\"teams\\" array","type":"string","format":"date"},"until":{"description":"The date up to which the player was registered with this team.  When a \\"from\\" date is specified and this is not, it should be taken that a player is still registered with this team","type":"string","format":"date"},"notes":{"description":"Free form string to add notes about this player\'s team entry.  This can be used for arbitrary content that various implementations can use","type":"string","minLength":1}},"required":["id"]}},"notes":{"description":"Free form string to add notes about the player.  This can be used for arbitrary content that various implementations can use","type":"string","minLength":1}},"required":["id","name"]}},"stages":{"description":"The stages of the competition.  Stages are phases of a competition that happen in order.  There may be only one stage (e.g. for a flat league) or multiple in sequence (e.g. for a tournament with pools, then crossovers, then finals)","type":"array","items":{"description":"A single competition stage","type":"object","additionalProperties":false,"properties":{"id":{"description":"A unique ID for this stage, e.g. \'LG\'.  It must contain only ASCII printable characters excluding \\" : { } ? =","type":"string","minLength":1,"maxLength":100,"pattern":"^((?![\\":{}?=])[\\\\x20-\\\\x7F])+$"},"name":{"description":"Descriptive title for the stage, e.g. \'Pools\'","type":"string","minLength":1,"maxLength":1000},"notes":{"description":"Free form string to add notes about this stage.  This can be used for arbitrary content that various implementations can use","type":"string","minLength":1},"description":{"description":"An array of string values as a verbose description of the nature of the stage, e.g. \'The first stage of the competition will consist of separate pools, where....\'","type":"array","items":{"description":"A part of the description of this stage","type":"string","minLength":1}},"groups":{"description":"The groups within a stage of the competition.  There may be only one group (e.g. for a flat league) or multiple in parallel (e.g. pool 1, pool 2)","type":"array","items":{"description":"A group within this stage of the competition","type":"object","additionalProperties":false,"properties":{"id":{"description":"A unique ID for this group, e.g. \'P1\'.  It must contain only ASCII printable characters excluding \\" : { } ? =","type":"string","minLength":1,"maxLength":100,"pattern":"^((?![\\":{}?=])[\\\\x20-\\\\x7F])+$"},"name":{"description":"Descriptive title for the group, e.g. \'Pool 1\'","type":"string","minLength":1,"maxLength":1000},"notes":{"description":"Free form string to add notes about this group.  This can be used for arbitrary content that various implementations can use","type":"string","minLength":1},"description":{"description":"An array of string values as a verbose description of the nature of the group, e.g. \'For the pool stage, teams will play each other once, with the top 2 teams going through to....\'","type":"array","items":{"description":"A part of the description of this stage","type":"string","minLength":1}},"type":{"description":"The type of competition applying to this group, which may dictate how the results are processed.  If this has the value \'league\' then the property \'league\' must be defined","type":"string","enum":["league","crossover","knockout"]},"knockout":{"description":"Configuration for the knockout group","type":"object","additionalProperties":false,"properties":{"standing":{"description":"Configuration for the knockout group","type":"array","items":{"description":"An ordered mapping from a position to a team ID","type":"object","additionalProperties":false,"properties":{"position":{"description":"The text description of the position, e.g. \\"1st\\", \\"2nd\\".  Having this field allows multiple teams to have the same \\"position\\", for example if there are no play-off games then two entries can have the value \\"3rd\\"","type":"string","minLength":1},"id":{"description":"The identifier for the team.  This must be a team reference (see the documentation), for example for the team in \\"1st\\", this would refer to the winner of the final in this stage->group","type":"string","minLength":1}},"required":["position","id"]},"minItems":1}},"required":["standing"]},"league":{"description":"Configuration for the league","type":"object","additionalProperties":false,"properties":{"ordering":{"description":"An array of parameters that define how the league positions are worked out, where the array position determines the precedence of that parameter, e.g. [ \\"PTS\\", \\"SD\\" ] means that league position is determined by league points, with ties decided by set difference.  Valid parameters are \'PTS\'=league points, \'WINS\'=wins, \'LOSSES\'=losses, \'H2H\'=head to head, PF\'=points for, \'PA\'=points against, \'PD\'=points difference, \'SF\'=sets for, \'SA\'=sets against, \'SD\'=set difference, \'BP\'=bonus points, \'PP\'=penalty points.  When comparing teams, a higher value for a parameter results in a higher league position except when comparing \'LOSSES\', \'PA\', \'SA\', and \'PP\' (where a lower value results in a higher league position).  Note that \'H2H\' only considers wins and losses between two teams; this means that, depending on whether draws are allowed or whether teams play each other multiple times, the head to head comparison may not be able to distinguish between two teams","type":"array","items":{"description":"A parameter that defines the league position","type":"string","enum":["PTS","WINS","LOSSES","H2H","PF","PA","PD","SF","SA","SD","BP","PP"]},"minItems":1},"points":{"description":"Properties defining how to calculate the league points based on match results","type":"object","additionalProperties":false,"properties":{"played":{"description":"Number of league points for playing the match.  Note that a forfeit counts as a \\"played\\" match, so if this has a non-zero value and the desire is for a forfeit to yield zero points then the \\"forfeit\\" value should be set to the same as this value","type":"integer","default":0},"perSet":{"description":"Number of league points for each set won","type":"integer","default":0},"win":{"description":"Number of league points for winning (by 2 sets or more if playing sets)","type":"integer","default":3},"winByOne":{"description":"Number of league points for winning by 1 set","type":"integer","default":0},"lose":{"description":"Number of league points for losing (by 2 sets or more if playing sets)","type":"integer","default":0},"loseByOne":{"description":"Number of league points for losing by 1 set","type":"integer","default":0},"forfeit":{"description":"Number of league penalty points for forfeiting a match.  This should be a positive number and will be subtracted from a team\'s league points for each forfeited match","type":"integer","default":0}}}},"required":["ordering","points"]},"matchType":{"description":"Are the matches played in sets or continuous points.  If this has the value \'sets\' then the property \'sets\' must be defined","type":"string","enum":["sets","continuous"]},"sets":{"description":"Configuration defining the nature of a set","type":"object","additionalProperties":false,"properties":{"maxSets":{"description":"The maximum number of sets that could be played, often known as \'best of\', e.g. if this has the value \'5\' then the match is played as \'best of 5 sets\'","type":"integer","default":5,"minimum":1},"setsToWin":{"description":"The number of sets that must be won to win the match.  This is usually one more than half the \'maxSets\', but may be needed if draws are allowed, e.g. if a competition dictates that exactly 2 sets must be played (by setting \'maxSets\' to \'2\') and that draws are allowed, then \'setsToWin\' should still be set to \'2\' to indicate that 2 sets are needed to win the match","type":"integer","default":3,"minimum":1},"clearPoints":{"description":"The number of points lead that the winning team must have, e.g. if this has the value \'2\' then teams must \'win by 2 clear points\'.  Note that if \'maxPoints\' has a value then that takes precedence, i.e. if \'maxPoints\' is set to \'35\' then a team can win \'35-34\' irrespective of the value of \'clearPoints\'","type":"integer","default":2,"minimum":1},"minPoints":{"description":"The minimum number of points that either team must score for a set to count as valid.  Usually only used for time-limited matches","type":"integer","default":1,"minimum":1},"pointsToWin":{"description":"The minimum number of points required to win all but the last set","type":"integer","default":25,"minimum":1},"lastSetPointsToWin":{"description":"The minimum number of points required to win the last set","type":"integer","default":15,"minimum":1},"maxPoints":{"description":"The upper limit of points that can be scored in a set","type":"integer","default":1000,"minimum":1},"lastSetMaxPoints":{"description":"The upper limit of points that can be scored in the last set","type":"integer","default":1000,"minimum":1}}},"drawsAllowed":{"description":"Sets whether drawn matches are allowed","default":false,"type":"boolean"},"matches":{"$ref":"#/$defs/matches"}},"allOf":[{"if":{"properties":{"type":{"const":"league"}},"required":["type"]},"then":{"required":["league"]}},{"if":{"properties":{"type":{"const":"crossover"}},"required":["type"]},"then":{"anyOf":[{"properties":{"drawsAllowed":{"enum":[false]}}},{"not":{"required":["drawsAllowed"]}}]}},{"if":{"properties":{"type":{"const":"knockout"}},"required":["type"]},"then":{"anyOf":[{"properties":{"drawsAllowed":{"enum":[false]}}},{"not":{"required":["drawsAllowed"]}}]}},{"if":{"properties":{"matchType":{"const":"continuous"}},"required":["matchType"]},"then":{"properties":{"matches":{"type":"array","items":{"type":"object","properties":{"homeTeam":{"type":"object","properties":{"scores":{"type":"array","maxItems":1}}},"awayTeam":{"type":"object","properties":{"scores":{"type":"array","maxItems":1}}}}}}},"allOf":[{"not":{"required":["sets"]}}]}},{"if":{"properties":{"matchType":{"const":"continuous"}},"required":["matchType"]},"then":{"allOf":[{"not":{"required":["sets"]}}]}},{"if":{"properties":{"matchType":{"const":"continuous"},"matches":{"type":"array","items":{"type":"object","properties":{"type":{"const":"match"}}}}},"required":["matchType"]},"then":{"properties":{"matches":{"type":"array","items":{"type":"object","required":["complete"]}}}}}],"required":["id","type","matchType","matches"]}},"ifUnknown":{"description":"It can be useful to still present something to the user about the later stages of a competition, even if the teams playing in that stage is not yet known.  This defines what should be presented in any application handling this competition\'s data in such cases","type":"object","additionalProperties":false,"properties":{"description":{"description":"An array of string values to be presented in the case that the teams in this stage are not yet known, typically as an explanation of what this stage will contain (e.g. \'The crossover games will be between the top two teams in each pool\')","type":"array","items":{"description":"A part of the description of this stage","type":"string","minLength":1}},"matches":{"$ref":"#/$defs/matches"}},"required":["description"]}},"required":["id","groups"]}}},"required":["name","teams","stages"],"$defs":{"team":{"description":"A team playing in the match","type":"object","additionalProperties":false,"properties":{"id":{"description":"The identifier for the team.  This can either be a team ID or a team reference (see the documentation)","type":"string","minLength":1,"maxLength":1000},"scores":{"description":"The array of set scores.  If the matchType is \'continuous\' then only the first value in the array is used","type":"array","items":{"description":"The set score","type":"integer","minimum":0}},"mvp":{"description":"This team\'s most valuable player award.  This can either be a name or a reference to a player ID.  A reference takes the form {PLAYER_ID}","type":"string","minLength":1},"forfeit":{"description":"Did this team forfeit the match","type":"boolean","default":false},"bonusPoints":{"description":"Does this team get any bonus points in the league.  This is separate from any league points calculated from the match result, and is added to their league points","type":"integer","default":0,"minimum":0},"penaltyPoints":{"description":"Does this team receive any penalty points in the league.  This is separate from any league points calculated from the match result, and is subtracted from their league points","type":"integer","default":0,"minimum":0},"notes":{"description":"Free form string to add notes about the team relating to this match.  This can be used for arbitrary content that various implementations can use","type":"string","minLength":1},"players":{"description":"The list of players from this team that played in this match.  This can be either a player\'s name or a reference to a player ID","type":"array","items":{"description":"Either the name of the player or a reference to a player ID.  A reference takes the form {PLAYER_ID}.  Not all entries need to be references, meaning that the document can allow a mix of registered players with a player ID, and unregistered players indicated just by name","type":"string","minLength":1}}},"required":["id","scores"]},"matches":{"description":"An array of matches (or breaks in play) in this group.  Note that a team ID and each unique team references can ony appear in one group, i.e. a team cannot play in multiple groups in a stage; if they did then those two groups would technically be the same group","type":"array","items":{"oneOf":[{"description":"A match between two teams","type":"object","additionalProperties":false,"properties":{"id":{"description":"An identifier for this match, i.e. a match number.  It must contain only ASCII printable characters excluding \\" : { } ? =","type":"string","minLength":1,"maxLength":100,"pattern":"^((?![\\":{}?=])[\\\\x20-\\\\x7F])+$"},"court":{"description":"The court that a match takes place on","type":"string","minLength":1,"maxLength":1000},"venue":{"description":"The venue that a match takes place at","type":"string","minLength":1,"maxLength":10000},"type":{"description":"The type of match, i.e. \'match\'","type":"string","enum":["match"]},"date":{"description":"The date of the match in the format YYYY-MM-DD","type":"string","format":"date"},"warmup":{"description":"The start time for the warmup in the format HH:mm using a 24 hour clock","type":"string","pattern":"^([0-1][0-9]|2[0-3]):[0-5][0-9]$"},"start":{"description":"The start time for the match in the format HH:mm using a 24 hour clock","type":"string","pattern":"^([0-1][0-9]|2[0-3]):[0-5][0-9]$"},"duration":{"description":"The maximum duration of the match in the format HH:mm","type":"string","pattern":"^[0-9]+:[0-5][0-9]$"},"complete":{"description":"Whether the match is complete.  This must be set when a match has a \\"duration\\" or when the matchType is \\"continuous\\".  What about a \\"continuous\\" match with no \\"duration\\" and a target score?  This can be represented by a \\"sets\\" match with \\"maxSets\\" = 1","type":"boolean"},"homeTeam":{"$ref":"#/$defs/team","description":"The \'home\' team for the match"},"awayTeam":{"$ref":"#/$defs/team","description":"The \'away\' team for the match"},"officials":{"oneOf":[{"description":"The officials for this match","type":"object","additionalProperties":false,"properties":{"team":{"description":"The team assigned to referee the match.  This can either be a team ID or a team reference","type":"string","minLength":1,"maxLength":1000}},"required":["team"]},{"description":"The officials for this match","type":"object","additionalProperties":false,"properties":{"first":{"description":"The first referee","type":"string","minLength":1},"second":{"description":"The second referee","type":"string","minLength":1},"challenge":{"description":"The challenge referee, responsible for resolving challenges from the teams","type":"string","minLength":1},"assistantChallenge":{"description":"The assistant challenge referee, who assists the challenge referee","type":"string","minLength":1},"reserve":{"description":"The reserve referee","type":"string","minLength":1},"scorer":{"description":"The scorer","type":"string","minLength":1},"assistantScorer":{"description":"The assistant scorer","type":"string","minLength":1},"linespersons":{"description":"The list of linespersons","type":"array","maxItems":4,"items":{"description":"A linesperson","type":"string","minLength":1}},"ballCrew":{"description":"The list of people in charge of managing the game balls","type":"array","maxItems":100,"items":{"description":"A ball person","type":"string","minLength":1}}},"required":["first"]}]},"mvp":{"description":"A most valuable player award for the match. This can either be a name or a reference to a player ID.  A reference takes the form {PLAYER_ID}","type":"string","minLength":1,"maxLength":203},"manager":{"oneOf":[{"description":"The court manager in charge of this match","type":"string","minLength":1,"maxLength":1000},{"description":"The court managers for this match","type":"object","additionalProperties":false,"properties":{"team":{"description":"The team assigned to manage the match.  This can either be a team ID or a team reference","type":"string","minLength":1,"maxLength":1000}},"required":["team"]}]},"friendly":{"description":"Whether the match is a friendly.  These matches do not contribute toward a league position.  If a team only participates in friendly matches then they are not included in the league table at all","type":"boolean","default":false},"notes":{"description":"Free form string to add notes about a match","type":"string","minLength":1}},"dependencies":{"duration":["complete"]},"required":["id","type","homeTeam","awayTeam"]},{"description":"A break in play, possibly while other matches are going on in other competitions running in parallel","type":"object","additionalProperties":false,"properties":{"type":{"description":"The type of match, i.e. \'break\'","type":"string","enum":["break"]},"start":{"description":"The start time for the break in the format HH:mm using a 24 hour clock","type":"string","pattern":"^([0-1][0-9]|2[0-3]):[0-5][0-9]$"},"date":{"description":"The date of the break in the format YYYY-MM-DD","type":"string","format":"date"},"duration":{"description":"The duration of the break","type":"string","pattern":"^[0-9]+:[0-5][0-9]$"},"name":{"description":"The name for the break, e.g. \'Lunch break\'","default":"Break","type":"string","minLength":1,"maxLength":1000}},"required":["type"]}]}}}}');var n=t.f;
 
-class ContactRole {
+class TeamContactRole {
   static TREASURER = 'treasurer'
   static SECRETARY = 'secretary'
   static MANAGER = 'manager'
@@ -234,47 +764,22 @@ class ContactRole {
   static COACH = 'coach'
   static ASSISTANT_COACH = 'assistantCoach'
   static MEDIC = 'medic'
+
+  static _validRoles = [
+    this.TREASURER,
+    this.SECRETARY,
+    this.MANAGER,
+    this.CAPTAIN,
+    this.COACH,
+    this.ASSISTANT_COACH,
+    this.MEDIC
+  ]
 }
 
 /**
  * A single contact for a team
  */
-class Contact {
-  /**
-   * A unique ID for this contact, e.g. 'TM1Contact1'. This must be unique within the team
-   * @type {string}
-   * @private
-   */
-  #id
-
-  /**
-   * The name of this contact
-   * @type {string|null}
-   * @private
-   */
-  #name = null
-
-  /**
-   * The roles of this contact within the team
-   * @type {array}
-   * @private
-   */
-  #roles
-
-  /**
-   * The email addresses for this contact
-   * @type {array}
-   * @private
-   */
-  #emails
-
-  /**
-   * A telephone number for this contact. If a contact has multiple phone numbers then add them as another contact
-   * @type {array}
-   * @private
-   */
-  #phones
-
+class TeamContact extends Contact {
   /**
    * The team this contact belongs to
    * @type {CompetitionTeam}
@@ -289,109 +794,16 @@ class Contact {
    * @param {Array<string>} roles The roles of this contact within the team
    */
   constructor (team, id, roles) {
-    if (id.length > 100 || id.length < 1) {
-      throw new Error('Invalid contact ID: must be between 1 and 100 characters long')
-    }
-
-    if (!/^((?![":{}?=])[\x20-\x7F])+$/.test(id)) {
-      throw new Error('Invalid contact ID: must contain only ASCII printable characters excluding " : { } ? =')
+    if (!(team instanceof CompetitionTeam)) {
+      throw new Error(`team contacts can only be attached to competition teams, ${team.constructor.name} given`)
     }
 
     if (team.hasContact(id)) {
       throw new Error(`Contact with ID "${id}" already exists in the team`)
     }
 
+    super(id, roles, TeamContactRole._validRoles);
     this.#team = team;
-    this.#id = id;
-    this.#roles = [];
-    roles.forEach(role => {
-      switch (role) {
-        case ContactRole.TREASURER:
-          this.addRole(ContactRole.TREASURER);
-          break
-        case ContactRole.SECRETARY:
-          this.addRole(ContactRole.SECRETARY);
-          break
-        case ContactRole.MANAGER:
-          this.addRole(ContactRole.MANAGER);
-          break
-        case ContactRole.CAPTAIN:
-          this.addRole(ContactRole.CAPTAIN);
-          break
-        case ContactRole.COACH:
-          this.addRole(ContactRole.COACH);
-          break
-        case ContactRole.ASSISTANT_COACH:
-          this.addRole(ContactRole.ASSISTANT_COACH);
-          break
-        case ContactRole.MEDIC:
-          this.addRole(ContactRole.MEDIC);
-          break
-      }
-    });
-    this.#name = null;
-    this.#emails = [];
-    this.#phones = [];
-  }
-
-  /**
-   * Loads contact data from an object
-   * @param {Object} contactData The data defining this Contact
-   * @returns {Contact} The updated Contact instance
-   */
-  loadFromData (contactData) {
-    if (Object.hasOwn(contactData, 'name')) {
-      this.setName(contactData.name);
-    }
-
-    if (Object.hasOwn(contactData, 'emails')) {
-      contactData.emails.forEach(email => {
-        this.addEmail(email);
-      });
-    }
-    if (Object.hasOwn(contactData, 'phones')) {
-      contactData.phones.forEach(phone => {
-        this.addPhone(phone);
-      });
-    }
-
-    return this
-  }
-
-  /**
-   * Return the contact definition in a form suitable for serializing
-   *
-   * @returns {Object}
-   */
-  serialize () {
-    const contact = {
-      id: this.#id
-    };
-
-    if (this.#name !== null) {
-      contact.name = this.#name;
-    }
-
-    contact.roles = [];
-    this.#roles.forEach(role => {
-      contact.roles.push(role);
-    });
-
-    if (this.#emails.length > 0) {
-      contact.emails = [];
-      this.#emails.forEach(email => {
-        contact.emails.push(email);
-      });
-    }
-
-    if (this.#phones.length > 0) {
-      contact.phones = [];
-      this.#phones.forEach(phone => {
-        contact.phones.push(phone);
-      });
-    }
-
-    return contact
   }
 
   /**
@@ -400,201 +812,6 @@ class Contact {
    */
   getTeam () {
     return this.#team
-  }
-
-  /**
-   * Get the ID for this contact
-   * @returns {string} The ID for this contact
-   */
-  getID () {
-    return this.#id
-  }
-
-  /**
-   * Set the name for this contact
-   * @param {string} name The name for this contact
-   * @returns {Contact} This contact
-   * @throws {Error} If the name is invalid
-   */
-  setName (name) {
-    if (name.length > 1000 || name.length < 1) {
-      throw new Error('Invalid contact name: must be between 1 and 1000 characters long')
-    }
-    this.#name = name;
-    return this
-  }
-
-  /**
-   * Get the name for this contact
-   * @returns {string|null} The name for this contact
-   */
-  getName () {
-    return this.#name
-  }
-
-  /**
-   * Get the roles for this contact
-   * @returns {Array<ContactRole>} The roles for this contact
-   */
-  getRoles () {
-    return this.#roles
-  }
-
-  /**
-   * Add a role to this contact
-   * @param {string} role The role to add to this contact
-   * @returns {Contact} Returns this contact for method chaining
-   */
-  addRole (role) {
-    if (!this.hasRole(role)) {
-      this.#roles.push(role);
-    }
-    return this
-  }
-
-  /**
-   * Check if this contact has the specified role
-   * @param {string} role The role to check for
-   * @returns {boolean} Whether the contact has the specified role
-   */
-  hasRole (role) {
-    return this.#roles.includes(role)
-  }
-
-  /**
-   * Set the list of roles, overriding the previous list
-   *
-   * @param {array<string>} roles The list of roles for the contact
-   *
-   * @returns {Contact} Returns this contact for method chaining
-   * @throws {Error} When the list of roles contains an invalid value
-   */
-  setRoles (roles) {
-    if (!Array.isArray(roles) || roles.length === 0) {
-      throw new Error('Error setting the roles to an empty list as the Contact must have at least one role')
-    }
-
-    const newRoles = [];
-    for (const role of roles) {
-      switch (role) {
-        case ContactRole.SECRETARY:
-        case ContactRole.TREASURER:
-        case ContactRole.MANAGER:
-        case ContactRole.CAPTAIN:
-        case ContactRole.COACH:
-        case ContactRole.ASSISTANT_COACH:
-        case ContactRole.MEDIC:
-          newRoles.push(role);
-          break
-        default:
-          throw new Error(`Error setting the roles due to invalid role: ${role}`)
-      }
-    }
-
-    this.#roles = newRoles;
-    return this
-  }
-
-  /**
-   * Get the email addresses for this contact
-   * @returns {Array<string>} The email addresses for this contact
-   */
-  getEmails () {
-    return this.#emails
-  }
-
-  /**
-   * Add an email address to this contact
-   * @param {string} email The email address to add
-   * @returns {Contact} Returns this contact for method chaining
-   * @throws {Error} When the email address is invalid
-   */
-  addEmail (email) {
-    if (email.length < 3) {
-      throw new Error('Invalid contact email address: must be at least 3 characters long')
-    }
-    if (!this.#emails.includes(email)) {
-      this.#emails.push(email);
-    }
-    return this
-  }
-
-  /**
-   * Set the list of email addresses, overriding the previous list.  To delete all email addresses, pass in null
-   *
-   * @param {array|null} emails The list of email addresses for the contact
-   *
-   * @returns {Contact} Returns this contact for method chaining
-   * @throws {Error} When one of the email addresses is invalid
-   */
-  setEmails (emails) {
-    if (emails === null) {
-      this.#emails = [];
-      return this
-    }
-
-    const newEmails = [];
-    for (const email of emails) {
-      if (email.length < 3) {
-        throw new Error('Invalid contact email address: must be at least 3 characters long')
-      }
-      if (!newEmails.includes(email)) {
-        newEmails.push(email);
-      }
-    }
-    this.#emails = newEmails;
-    return this
-  }
-
-  /**
-   * Get the phone numbers for this contact
-   * @returns {Array<string>} The phone numbers for this contact
-   */
-  getPhones () {
-    return this.#phones
-  }
-
-  /**
-   * Add a phone number to this contact
-   * @param {string} phone The phone number to add
-   * @returns {Contact} Returns this contact for method chaining
-   * @throws {Error} When the phone number is invalid
-   */
-  addPhone (phone) {
-    if (phone.length > 50 || phone.length < 1) {
-      throw new Error('Invalid contact phone number: must be between 1 and 50 characters long')
-    }
-    if (!this.#phones.includes(phone)) {
-      this.#phones.push(phone);
-    }
-    return this
-  }
-
-  /**
-   * Set the list of phone numbers, overriding the previous list.  To delete all phone numbers, pass in null
-   *
-   * @param {array|null} phones The list of phone numbers for the contact
-   *
-   * @return {Contact} Returns this contact for method chaining
-   * @throws {Error} When one of the phone numbers is invalid
-   */
-  setPhones (phones) {
-    if (phones === null) {
-      this.#phones = [];
-      return this
-    }
-
-    const newPhones = [];
-    for (const phone of phones) {
-      if (phone.length > 50 || phone.length < 1) {
-        throw new Error('Invalid contact phone number: must be between 1 and 50 characters long')
-      }
-      if (!newPhones.includes(phone)) {
-        newPhones.push(phone);
-      }
-    }
-    this.#phones = newPhones;
-    return this
   }
 }
 
@@ -690,33 +907,7 @@ class CompetitionTeam {
   loadFromData (teamData) {
     if (Object.hasOwn(teamData, 'contacts')) {
       teamData.contacts.forEach(contactData => {
-        const roles = [];
-        contactData.roles.forEach(contactRole => {
-          switch (contactRole) {
-            case ContactRole.SECRETARY:
-              roles.push(ContactRole.SECRETARY);
-              break
-            case ContactRole.TREASURER:
-              roles.push(ContactRole.TREASURER);
-              break
-            case ContactRole.MANAGER:
-              roles.push(ContactRole.MANAGER);
-              break
-            case ContactRole.CAPTAIN:
-              roles.push(ContactRole.CAPTAIN);
-              break
-            case ContactRole.COACH:
-              roles.push(ContactRole.COACH);
-              break
-            case ContactRole.ASSISTANT_COACH:
-              roles.push(ContactRole.ASSISTANT_COACH);
-              break
-            case ContactRole.MEDIC:
-              roles.push(ContactRole.MEDIC);
-              break
-          }
-        });
-        this.addContact((new Contact(this, contactData.id, roles)).loadFromData(contactData));
+        this.addContact((new TeamContact(this, contactData.id, contactData.roles)).loadFromData(contactData));
       });
     }
 
@@ -881,13 +1072,16 @@ class CompetitionTeam {
   /**
    * Add a contact to this team
    *
-   * @param {Contact} contact The contact to add to this team
+   * @param {TeamContact} contact The contact to add to this team
    *
    * @returns {CompetitionTeam} This CompetitionTeam instance
    *
    * @throws {Error} If a contact with a duplicate ID within the team is added
    */
   addContact (contact) {
+    if (!(contact instanceof TeamContact)) {
+      throw new Error(`teams can only have team contacts, ${contact.constructor.name} given`)
+    }
     if (this.hasContact(contact.getID())) {
       throw new Error('team contacts with duplicate IDs within a team not allowed')
     }
@@ -897,22 +1091,22 @@ class CompetitionTeam {
   }
 
   /**
-   * Returns an array of Contacts for this team
+   * Returns an array of TeamContacts for this team
    *
-   * @returns {array<Contact>|null} The contacts for this team
+   * @returns {array<TeamContact>|null} The contacts for this team
    */
   getContacts () {
     return this.#contacts
   }
 
   /**
-   * Returns the Contact with the requested ID, or throws if the ID is not found
+   * Returns the TeamContact with the requested ID, or throws if the ID is not found
    *
    * @param {string} id The ID of the contact in this team to return
    *
-   * @throws {Error} If a Contact with the requested ID was not found
+   * @throws {Error} If a TeamContact with the requested ID was not found
    *
-   * @returns {Contact} The requested contact for this team
+   * @returns {TeamContact} The requested contact for this team
    */
   getContact (id) {
     if (!Object.hasOwn(this.#contactLookup, id)) {
@@ -985,6 +1179,81 @@ class CompetitionTeam {
    */
   hasPlayers () {
     return this.#competition.hasPlayersInTeam(this.#id)
+  }
+}
+
+class CompetitionContactRole {
+  static DIRECTOR = 'director'
+  static FIXTURES = 'fixtures'
+  static LOGISTICS = 'logistics'
+  static COMMUNICATIONS = 'communications'
+  static OFFICIALS = 'officials'
+  static RESULTS = 'results'
+  static MARKETING = 'marketing'
+  static SAFETY = 'safety'
+  static VOLUNTEER = 'volunteer'
+  static WELFARE = 'welfare'
+  static HOSPITALITY = 'hospitality'
+  static CEREMONIES = 'ceremonies'
+  static SECRETARY = 'secretary'
+  static TREASURER = 'treasurer'
+  static MEDIC = 'medic'
+
+  static _validRoles = [
+    CompetitionContactRole.DIRECTOR,
+    CompetitionContactRole.FIXTURES,
+    CompetitionContactRole.LOGISTICS,
+    CompetitionContactRole.COMMUNICATIONS,
+    CompetitionContactRole.OFFICIALS,
+    CompetitionContactRole.RESULTS,
+    CompetitionContactRole.MARKETING,
+    CompetitionContactRole.SAFETY,
+    CompetitionContactRole.VOLUNTEER,
+    CompetitionContactRole.WELFARE,
+    CompetitionContactRole.HOSPITALITY,
+    CompetitionContactRole.CEREMONIES,
+    CompetitionContactRole.SECRETARY,
+    CompetitionContactRole.TREASURER,
+    CompetitionContactRole.MEDIC
+  ]
+}
+
+/**
+ * A single contact for a competition
+ */
+class CompetitionContact extends Contact {
+  /**
+   * The competition this contact belongs to
+   * @type {Competition}
+   * @private
+   */
+  #competition
+
+  /**
+   * Defines a Competition Contact
+   * @param {Competition} competition The competition this contact belongs to
+   * @param {string} id The unique ID for this contact
+   * @param {Array<string>} roles The roles of this contact within the competition
+   */
+  constructor (competition, id, roles) {
+    if (!(competition instanceof Competition)) {
+      throw new Error(`competition contacts can only be attached to competitions, ${competition.constructor.name} given`)
+    }
+
+    if (competition.hasContact(id)) {
+      throw new Error(`Contact with ID "${id}" already exists in the competition`)
+    }
+
+    super(id, roles, CompetitionContactRole._validRoles);
+    this.#competition = competition;
+  }
+
+  /**
+   * Get the competition this contact belongs to
+   * @returns {Competition} The competition this contact belongs to
+   */
+  getCompetition () {
+    return this.#competition
   }
 }
 
@@ -2278,7 +2547,7 @@ class IfUnknownMatch {
     this.setAwayTeam(MatchTeam.loadFromData(this, matchData.awayTeam));
 
     if (Object.hasOwn(matchData, 'officials')) {
-      this.setOfficials(MatchOfficials$1.loadFromData(this, matchData.officials));
+      this.setOfficials(MatchOfficials.loadFromData(this, matchData.officials));
     }
     if (Object.hasOwn(matchData, 'mvp')) {
       const mvpMatch = matchData.mvp.match(/^{(.*)}$/);
@@ -3229,8 +3498,6 @@ class MatchOfficials {
   }
 }
 
-var MatchOfficials$1 = MatchOfficials;
-
 class MatchType {
   static CONTINUOUS = 'continuous'
   static SETS = 'sets'
@@ -3372,7 +3639,7 @@ class GroupMatch {
     this.#awayTeamScores = matchData.awayTeam.scores;
 
     if (Object.hasOwn(matchData, 'officials')) {
-      const officials = MatchOfficials$1.loadFromData(this, matchData.officials);
+      const officials = MatchOfficials.loadFromData(this, matchData.officials);
       if (officials.isTeam() && (officials.getTeamID() === this.getHomeTeam().getID() || officials.getTeamID() === this.getAwayTeam().getID())) {
         throw new Error(`Refereeing team (in match {${this.#group.getStage().getID()}:${this.#group.getID()}:${this.getID()}}) cannot be the same as one of the playing teams`)
       }
@@ -4030,7 +4297,7 @@ class GroupMatch {
     if (scoreLength > 1) {
       throw new Error('Invalid results: match type is continuous, but score length is greater than one')
     }
-    if (groupConfig instanceof Group$1) {
+    if (groupConfig instanceof Group) {
       if (!groupConfig.getDrawsAllowed() && homeTeamScores[0] === awayTeamScores[0] && homeTeamScores[0] !== 0) {
         throw new Error('Invalid score: draws not allowed in this group')
       }
@@ -5640,7 +5907,7 @@ class Group {
    */
   getMatches (id = null, flags = 0) {
     if (id === null ||
-            flags & Competition$1.VBC_MATCH_ALL_IN_GROUP ||
+            flags & Competition.VBC_MATCH_ALL_IN_GROUP ||
             id === CompetitionTeam.UNKNOWN_TEAM_ID ||
             id.charAt(0) === '{') {
       return this._matches
@@ -5651,10 +5918,10 @@ class Group {
     for (const match of this._matches) {
       if (match instanceof GroupBreak) {
         continue
-      } else if (flags & Competition$1.VBC_MATCH_PLAYING &&
+      } else if (flags & Competition.VBC_MATCH_PLAYING &&
                 (this._competition.getTeam(match.getHomeTeam().getID()).getID() === id || this._competition.getTeam(match.getAwayTeam().getID()).getID() === id)) {
         matches.push(match);
-      } else if (flags & Competition$1.VBC_MATCH_OFFICIATING &&
+      } else if (flags & Competition.VBC_MATCH_OFFICIATING &&
                 match.getOfficials() !== null &&
                 match.getOfficials().isTeam() &&
                 this._competition.getTeam(match.getOfficials().getTeamID()).getID() === id) {
@@ -5678,21 +5945,21 @@ class Group {
    *                       </ul>
    * @returns {Array<string>}
    */
-  getTeamIDs (flags = Competition$1.VBC_TEAMS_FIXED_ID) {
+  getTeamIDs (flags = Competition.VBC_TEAMS_FIXED_ID) {
     let teamIDs = [];
 
-    if (flags & Competition$1.VBC_TEAMS_ALL) {
+    if (flags & Competition.VBC_TEAMS_ALL) {
       teamIDs = Object.keys(this.#teamIDs);
-    } else if (flags & Competition$1.VBC_TEAMS_PLAYING) {
+    } else if (flags & Competition.VBC_TEAMS_PLAYING) {
       teamIDs = Object.keys(this.#playingTeamIDs);
-    } else if (flags & Competition$1.VBC_TEAMS_OFFICIATING) {
+    } else if (flags & Competition.VBC_TEAMS_OFFICIATING) {
       teamIDs = Object.keys(this.#officiatingTeamIDs);
-    } else if (flags & Competition$1.VBC_TEAMS_MAYBE) {
+    } else if (flags & Competition.VBC_TEAMS_MAYBE) {
       return this.#getMaybeTeamIDs()
-    } else if (flags & Competition$1.VBC_TEAMS_KNOWN) {
+    } else if (flags & Competition.VBC_TEAMS_KNOWN) {
       teamIDs = Object.keys(this.#teamIDs).filter(k => this._competition.getTeam(k).getID() !== CompetitionTeam.UNKNOWN_TEAM_ID);
       teamIDs.sort((a, b) => this._competition.getTeam(a).getName().localeCompare(this._competition.getTeam(b).getName()));
-    } else if (flags & Competition$1.VBC_TEAMS_FIXED_ID) {
+    } else if (flags & Competition.VBC_TEAMS_FIXED_ID) {
       teamIDs = Object.keys(this.#teamIDs).filter(k => k.charAt(0) !== '{');
       teamIDs.sort((a, b) => this._competition.getTeam(a).getName().localeCompare(this._competition.getTeam(b).getName()));
     }
@@ -5722,7 +5989,7 @@ class Group {
       for (let i = 0; i < stgGrpLookupValues.length; i++) {
         const group = this._competition.getStage(stgGrpLookupValues[i].stage).getGroup(stgGrpLookupValues[i].group);
         if (!group.isComplete()) {
-          this.#maybeTeams = Array.from(new Set([...this.#maybeTeams, ...group.getTeamIDs(Competition$1.VBC_TEAMS_KNOWN), ...group.getTeamIDs(Competition$1.VBC_TEAMS_MAYBE)]));
+          this.#maybeTeams = Array.from(new Set([...this.#maybeTeams, ...group.getTeamIDs(Competition.VBC_TEAMS_KNOWN), ...group.getTeamIDs(Competition.VBC_TEAMS_MAYBE)]));
         }
       }
     }
@@ -6051,9 +6318,9 @@ class Group {
    * @param {number} [flags=VBC_MATCH_PLAYING] Controls what gets returned
    * @returns {Array<string>} List of match dates
    */
-  getMatchDates (teamID = null, flags = Competition$1.VBC_MATCH_PLAYING) {
+  getMatchDates (teamID = null, flags = Competition.VBC_MATCH_PLAYING) {
     const matchDates = {};
-    if (teamID === null || teamID === CompetitionTeam.UNKNOWN_TEAM_ID || flags & Competition$1.VBC_MATCH_ALL) {
+    if (teamID === null || teamID === CompetitionTeam.UNKNOWN_TEAM_ID || flags & Competition.VBC_MATCH_ALL) {
       for (const match of this._matches) {
         if (match instanceof GroupMatch) {
           matchDates[match.getDate()] = 1;
@@ -6065,11 +6332,11 @@ class Group {
           continue
         }
 
-        if (flags & Competition$1.VBC_MATCH_PLAYING &&
+        if (flags & Competition.VBC_MATCH_PLAYING &&
                     (this._competition.getTeam(match.getHomeTeam().getID()).getID() === teamID ||
                      this._competition.getTeam(match.getAwayTeam().getID()).getID() === teamID)) {
           matchDates[match.getDate()] = 1;
-        } else if (flags & Competition$1.VBC_MATCH_OFFICIATING &&
+        } else if (flags & Competition.VBC_MATCH_OFFICIATING &&
                     match.getOfficials() !== null &&
                     match.getOfficials().isTeam() &&
                     this._competition.getTeam(match.getOfficials().getTeamID()).getID() === teamID) {
@@ -6089,9 +6356,9 @@ class Group {
    * @param {number} [flags=VBC_MATCH_ALL] Controls what gets returned
    * @returns {Array<MatchInterface>} List of matches on the specified date
    */
-  getMatchesOnDate (date, teamID = null, flags = Competition$1.VBC_MATCH_ALL) {
+  getMatchesOnDate (date, teamID = null, flags = Competition.VBC_MATCH_ALL) {
     const matches = [];
-    if (teamID === null || teamID === CompetitionTeam.UNKNOWN_TEAM_ID || flags & Competition$1.VBC_MATCH_ALL) {
+    if (teamID === null || teamID === CompetitionTeam.UNKNOWN_TEAM_ID || flags & Competition.VBC_MATCH_ALL) {
       for (const match of this._matches) {
         if (match.getDate() === date) {
           matches.push(match);
@@ -6102,11 +6369,11 @@ class Group {
         if (match.getDate() === date) {
           if (!(match instanceof GroupMatch)) {
             matches.push(match);
-          } else if (flags & Competition$1.VBC_MATCH_PLAYING &&
+          } else if (flags & Competition.VBC_MATCH_PLAYING &&
                               (this._competition.getTeam(match.getHomeTeam().getID()).getID() === teamID ||
                                this._competition.getTeam(match.getAwayTeam().getID()).getID() === teamID)) {
             matches.push(match);
-          } else if (flags & Competition$1.VBC_MATCH_OFFICIATING &&
+          } else if (flags & Competition.VBC_MATCH_OFFICIATING &&
                                match.getOfficials() !== null &&
                                match.getOfficials().isTeam() &&
                                this._competition.getTeam(match.getOfficials().getTeamID()).getID() === teamID) {
@@ -6119,12 +6386,10 @@ class Group {
   }
 }
 
-var Group$1 = Group;
-
 /**
  * A group within this stage of the competition.  There is no implied league table or team order, just match winners and losers
  */
-class Crossover extends Group$1 {
+class Crossover extends Group {
   /**
    * Contains the group data of a stage, creating any metadata needed
    *
@@ -6748,7 +7013,7 @@ class IfUnknown {
 /**
  * A group within this stage of the competition.  A knockout expects to generate an order of teams based on team elimination
  */
-class Knockout extends Group$1 {
+class Knockout extends Group {
   /**
    * Contains the group data of a stage, creating any metadata needed
    *
@@ -7402,7 +7667,7 @@ class LeagueTableEntry {
 /**
  * A group within this stage of the competition. Leagues expect all teams to play each other at least once, and have a league table
  */
-class League extends Group$1 {
+class League extends Group {
   /**
    * The table for this group, if the group type is league
    * @type {LeagueTable}
@@ -8120,9 +8385,9 @@ class Stage {
    */
   checkMatches () {
     for (let i = 0; i < this.#groups.length - 1; i++) {
-      const thisGroupsTeamIDs = this.#groups[i].getTeamIDs(Competition$1.VBC_TEAMS_PLAYING);
+      const thisGroupsTeamIDs = this.#groups[i].getTeamIDs(Competition.VBC_TEAMS_PLAYING);
       for (let j = i + 1; j < this.#groups.length; j++) {
-        const thatGroupsTeamIDs = this.#groups[j].getTeamIDs(Competition$1.VBC_TEAMS_PLAYING);
+        const thatGroupsTeamIDs = this.#groups[j].getTeamIDs(Competition.VBC_TEAMS_PLAYING);
         const intersectingIDs = thisGroupsTeamIDs.filter(id => thatGroupsTeamIDs.includes(id));
         if (intersectingIDs.length > 0) {
           throw new Error('Groups in the same stage cannot contain the same team. Groups {' +
@@ -8172,7 +8437,7 @@ class Stage {
    *                   </ul>
    * @returns {Array<string>} All team IDs participating in this stage
    */
-  getTeamIDs (flags = Competition$1.VBC_TEAMS_FIXED_ID) {
+  getTeamIDs (flags = Competition.VBC_TEAMS_FIXED_ID) {
     let teamIDs = [];
 
     this.#groups.forEach(group => {
@@ -8317,8 +8582,8 @@ class Stage {
     this.#groups.forEach(group => {
       if (group.teamHasMatches(id)) {
         matches = matches.concat(group.getMatches(id, flags));
-      } else if (flags & Competition$1.VBC_MATCH_OFFICIATING && group.teamHasOfficiating(id)) {
-        matches = matches.concat(group.getMatches(id, Competition$1.VBC_MATCH_OFFICIATING));
+      } else if (flags & Competition.VBC_MATCH_OFFICIATING && group.teamHasOfficiating(id)) {
+        matches = matches.concat(group.getMatches(id, Competition.VBC_MATCH_OFFICIATING));
       }
     });
 
@@ -8598,7 +8863,7 @@ class Stage {
    *                   </ul>
    * @returns array<string>
    */
-  getMatchDates (id = null, flags = Competition$1.VBC_MATCH_PLAYING) {
+  getMatchDates (id = null, flags = Competition.VBC_MATCH_PLAYING) {
     let matchDates = [];
     this.#groups.forEach(group => {
       const groupMatchDates = group.getMatchDates(id, flags);
@@ -8622,7 +8887,7 @@ class Stage {
    *                   </ul>
    * @returns array<MatchInterface>
    */
-  getMatchesOnDate (date, id = null, flags = Competition$1.VBC_MATCH_ALL) {
+  getMatchesOnDate (date, id = null, flags = Competition.VBC_MATCH_ALL) {
     let matches = [];
     this.#groups.forEach(group => {
       const groupMatches = group.getMatchesOnDate(date, id, flags);
@@ -8720,6 +8985,13 @@ class Competition {
   #name
 
   /**
+   * The contacts for the competition
+   * @type {array}
+   * @private
+   */
+  #contacts
+
+  /**
    * Free form string to add notes about the competition.  This can be used for arbitrary content that various implementations can use
    * @type {string|null}
    * @private
@@ -8784,6 +9056,13 @@ class Competition {
   #clubLookup
 
   /**
+   * A Lookup table from contact IDs to the contact
+   * @type {object}
+   * @private
+   */
+  #contactLookup
+
+  /**
    * The "unknown" team, typically for matching against
    * @type {CompetitionTeam}
    * @private
@@ -8819,6 +9098,7 @@ class Competition {
     this.#metadata = [];
     this.#notes = null;
     this.#clubs = [];
+    this.#contacts = [];
     this.#teams = [];
     this.#players = [];
     this.#stages = [];
@@ -8826,6 +9106,7 @@ class Competition {
     this.#playerLookup = {};
     this.#stageLookup = {};
     this.#clubLookup = {};
+    this.#contactLookup = {};
 
     this.#unknownTeam = new CompetitionTeam(this, CompetitionTeam.UNKNOWN_TEAM_ID, CompetitionTeam.UNKNOWN_TEAM_NAME);
   }
@@ -8865,6 +9146,12 @@ class Competition {
           throw new Error(`Metadata with key "${kv.key}" already exists in the competition`)
         }
         competition.setMetadataByKey(kv.key, kv.value);
+      });
+    }
+
+    if (Array.isArray(competitionData.contacts)) {
+      competitionData.contacts.forEach(contactData => {
+        competition.addContact((new CompetitionContact(competition, contactData.id, contactData.roles)).loadFromData(contactData));
       });
     }
 
@@ -9100,6 +9387,89 @@ class Competition {
    */
   deleteMetadataByKey (key) {
     this.#metadata = this.#metadata.filter(el => el.key !== key);
+    return this
+  }
+
+  /**
+   * Add a contact to this competition
+   *
+   * @param {CompetitionContact} contact The contact to add to this competition
+   *
+   * @returns {CompetitionTeam} This CompetitionTeam instance
+   *
+   * @throws {Error} If a contact with a duplicate ID within the competition is added
+   */
+  addContact (contact) {
+    if (!(contact instanceof CompetitionContact)) {
+      throw new Error(`competitions can only have competition contacts, ${contact.constructor.name} given`)
+    }
+    if (this.hasContact(contact.getID())) {
+      throw new Error('competition contacts with duplicate IDs within a competition not allowed')
+    }
+    this.#contacts.push(contact);
+    this.#contactLookup[contact.getID()] = contact;
+    return this
+  }
+
+  /**
+   * Returns an array of Contacts for this competition
+   *
+   * @returns {array<CompetitionContact>|null} The contacts for this competition
+   */
+  getContacts () {
+    return this.#contacts
+  }
+
+  /**
+   * Returns the CompetitionContact with the requested ID, or throws if the ID is not found
+   *
+   * @param {string} id The ID of the contact in this competition to return
+   *
+   * @throws {Error} If a CompetitionContact with the requested ID was not found
+   *
+   * @returns {CompetitionContact} The requested contact for this competition
+   */
+  getContact (id) {
+    if (!Object.hasOwn(this.#contactLookup, id)) {
+      throw new Error(`Contact with ID "${id}" not found`)
+    }
+    return this.#contactLookup[id]
+  }
+
+  /**
+   * Check if a contact with the given ID exists in this competition
+   *
+   * @param {string} id The ID of the contact to check
+   *
+   * @returns {bool} True if the contact exists, otherwise false
+   */
+  hasContact (id) {
+    return Object.hasOwn(this.#contactLookup, id)
+  }
+
+  /**
+   * Check if this competition has any contacts
+   *
+   * @returns bool True if the competition has contacts, otherwise false
+   */
+  hasContacts () {
+    return this.#contacts.length > 0
+  }
+
+  /**
+   * Delete a contact from the competition
+   *
+   * @param {string} id The ID of the contact to delete
+   *
+   * @returns {CompetitionTeam} This CompetitionTeam instance
+   */
+  deleteContact (id) {
+    if (!this.hasContact(id)) {
+      return this
+    }
+
+    delete this.#contactLookup[id];
+    this.#contacts = this.#contacts.filter(el => el.getID() !== id);
     return this
   }
 
@@ -9760,15 +10130,16 @@ class Competition {
   }
 }
 
-var Competition$1 = Competition;
-
 exports.Club = Club;
-exports.Competition = Competition$1;
+exports.ClubContact = ClubContact;
+exports.ClubContactRole = ClubContactRole;
+exports.Competition = Competition;
+exports.CompetitionContact = CompetitionContact;
+exports.CompetitionContactRole = CompetitionContactRole;
 exports.CompetitionTeam = CompetitionTeam;
 exports.Contact = Contact;
-exports.ContactRole = ContactRole;
 exports.Crossover = Crossover;
-exports.Group = Group$1;
+exports.Group = Group;
 exports.GroupBreak = GroupBreak;
 exports.GroupMatch = GroupMatch;
 exports.GroupType = GroupType;
@@ -9783,10 +10154,12 @@ exports.LeagueConfigPoints = LeagueConfigPoints;
 exports.LeagueTable = LeagueTable;
 exports.LeagueTableEntry = LeagueTableEntry;
 exports.MatchManager = MatchManager;
-exports.MatchOfficials = MatchOfficials$1;
+exports.MatchOfficials = MatchOfficials;
 exports.MatchTeam = MatchTeam;
 exports.MatchType = MatchType;
 exports.Player = Player;
 exports.PlayerTeam = PlayerTeam;
 exports.SetConfig = SetConfig;
 exports.Stage = Stage;
+exports.TeamContact = TeamContact;
+exports.TeamContactRole = TeamContactRole;

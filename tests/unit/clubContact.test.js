@@ -4,87 +4,78 @@ import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 
 
-import { Competition, CompetitionTeam, Contact, ContactRole } from '../../src/index.js'
+import { Club, ClubContact, ClubContactRole, Competition, CompetitionTeam } from '../../src/index.js'
 
-describe('contact', () => {
+describe('team contact', () => {
   it('testContactsNone', async () => {
-    const competitionJSON = await readFile(new URL(path.join('contacts', 'contacts.json'), import.meta.url), { encoding: 'utf8' })
+    const competitionJSON = await readFile(new URL(path.join('clubcontacts', 'no-contacts.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
+    const club = competition.getClub('CL1')
 
-    const team = competition.getTeam('TM1')
-    assert(team instanceof CompetitionTeam)
-    assert.equal(team.getContacts().length, 0)
-  })
-
-  it('testContactsDefaultSecretary', async () => {
-    const competitionJSON = await readFile(new URL(path.join('contacts', 'contacts.json'), import.meta.url), { encoding: 'utf8' })
-    const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-
-    const team = competition.getTeam('TM2')
-    assert(team instanceof CompetitionTeam)
-
-    assert.equal(team.getContacts().length, 1)
-    assert.equal(team.getContact('C1').getID(), 'C1')
-    assert.equal(team.getContact('C1').getName(), 'Alice Alison')
-    assert.deepEqual(team.getContact('C1').getEmails(), ['alice@example.com'])
-    assert.deepEqual(team.getContact('C1').getRoles(), [ContactRole.SECRETARY])
+    assert.equal(club.getContacts().length, 0)
+    assert(!club.hasContacts())
   })
 
   it('testContactsDuplicateID', async () => {
-    const competitionJSON = await readFile(new URL(path.join('contacts', 'contacts-duplicate-ids.json'), import.meta.url), { encoding: 'utf8' })
+    const competitionJSON = await readFile(new URL(path.join('clubcontacts', 'contacts-duplicate-ids.json'), import.meta.url), { encoding: 'utf8' })
     await assert.rejects(async () => {
       await Competition.loadFromCompetitionJSON(competitionJSON)
     }, {
-      message: 'Contact with ID "C1" already exists in the team'
+      message: 'Contact with ID "C1" already exists in the club'
     })
   })
 
   it('testContactsEach', async () => {
-    const competitionJSON = await readFile(new URL(path.join('contacts', 'contacts.json'), import.meta.url), { encoding: 'utf8' })
+    const competitionJSON = await readFile(new URL(path.join('clubcontacts', 'contacts.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
-    const team = competition.getTeam('TM3')
+    const club = competition.getClub('CL1')
 
-    assert.equal(team.getContacts().length, 7)
+    assert.equal(club.getContacts().length, 7)
 
-    const contactC1 = team.getContact('C1')
+    const contactC1 = club.getContact('C1')
     assert.equal(contactC1.getID(), 'C1')
     assert.equal(contactC1.getName(), 'Alice Alison')
     assert.deepEqual(contactC1.getEmails(), ['alice@example.com'])
     assert.deepEqual(contactC1.getPhones(), ['01234 567890'])
+    assert.equal(contactC1.getNotes(), 'Alice is both the club chair and secretary')
 
-    assert.deepEqual(contactC1.getRoles(), [ContactRole.SECRETARY, ContactRole.ASSISTANT_COACH])
-    assert(contactC1.hasRole(ContactRole.SECRETARY))
-    assert(contactC1.hasRole(ContactRole.ASSISTANT_COACH))
-    assert(!contactC1.hasRole(ContactRole.TREASURER))
-    assert(!contactC1.hasRole(ContactRole.MANAGER))
-    assert(!contactC1.hasRole(ContactRole.CAPTAIN))
-    assert(!contactC1.hasRole(ContactRole.COACH))
-    assert(!contactC1.hasRole(ContactRole.MEDIC))
+    assert.deepEqual(contactC1.getRoles(), [ClubContactRole.CHAIR, ClubContactRole.SECRETARY])
+    assert(contactC1.hasRole(ClubContactRole.CHAIR))
+    assert(contactC1.hasRole(ClubContactRole.SECRETARY))
+    assert(!contactC1.hasRole(ClubContactRole.VICE))
+    assert(!contactC1.hasRole(ClubContactRole.TREASURER))
+    assert(!contactC1.hasRole(ClubContactRole.WELFARE))
+    assert(!contactC1.hasRole(ClubContactRole.COMMUNICATIONS))
+    assert(!contactC1.hasRole(ClubContactRole.MARKETING))
+    assert(!contactC1.hasRole(ClubContactRole.VOLUNTEER))
+    assert(!contactC1.hasRole(ClubContactRole.LOGISTICS))
+    assert(!contactC1.hasRole(ClubContactRole.COACHING))
 
-    assert.deepEqual(team.getContact('C2').getRoles(), [ContactRole.TREASURER])
-    assert.deepEqual(team.getContact('C3').getRoles(), [ContactRole.MANAGER])
-    assert.deepEqual(team.getContact('C4').getRoles(), [ContactRole.CAPTAIN])
-    assert.deepEqual(team.getContact('C5').getRoles(), [ContactRole.COACH])
-    assert.deepEqual(team.getContact('C6').getRoles(), [ContactRole.ASSISTANT_COACH])
-    assert.deepEqual(team.getContact('C7').getRoles(), [ContactRole.MEDIC])
+    assert.deepEqual(club.getContact('C2').getRoles(), [ClubContactRole.TREASURER])
+    assert.deepEqual(club.getContact('C3').getRoles(), [ClubContactRole.VICE, ClubContactRole.LOGISTICS])
+    assert.deepEqual(club.getContact('C4').getRoles(), [ClubContactRole.WELFARE])
+    assert.deepEqual(club.getContact('C5').getRoles(), [ClubContactRole.COMMUNICATIONS, ClubContactRole.MARKETING])
+    assert.deepEqual(club.getContact('C6').getRoles(), [ClubContactRole.VOLUNTEER])
+    assert.deepEqual(club.getContact('C7').getRoles(), [ClubContactRole.COACHING])
   })
 
   it('testContactsGetByIDOutOfBounds', async () => {
-    const competitionJSON = await readFile(new URL(path.join('contacts', 'contacts.json'), import.meta.url), { encoding: 'utf8' })
+    const competitionJSON = await readFile(new URL(path.join('clubcontacts', 'contacts.json'), import.meta.url), { encoding: 'utf8' })
     const competition = await Competition.loadFromCompetitionJSON(competitionJSON)
+    const club = competition.getClub('CL1')
 
     assert.throws(() => {
-      competition.getTeam('TM1').getContact('NO-SUCH-TEAM')
+      club.getContact('NO-SUCH-CONTACT')
     }, {
-      message: 'Contact with ID "NO-SUCH-TEAM" not found'
+      message: 'Contact with ID "NO-SUCH-CONTACT" not found'
     })
   })
 
   it('testContactSetName', async () => {
     const competition = new Competition('test competition')
-    const team = new CompetitionTeam(competition, 'T1', 'Team 1')
-    const contact = new Contact(team, 'C1', [ContactRole.SECRETARY])
-    assert.equal(contact.getTeam().getID(), 'T1')
+    const club = new Club(competition, 'CL1', 'Some Club')
+    const contact = new ClubContact(club, 'C1', [ClubContactRole.SECRETARY])
+    assert.equal(contact.getClub().getID(), 'CL1')
 
     assert.throws(() => {
       contact.setName('')
@@ -110,8 +101,8 @@ describe('contact', () => {
 
   it('testContactSetSpotsDuplicates', async () => {
     const competition = new Competition('test competition')
-    const team = new CompetitionTeam(competition, 'T1', 'Team 1')
-    const contact = new Contact(team, 'C1', [ContactRole.SECRETARY])
+    const club = new Club(competition, 'CL1', 'Some Club')
+    const contact = new ClubContact(club, 'C1', [ClubContactRole.SECRETARY])
 
     contact.addEmail('alice@example.com').addEmail('alice@example.com').addEmail('alice@example.com')
     assert.equal(contact.getEmails().length, 1)
@@ -119,17 +110,31 @@ describe('contact', () => {
     contact.addPhone('01234 567890').addPhone('01234 567890').addPhone('01234 567890')
     assert.equal(contact.getPhones().length, 1)
 
-    contact.addRole(ContactRole.SECRETARY).addRole(ContactRole.SECRETARY)
+    contact.addRole(ClubContactRole.SECRETARY).addRole(ClubContactRole.SECRETARY)
     assert.equal(contact.getRoles().length, 1)
   })
 
   it('testContactSettersAndAdders', () => {
     const competition = new Competition('test competition')
-    const team = new CompetitionTeam(competition, 'T1', 'Team 1')
-    const contact = new Contact(team, 'C1', [ContactRole.SECRETARY])
+    const club = new Club(competition, 'CL1', 'Some Club')
+
+    assert.throws(() => {
+      const team = new CompetitionTeam(competition, 'T1', 'Team 1')
+      new ClubContact(team, 'C1', [ClubContactRole.SECRETARY])
+    }, {
+      message: 'club contacts can only be attached to clubs, CompetitionTeam given'
+    })
+
+    const contact = new ClubContact(club, 'C1', [ClubContactRole.SECRETARY])
+
+    assert.throws(() => {
+      contact.addRole('bad role')
+    }, {
+      message: 'Error adding the role due to invalid role: bad role'
+    })
 
     assert.equal(contact.getRoles().length, 1)
-    contact.setRoles([ContactRole.CAPTAIN, ContactRole.COACH, ContactRole.TREASURER, ContactRole.SECRETARY])
+    contact.setRoles([ClubContactRole.CHAIR, ClubContactRole.COACHING, ClubContactRole.TREASURER, ClubContactRole.SECRETARY])
     assert.equal(contact.getRoles().length, 4)
 
     assert.throws(() => {
@@ -216,55 +221,61 @@ describe('contact', () => {
     }, {
       message: 'Invalid contact phone number: must be between 1 and 50 characters long'
     })
+
+    assert.equal(contact.getNotes(), null)
+    contact.setNotes('some contact notes')
+    assert.equal(contact.getNotes(), 'some contact notes')
+    contact.setNotes(null)
+    assert.equal(contact.getNotes(), null)
   })
 
   it('testContactConstructorBadID', async () => {
     const competition = new Competition('test competition')
-    const team = new CompetitionTeam(competition, 'T1', 'Team 1')
+    const club = new Club(competition, 'CL1', 'Some Club')
     assert.throws(() => {
-      new Contact(team, '', [ContactRole.SECRETARY])
+      new ClubContact(club, '', [ClubContactRole.SECRETARY])
     }, {
       message: 'Invalid contact ID: must be between 1 and 100 characters long'
     })
 
     assert.throws(() => {
-      new Contact(team, '01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567891', [ContactRole.SECRETARY])
+      new ClubContact(club, '01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567891', [ClubContactRole.SECRETARY])
     }, {
       message: 'Invalid contact ID: must be between 1 and 100 characters long'
     })
 
     assert.throws(() => {
-      new Contact(team, '"id1"', [ContactRole.SECRETARY])
+      new ClubContact(club, '"id1"', [ClubContactRole.SECRETARY])
     }, {
       message: 'Invalid contact ID: must contain only ASCII printable characters excluding " : { } ? ='
     })
 
     assert.throws(() => {
-      new Contact(team, 'id:1', [ContactRole.SECRETARY])
+      new ClubContact(club, 'id:1', [ClubContactRole.SECRETARY])
     }, {
       message: 'Invalid contact ID: must contain only ASCII printable characters excluding " : { } ? ='
     })
 
     assert.throws(() => {
-      new Contact(team, 'id{1', [ContactRole.SECRETARY])
+      new ClubContact(club, 'id{1', [ClubContactRole.SECRETARY])
     }, {
       message: 'Invalid contact ID: must contain only ASCII printable characters excluding " : { } ? ='
     })
 
     assert.throws(() => {
-      new Contact(team, 'id1}', [ContactRole.SECRETARY])
+      new ClubContact(club, 'id1}', [ClubContactRole.SECRETARY])
     }, {
       message: 'Invalid contact ID: must contain only ASCII printable characters excluding " : { } ? ='
     })
 
     assert.throws(() => {
-      new Contact(team, 'id1?', [ContactRole.SECRETARY])
+      new ClubContact(club, 'id1?', [ClubContactRole.SECRETARY])
     }, {
       message: 'Invalid contact ID: must contain only ASCII printable characters excluding " : { } ? ='
     })
 
     assert.throws(() => {
-      new Contact(team, 'id=1', [ContactRole.SECRETARY])
+      new ClubContact(club, 'id=1', [ClubContactRole.SECRETARY])
     }, {
       message: 'Invalid contact ID: must contain only ASCII printable characters excluding " : { } ? ='
     })

@@ -3,7 +3,7 @@ import { describe, it } from 'node:test'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 
-import { Club, Competition } from '../../src/index.js'
+import { Club, ClubContact, ClubContactRole, Competition, CompetitionContact, CompetitionContactRole } from '../../src/index.js'
 
 describe('club', () => {
   it('testClubNone', async () => {
@@ -158,5 +158,36 @@ describe('club', () => {
     }, {
       message: 'Invalid club ID: must contain only ASCII printable characters excluding " : { } ? ='
     })
+  })
+
+  it('testClubContacts', () => {
+    const competition = new Competition('test')
+    const club1 = new Club(competition, 'CL1', 'Some club')
+    const club2 = new Club(competition, 'CL2', 'Some other club')
+
+    const contact1 = new ClubContact(club1, 'C1', [ClubContactRole.SECRETARY])
+    club1.addContact(contact1)
+
+    const contact2 = new ClubContact(club2, 'C1', [ClubContactRole.CHAIR])
+    assert.throws(() => {
+      club1.addContact(contact2)
+    },
+    {
+      message: 'club contacts with duplicate IDs within a club not allowed'
+    })
+
+    assert.throws(() => {
+      const competitionContact = new CompetitionContact(competition, 'C3', [CompetitionContactRole.SECRETARY])
+      club1.addContact(competitionContact)
+    },
+    {
+      message: 'clubs can only have club contacts, CompetitionContact given'
+    })
+
+    assert.equal(club1.getContacts().length, 1)
+    club1.deleteContact('C1')
+    assert(!club1.hasContacts())
+    club1.deleteContact('C1')
+    assert(!club1.hasContacts())
   })
 })
